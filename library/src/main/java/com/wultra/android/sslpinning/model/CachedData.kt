@@ -18,7 +18,6 @@ package com.wultra.android.sslpinning.model
 
 import java.io.Serializable
 import java.util.*
-import kotlin.Comparator
 
 /**
  * @author Tomas Kypta, tomas.kypta@wultra.com
@@ -36,15 +35,6 @@ internal data class CachedData(var certificates: Array<CertificateInfo>,
         return result
     }
 
-    private val certificateInfoComparator = object : Comparator<CertificateInfo> {
-        override fun compare(lhs: CertificateInfo, rhs: CertificateInfo): Int {
-            if (lhs.commonName == rhs.commonName) {
-                return -lhs.expires.compareTo(rhs.expires)
-            }
-            return lhs.commonName.compareTo(rhs.commonName)
-        }
-    }
-
     /**
      * Sorts certificates stored in CachedData structure. Entries are alphabetically sorted
      * by the common name. For entries with the same common name, the entries with expiration
@@ -52,7 +42,7 @@ internal data class CachedData(var certificates: Array<CertificateInfo>,
      * so we can more easily calculate when the next silent update will be scheduled.
      */
     internal fun sort() {
-        certificates.sortWith(certificateInfoComparator)
+        certificates.sort()
     }
 }
 

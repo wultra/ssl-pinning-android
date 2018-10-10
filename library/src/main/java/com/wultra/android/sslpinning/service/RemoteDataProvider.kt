@@ -16,6 +16,7 @@
 
 package com.wultra.android.sslpinning.service
 
+import android.support.annotation.WorkerThread
 import com.wultra.android.sslpinning.interfaces.ResultCallback
 
 /**
@@ -23,5 +24,6 @@ import com.wultra.android.sslpinning.interfaces.ResultCallback
  */
 interface RemoteDataProvider {
 
-    fun getFingerprints(callback: ResultCallback<ByteArray>)
+    @WorkerThread
+    fun getFingerprints(): ByteArray
 }

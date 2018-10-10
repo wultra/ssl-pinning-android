@@ -24,7 +24,7 @@ import java.util.*
  */
 data class CertificateInfo(val commonName: String,
                            val fingerprint: ByteArray,
-                           val expires: Date) : Serializable {
+                           val expires: Date) : Serializable, Comparable<CertificateInfo> {
 
     internal constructor(responseEntry: GetFingerprintResponse.Entry) :
             this(commonName = responseEntry.name, fingerprint = responseEntry.fingerprint,
@@ -32,5 +32,12 @@ data class CertificateInfo(val commonName: String,
 
     internal fun isExpired(date: Date): Boolean {
         return expires.before(date)
+    }
+
+    override fun compareTo(other: CertificateInfo): Int {
+        if (this.commonName == other.commonName) {
+            return -this.expires.compareTo(other.expires)
+        }
+        return this.commonName.compareTo(other.commonName)
     }
 }

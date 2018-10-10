@@ -1,5 +1,6 @@
 package com.wultra.android.sslpinning.plugins.powerauth
 
+import android.content.Context
 import com.wultra.android.sslpinning.CertStore
 import com.wultra.android.sslpinning.CertStoreConfiguration
 import com.wultra.android.sslpinning.interfaces.ECPublicKey
@@ -12,35 +13,31 @@ import javax.net.ssl.*
 /**
  * @author Tomas Kypta, tomas.kypta@wultra.com
  */
-fun CertStore.Companion.powerAuthCertStore(configuration: CertStoreConfiguration): CertStore {
+fun CertStore.Companion.powerAuthCertStore(configuration: CertStoreConfiguration,
+                                           context: Context,
+                                           keychainIdentifier: String? = null): CertStore {
+    val secureDataStore = if (keychainIdentifier == null) {
+        PowerAuthSecureDataStore(context)
+    } else {
+        PowerAuthSecureDataStore(context, keychainIdentifier)
+    }
     return CertStore(configuration = configuration,
             cryptoProvider = PowerAuthCryptoProvider(),
-            secureDataStore = PowerAuthSecureDataStore())
+            secureDataStore = secureDataStore)
 }
 
 class PowerAuthSslPinningValidationStrategy(private val certStore: CertStore) : PA2ClientValidationStrategy {
 
     private val sslPinningTrustManager = object : X509TrustManager {
-        override fun checkClientTrusted(chain: Array<out X509Certificate>?, authType: String?) {
-            TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
+        override fun checkClientTrusted(chain: Array<out X509Certificate>, authType: String) {
         }
 
-        override fun checkServerTrusted(chain: Array<out X509Certificate>?, authType: String?) {
-            TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
+        override fun checkServerTrusted(chain: Array<out X509Certificate>, authType: String) {
+            certStore.validateCertificate(chain[0])
         }
 
         override fun getAcceptedIssuers(): Array<X509Certificate> {
-            TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
-        }
-    }
-
-    private class SslPinningHostNameVerifier(private val delegate: HostnameVerifier) : HostnameVerifier {
-
-        override fun verify(hostname: String?, session: SSLSession?): Boolean {
-            if (delegate.verify(hostname, session)) {
-
-            }
-            return false
+            return arrayOf()
         }
     }
 

@@ -1,16 +1,26 @@
 package com.wultra.android.sslpinning
 
+import android.support.annotation.WorkerThread
+import android.util.Base64
 import com.google.gson.Gson
 import com.google.gson.GsonBuilder
 import com.wultra.android.sslpinning.interfaces.CryptoProvider
+import com.wultra.android.sslpinning.interfaces.ECPublicKey
+import com.wultra.android.sslpinning.interfaces.ResultCallback
 import com.wultra.android.sslpinning.interfaces.SecureDataStore
 import com.wultra.android.sslpinning.model.CachedData
 import com.wultra.android.sslpinning.model.CertificateInfo
 import com.wultra.android.sslpinning.model.GetFingerprintResponse
+import com.wultra.android.sslpinning.plugins.powerauth.PA2ECPublicKey
 import com.wultra.android.sslpinning.service.RemoteDataProvider
 import com.wultra.android.sslpinning.service.RestApi
+import com.wultra.android.sslpinning.service.UpdateScheduler
 import com.wultra.android.sslpinning.util.ByteArrayTypeAdapter
+import com.wultra.android.sslpinning.util.CertUtils
+import java.lang.Exception
+import java.lang.IllegalArgumentException
 import java.security.cert.X509Certificate
+import java.util.*
 
 /**
  * The main class that provides features of the dynamic SSL pinng library.
@@ -103,6 +113,8 @@ class CertStore internal constructor(private val configuration: CertStoreConfigu
         }
     }
 
+    /*** STORAGE ***/
+
     internal fun loadCachedData(): CachedData? {
         val encodedData = secureDataStore.load(key = instanceIdentifier) ?: return null
         val cachedData = try {
@@ -135,6 +147,122 @@ class CertStore internal constructor(private val configuration: CertStoreConfigu
                 .create()
     }
 
+    /*** UPDATE ***/
+
+    /**
+     * Tells `CertStore` to update its database of certificates from the remote location.
+     *
+     * Works synchronously, run it on a worker thread.
+     */
+    @WorkerThread
+    fun update(mode: UpdateMode = UpdateMode.DEFAULT): UpdateResult {
+        val now = Date()
+        val cachedData = getCachedData()
+        var needsDirectUpdate = true
+        var needsSilentUpdate = false
+
+        cachedData?.let {
+            needsDirectUpdate = it.numberOfValidCertificates(now) == 0 || mode == UpdateMode.FORCED
+            if (!needsDirectUpdate) {
+                needsSilentUpdate = it.nextUpdate.before(now)
+            }
+        }
+
+        if (needsDirectUpdate) {
+            return doUpdate(now)
+        } else {
+            if (needsSilentUpdate) {
+                planUpdate(now)
+            }
+            return UpdateResult.SCHEDULED
+        }
+    }
+
+    @WorkerThread
+    private fun doUpdate(currentDate: Date): UpdateResult {
+        val bytes = remoteDataProvider.getFingerprints()
+        return processReceivedData(bytes, currentDate)
+    }
+
+    private fun planUpdate(currentDate: Date) {
+
+    }
+
+    private fun processReceivedData(data: ByteArray, currentDate: Date): UpdateResult {
+        val response = try {
+            getGson().fromJson(String(data), GetFingerprintResponse::class.java)
+        } catch (t: Throwable) {
+            null
+        } ?: return UpdateResult.INVALID_DATA
+
+        val publicKey = cryptoProvider.importECPublicKey(publicKey = configuration.publicKey)
+                ?: throw IllegalArgumentException("Illegal configuration public key")
+
+        var result = UpdateResult.OK
+        updateCachedData { cachedData ->
+            var newCertificates = (cachedData?.certificates ?: arrayOf())
+                    .filter { !it.isExpired(currentDate) }
+                    .toMutableList()
+
+            for (entry in response.fingerprints) {
+                val newCertificateInfo = CertificateInfo(entry)
+                if (newCertificateInfo.isExpired(currentDate)) {
+                    // skip already expired entry
+                    continue
+                }
+
+                if (newCertificates.indexOf(newCertificateInfo) != -1) {
+                    // skip entry that's already in the database
+                    continue
+                }
+
+                val signedData = entry.dataForSignature()
+                if (signedData == null) {
+                    // failed to construct bytes for signature validation
+                    result = UpdateResult.INVALID_DATA
+                    break
+                }
+
+                if (!cryptoProvider.ecdsaValidateSignatures(signedData, publicKey)) {
+                    // detected invalid signature
+                    result = UpdateResult.INVALID_SIGNATURE
+                    break
+                }
+
+                configuration.expectedCommonNames?.let { expectedCN ->
+                    if (!expectedCN.contains(newCertificateInfo.commonName)) {
+                        // CertStore will stor ethis CertificateInfo, but validation will ignore
+                        // this entry because it's not in expectedCommonNames
+                    }
+                }
+
+                newCertificates.add(newCertificateInfo)
+            }
+
+            if (result == UpdateResult.OK && newCertificates.isEmpty()) {
+                // looks like it's time to update list of certificates stored on the server
+                result = UpdateResult.STORE_IS_EMPTY
+            }
+
+            if (result != UpdateResult.OK) {
+                return@updateCachedData null
+            }
+
+            newCertificates.sort()
+            val certArray = newCertificates.toTypedArray()
+
+            val scheduler = UpdateScheduler(
+                    periodicUpdateIntervalMillis = configuration.periodicUpdateIntervalMillis,
+                    expirationUpdateThresholdMillis = configuration.expirationUpdateThresholdMillis,
+                    thresholdMultiplier = 0.125)
+            val nextUpdate = scheduler.scheduleNextUpdate(certArray, currentDate)
+            return@updateCachedData CachedData(certificates = certArray, nextUpdate = nextUpdate)
+        }
+        return result
+    }
+
+    /*** VALIDATION ***/
+
     /**
      * Validates whether provided certificate fingerprint is valid for given common name.
      *
@@ -157,7 +285,7 @@ class CertStore internal constructor(private val configuration: CertStoreConfigu
         var matchAttempts = 0
         for (info in certificates) {
             if (info.commonName == commonName) {
-                if (info.fingerprint == fingerprint) {
+                if (info.fingerprint.contentEquals(fingerprint)) {
                     return ValidationResult.TRUSTED
                 }
                 matchAttempts += 1
@@ -176,10 +304,11 @@ class CertStore internal constructor(private val configuration: CertStoreConfigu
         return validateFingerprint(commonName, fingerprint)
     }
 
-    fun validateCertificate(certificate: X509Certificate) {
-        val key = certificate.publicKey.encoded
+    fun validateCertificate(certificate: X509Certificate): ValidationResult {
+        val key = certificate.encoded
         val fingerprint = cryptoProvider.hashSha256(key)
-        certificate.subjectDN
+        val commonName = CertUtils.parseCommonName(certificate)
+        return validateFingerprint(commonName, fingerprint)
     }
 
 }

@@ -40,7 +40,7 @@ class CertStoreConfiguration(
          * If an invalid key is provided, the library will crash with a fatal error on the first
          * attempt to use the public key.
          */
-        val publicKey: String,
+        val publicKey: ByteArray,
 
         /**
          * Optional property defining the set of common names which are expected in certificate
@@ -108,7 +108,7 @@ class CertStoreConfiguration(
 
     class Builder(
             val serviceUrl: URL,
-            val publicKey: String
+            val publicKey: ByteArray
     ) {
         var expectedCommonNames: Array<String>? = null
             private set

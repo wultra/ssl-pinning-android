@@ -16,24 +16,48 @@
 
 package com.wultra.android.sslpinning.service
 
-import com.wultra.android.sslpinning.interfaces.ResultCallback
+import android.support.annotation.WorkerThread
 import java.lang.Exception
 import java.net.URL
+import javax.net.ssl.HttpsURLConnection
 
 /**
  * @author Tomas Kypta, tomas.kypta@wultra.com
  */
 class RestApi(private val baseUrl: URL) : RemoteDataProvider {
 
-//    private val session
-//    private val executionQueue
+    companion object {
+        const val CONTENT_TYPE = "application/json"
+    }
 
     init {
 
     }
 
-    override fun getFingerprints(callback: ResultCallback<ByteArray>) {
-        TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
+    class NetworkException : Exception() {
+
     }
+
+    @WorkerThread
+    override fun getFingerprints(): ByteArray {
+        val connection = baseUrl.openConnection() as HttpsURLConnection
+        connection.requestMethod = "GET"
+        connection.addRequestProperty("Accept", CONTENT_TYPE)
+        try {
+            connection.connect()
+            val responseCode = connection.responseCode
+            val responseOk = responseCode / 100 == 2
+            if (responseOk) {
+                connection.inputStream
+                return connection.inputStream.use { it.readBytes() }
+            } else {
+                throw NetworkException()
+            }
+
+        } finally {
+            connection.disconnect()
+        }
+    }
+
 
 }
