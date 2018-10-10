@@ -31,7 +31,7 @@ dependencies {
     compileOnly "io.getlime.security.powerauth:powerauth-android-sdk:${rootProject.ext.powerAuthSdkVersion}"
 
     compile "org.jetbrains.kotlin:kotlin-stdlib-jdk7:$kotlin_version"
-    implementation "androidx.appcompat:appcompat:${rootProject.ext.androidxAppcompat}"
+    implementation "com.android.support:support-annotations:${supportVersion}"
     implementation "com.google.code.gson:gson:${gsonVersion}"
 
     testImplementation 'junit:junit:4.12'

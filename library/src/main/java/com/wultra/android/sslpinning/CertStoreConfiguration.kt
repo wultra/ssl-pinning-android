@@ -18,6 +18,7 @@ package com.wultra.android.sslpinning
 
 import com.wultra.android.sslpinning.interfaces.CryptoProvider
 import java.net.URL
+import java.util.concurrent.ExecutorService
 import java.util.concurrent.TimeUnit
 
 /**
@@ -92,7 +93,13 @@ class CertStoreConfiguration(
          *
          * The default value is two weeks in milliseconds.
          */
-        val expirationUpdateThresholdMillis: Long) {
+        val expirationUpdateThresholdMillis: Long,
+
+        /**
+         * Executor service on which silent updates will run.
+         * If not set, the silent updates will run on a not pooled thread.
+         */
+        val executorService: ExecutorService? = null) {
 
     private constructor(builder: Builder) : this(serviceUrl = builder.serviceUrl,
             publicKey = builder.publicKey,
@@ -100,7 +107,8 @@ class CertStoreConfiguration(
             identifier = builder.identifier,
             fallbackCertificateData = builder.fallbackCertificateData,
             periodicUpdateIntervalMillis = builder.periodicUpdateIntervalMillis,
-            expirationUpdateThresholdMillis = builder.expirationUpdateThresholdMillis)
+            expirationUpdateThresholdMillis = builder.expirationUpdateThresholdMillis,
+            executorService = builder.executorService)
 
     internal fun validate(cryptoProvider: CryptoProvider) {
         TODO()
@@ -125,6 +133,9 @@ class CertStoreConfiguration(
         var expirationUpdateThresholdMillis: Long = TimeUnit.DAYS.toMillis(14)
             private set
 
+        var executorService: ExecutorService? = null
+            private set
+
         fun expectedCommonNames(expectedCommonNames: Array<String>?) = apply {
             this.expectedCommonNames = expectedCommonNames
         }
@@ -143,6 +154,10 @@ class CertStoreConfiguration(
 
         fun expirationUpdateThresholdMillis(expirationUpdateThresholdMillis: Long) = apply {
             this.expirationUpdateThresholdMillis = expirationUpdateThresholdMillis
+        }
+
+        fun executorService(executorService: ExecutorService?) = apply {
+            this.executorService = executorService
         }
 
         fun build() = CertStoreConfiguration(this)

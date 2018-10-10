@@ -1,23 +1,19 @@
 package com.wultra.android.sslpinning
 
+import android.os.Process
 import android.support.annotation.WorkerThread
-import android.util.Base64
 import com.google.gson.Gson
 import com.google.gson.GsonBuilder
 import com.wultra.android.sslpinning.interfaces.CryptoProvider
-import com.wultra.android.sslpinning.interfaces.ECPublicKey
-import com.wultra.android.sslpinning.interfaces.ResultCallback
 import com.wultra.android.sslpinning.interfaces.SecureDataStore
 import com.wultra.android.sslpinning.model.CachedData
 import com.wultra.android.sslpinning.model.CertificateInfo
 import com.wultra.android.sslpinning.model.GetFingerprintResponse
-import com.wultra.android.sslpinning.plugins.powerauth.PA2ECPublicKey
 import com.wultra.android.sslpinning.service.RemoteDataProvider
 import com.wultra.android.sslpinning.service.RestApi
 import com.wultra.android.sslpinning.service.UpdateScheduler
 import com.wultra.android.sslpinning.util.ByteArrayTypeAdapter
 import com.wultra.android.sslpinning.util.CertUtils
-import java.lang.Exception
 import java.lang.IllegalArgumentException
 import java.security.cert.X509Certificate
 import java.util.*
@@ -152,7 +148,13 @@ class CertStore internal constructor(private val configuration: CertStoreConfigu
     /**
      * Tells `CertStore` to update its database of certificates from the remote location.
      *
-     * Works synchronously, run it on a worker thread.
+     * Run this method on a worker thread.
+     * This method might block the execution in case an update is necessary.
+     *
+     * If the update is not critically needed, it is scheduled
+     * either on a provided [ExecutorService] or on a dedicated [Thread].
+     * In this case the method doesn't block the execution.
+     *
      */
     @WorkerThread
     fun update(mode: UpdateMode = UpdateMode.DEFAULT): UpdateResult {
@@ -172,7 +174,7 @@ class CertStore internal constructor(private val configuration: CertStoreConfigu
             return doUpdate(now)
         } else {
             if (needsSilentUpdate) {
-                planUpdate(now)
+                doUpdateAsync(now)
             }
             return UpdateResult.SCHEDULED
         }
@@ -184,8 +186,23 @@ class CertStore internal constructor(private val configuration: CertStoreConfigu
         return processReceivedData(bytes, currentDate)
     }
 
-    private fun planUpdate(currentDate: Date) {
-
+    private fun doUpdateAsync(currentDate: Date) {
+        val updateRunnable = Runnable {
+            doUpdate(currentDate)
+        }
+        configuration.executorService?.let {
+            it.submit(updateRunnable)
+        } ?: run {
+            val thread = Thread(updateRunnable)
+            thread.name = "SilentCertStoreUpdate"
+            thread.priority = Process.THREAD_PRIORITY_BACKGROUND
+            thread.uncaughtExceptionHandler = object : Thread.UncaughtExceptionHandler() {
+                override fun uncaughtException(t: Thread?, e: Throwable?) {
+                    TODO("Log exception $e")
+                }
+            }
+            thread.start()
+        }
     }
 
     private fun processReceivedData(data: ByteArray, currentDate: Date): UpdateResult {
