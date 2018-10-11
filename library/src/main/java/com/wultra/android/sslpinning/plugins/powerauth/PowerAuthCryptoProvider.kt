@@ -18,6 +18,7 @@ class PowerAuthCryptoProvider : CryptoProvider {
     }
 
     override fun importECPublicKey(publicKey: ByteArray): ECPublicKey? {
+        // TODO consider validation of the data
         return PA2ECPublicKey(data = publicKey)
     }
 

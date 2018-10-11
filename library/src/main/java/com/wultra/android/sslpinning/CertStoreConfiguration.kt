@@ -17,7 +17,12 @@
 package com.wultra.android.sslpinning
 
 import com.wultra.android.sslpinning.interfaces.CryptoProvider
+import com.wultra.android.sslpinning.model.GetFingerprintResponse
+import com.wultra.android.sslpinning.service.WultraDebug
+import com.wultra.android.sslpinning.util.CertStoreUtils
+import java.lang.IllegalArgumentException
 import java.net.URL
+import java.util.*
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.TimeUnit
 
@@ -111,7 +116,37 @@ class CertStoreConfiguration(
             executorService = builder.executorService)
 
     internal fun validate(cryptoProvider: CryptoProvider) {
-        TODO()
+        if (serviceUrl.protocol == "http") {
+            WultraDebug.warning("CertStoreConfiguration: 'serviceUrl' should point to 'https' server.")
+        }
+
+        // validate fallback certificate data
+        fallbackCertificateData?.let { fallback ->
+            try {
+                val fallbackEntry = CertStoreUtils.gson.fromJson(String(fallback), GetFingerprintResponse.Entry::class.java)
+                expectedCommonNames?.let { expectedCNs ->
+                    if (!expectedCNs.contains(fallbackEntry.name)) {
+                        WultraDebug.warning("CertStoreConfiguration: 'fallbackCertificateData' is issued for common name " +
+                                "which is not included in 'expectedCommonNames'.")
+                    }
+                    if (fallbackEntry.expires.before(Date())) {
+                        WultraDebug.warning("CertStoreConfiguration: 'fallbackCertificateData' is already expired.")
+                    }
+                }
+            } catch (t: Throwable) {
+                WultraDebug.error("CertStoreConfiguration: 'fallbackCertificateData' contains invalid JSON.")
+            }
+
+        }
+
+        // TODO improve with validation of public key
+
+        if (periodicUpdateIntervalMillis < 0) {
+            throw IllegalArgumentException("CertStoreConfiguration: 'periodicUpdateIntervalMillis' contains negative value.")
+        }
+        if (expirationUpdateThresholdMillis < 0) {
+            throw IllegalArgumentException("CertStoreConfiguration: 'expirationUpdateThresholdMillis' contains negative value.")
+        }
     }
 
     class Builder(

@@ -13,6 +13,7 @@ import com.wultra.android.sslpinning.service.RemoteDataProvider
 import com.wultra.android.sslpinning.service.RestApi
 import com.wultra.android.sslpinning.service.UpdateScheduler
 import com.wultra.android.sslpinning.util.ByteArrayTypeAdapter
+import com.wultra.android.sslpinning.util.CertStoreUtils
 import com.wultra.android.sslpinning.util.CertUtils
 import java.lang.IllegalArgumentException
 import java.security.cert.X509Certificate
@@ -114,7 +115,7 @@ class CertStore internal constructor(private val configuration: CertStoreConfigu
     internal fun loadCachedData(): CachedData? {
         val encodedData = secureDataStore.load(key = instanceIdentifier) ?: return null
         val cachedData = try {
-            getGson().fromJson(String(encodedData), CachedData::class.java)
+            CertStoreUtils.gson.fromJson(String(encodedData), CachedData::class.java)
         } catch (t: Throwable) {
             return null
         }
@@ -122,25 +123,19 @@ class CertStore internal constructor(private val configuration: CertStoreConfigu
     }
 
     internal fun saveDataToCache(data: CachedData) {
-        val encodedData = getGson().toJson(data).toByteArray(Charsets.UTF_8)
+        val encodedData = CertStoreUtils.gson.toJson(data).toByteArray(Charsets.UTF_8)
         secureDataStore.save(data = encodedData, key = instanceIdentifier)
     }
 
     internal fun loadFallbackCertificate(): CertificateInfo? {
         val fallbackData = configuration.fallbackCertificateData ?: return null
         val fallbackEntry = try {
-            getGson().fromJson(String(fallbackData), GetFingerprintResponse.Entry::class.java)
+            CertStoreUtils.gson.fromJson(String(fallbackData), GetFingerprintResponse.Entry::class.java)
                     ?: return null
         } catch (t: Throwable) {
             return null
         }
         return CertificateInfo(fallbackEntry)
-    }
-
-    fun getGson(): Gson {
-        return GsonBuilder()
-                .registerTypeAdapter(ByteArray::class.java, ByteArrayTypeAdapter::class.java)
-                .create()
     }
 
     /*** UPDATE ***/
@@ -196,18 +191,15 @@ class CertStore internal constructor(private val configuration: CertStoreConfigu
             val thread = Thread(updateRunnable)
             thread.name = "SilentCertStoreUpdate"
             thread.priority = Process.THREAD_PRIORITY_BACKGROUND
-            thread.uncaughtExceptionHandler = object : Thread.UncaughtExceptionHandler() {
-                override fun uncaughtException(t: Thread?, e: Throwable?) {
-                    TODO("Log exception $e")
-                }
-            }
+            thread.uncaughtExceptionHandler =
+                    Thread.UncaughtExceptionHandler { t, e -> TODO("Log exception $e") }
             thread.start()
         }
     }
 
     private fun processReceivedData(data: ByteArray, currentDate: Date): UpdateResult {
         val response = try {
-            getGson().fromJson(String(data), GetFingerprintResponse::class.java)
+            CertStoreUtils.gson.fromJson(String(data), GetFingerprintResponse::class.java)
         } catch (t: Throwable) {
             null
         } ?: return UpdateResult.INVALID_DATA
