@@ -16,10 +16,8 @@
 
 package com.wultra.android.sslpinning
 
-import com.wultra.android.sslpinning.interfaces.CryptoProvider
 import com.wultra.android.sslpinning.model.GetFingerprintResponse
 import com.wultra.android.sslpinning.service.WultraDebug
-import com.wultra.android.sslpinning.util.CertStoreUtils
 import java.lang.IllegalArgumentException
 import java.net.URL
 import java.util.*
@@ -66,24 +64,12 @@ class CertStoreConfiguration(
         val identifier: String?,
 
         /**
-         * Defines JSON data with a fallback certificate fingerprint.
+         * Defines a fallback certificate fingerprint.
          *
          * You can configure a fallback certificate which will be used as the last stand during
          * the fingerprint validation.
-         *
-         * The JSON should contain the same data as are usually received from the server,
-         * except that "signature" is not validated (but has to be provided in the JSON).
-         * For example:
-         * ```val fallbackData = """
-         * {
-         *     "name" : "www.google.com",
-         *     "fingerprint" : "nu1DOBz31Y5FY6lRNkJV/HdnB6BDVCp7mX0nxkbub7Y=",
-         *     "expires" : 1540280280000,
-         *     "signature" : ""
-         * }
-         * """.toByteArray()
          */
-        val fallbackCertificateData: ByteArray?,
+        val fallbackCertificate: GetFingerprintResponse.Entry?,
 
         /**
          * Defines how often (in milliseconds) will [CertStore] periodically check the certificates
@@ -110,31 +96,30 @@ class CertStoreConfiguration(
             publicKey = builder.publicKey,
             expectedCommonNames = builder.expectedCommonNames,
             identifier = builder.identifier,
-            fallbackCertificateData = builder.fallbackCertificateData,
+            fallbackCertificate = builder.fallbackCertificate,
             periodicUpdateIntervalMillis = builder.periodicUpdateIntervalMillis,
             expirationUpdateThresholdMillis = builder.expirationUpdateThresholdMillis,
             executorService = builder.executorService)
 
-    internal fun validate(cryptoProvider: CryptoProvider) {
+    internal fun validate() {
         if (serviceUrl.protocol == "http") {
             WultraDebug.warning("CertStoreConfiguration: 'serviceUrl' should point to 'https' server.")
         }
 
         // validate fallback certificate data
-        fallbackCertificateData?.let { fallback ->
+        fallbackCertificate?.let { fallback ->
             try {
-                val fallbackEntry = CertStoreUtils.gson.fromJson(String(fallback), GetFingerprintResponse.Entry::class.java)
                 expectedCommonNames?.let { expectedCNs ->
-                    if (!expectedCNs.contains(fallbackEntry.name)) {
-                        WultraDebug.warning("CertStoreConfiguration: 'fallbackCertificateData' is issued for common name " +
+                    if (!expectedCNs.contains(fallback.name)) {
+                        WultraDebug.warning("CertStoreConfiguration: 'fallbackCertificate' is issued for common name " +
                                 "which is not included in 'expectedCommonNames'.")
                     }
-                    if (fallbackEntry.expires.before(Date())) {
-                        WultraDebug.warning("CertStoreConfiguration: 'fallbackCertificateData' is already expired.")
+                    if (fallback.expires.before(Date())) {
+                        WultraDebug.warning("CertStoreConfiguration: 'fallbackCertificate' is already expired.")
                     }
                 }
             } catch (t: Throwable) {
-                WultraDebug.error("CertStoreConfiguration: 'fallbackCertificateData' contains invalid JSON.")
+                WultraDebug.error("CertStoreConfiguration: 'fallbackCertificate' contains invalid JSON.")
             }
 
         }
@@ -159,7 +144,7 @@ class CertStoreConfiguration(
         var identifier: String? = null
             private set
 
-        var fallbackCertificateData: ByteArray? = null
+        var fallbackCertificate: GetFingerprintResponse.Entry? = null
             private set
 
         var periodicUpdateIntervalMillis: Long = TimeUnit.DAYS.toMillis(7)
@@ -179,8 +164,8 @@ class CertStoreConfiguration(
             this.identifier = identifier
         }
 
-        fun fallbackCertificateData(fallbackCertificateData: ByteArray?) = apply {
-            this.fallbackCertificateData = fallbackCertificateData
+        fun fallbackCertificate(fallbackCertificate: GetFingerprintResponse.Entry?) = apply {
+            this.fallbackCertificate = fallbackCertificate
         }
 
         fun periodicUpdateIntervalMillis(periodicUpdateIntervalMillis: Long) = apply {

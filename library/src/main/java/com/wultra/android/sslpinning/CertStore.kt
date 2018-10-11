@@ -12,8 +12,8 @@ import com.wultra.android.sslpinning.model.GetFingerprintResponse
 import com.wultra.android.sslpinning.service.RemoteDataProvider
 import com.wultra.android.sslpinning.service.RestApi
 import com.wultra.android.sslpinning.service.UpdateScheduler
+import com.wultra.android.sslpinning.service.WultraDebug
 import com.wultra.android.sslpinning.util.ByteArrayTypeAdapter
-import com.wultra.android.sslpinning.util.CertStoreUtils
 import com.wultra.android.sslpinning.util.CertUtils
 import java.lang.IllegalArgumentException
 import java.security.cert.X509Certificate
@@ -38,13 +38,15 @@ class CertStore internal constructor(private val configuration: CertStoreConfigu
     private var fallbackCertificate: CertificateInfo? = null
 
     companion object {
-
+        internal val GSON: Gson = GsonBuilder()
+                .registerTypeAdapter(ByteArray::class.java, ByteArrayTypeAdapter())
+                .create()
     }
 
     init {
-        configuration.validate(cryptoProvider)
+        configuration.validate()
         if (remoteDataProvider != null) {
-            this.remoteDataProvider = remoteDataProvider!!
+            this.remoteDataProvider = remoteDataProvider
         } else {
             this.remoteDataProvider = RestApi(baseUrl = configuration.serviceUrl)
         }
@@ -74,7 +76,7 @@ class CertStore internal constructor(private val configuration: CertStoreConfigu
     @Synchronized
     internal fun getCertificates(): Array<CertificateInfo> {
         restoreCache()
-        var result = cachedData?.certificates ?: arrayOf<CertificateInfo>()
+        var result = cachedData?.certificates ?: arrayOf()
         fallbackCertificate?.let {
             result = arrayOf(*result, it)
         }
@@ -115,7 +117,7 @@ class CertStore internal constructor(private val configuration: CertStoreConfigu
     internal fun loadCachedData(): CachedData? {
         val encodedData = secureDataStore.load(key = instanceIdentifier) ?: return null
         val cachedData = try {
-            CertStoreUtils.gson.fromJson(String(encodedData), CachedData::class.java)
+            GSON.fromJson(String(encodedData), CachedData::class.java)
         } catch (t: Throwable) {
             return null
         }
@@ -123,18 +125,12 @@ class CertStore internal constructor(private val configuration: CertStoreConfigu
     }
 
     internal fun saveDataToCache(data: CachedData) {
-        val encodedData = CertStoreUtils.gson.toJson(data).toByteArray(Charsets.UTF_8)
+        val encodedData = GSON.toJson(data).toByteArray(Charsets.UTF_8)
         secureDataStore.save(data = encodedData, key = instanceIdentifier)
     }
 
     internal fun loadFallbackCertificate(): CertificateInfo? {
-        val fallbackData = configuration.fallbackCertificateData ?: return null
-        val fallbackEntry = try {
-            CertStoreUtils.gson.fromJson(String(fallbackData), GetFingerprintResponse.Entry::class.java)
-                    ?: return null
-        } catch (t: Throwable) {
-            return null
-        }
+        val fallbackEntry = configuration.fallbackCertificate ?: return null
         return CertificateInfo(fallbackEntry)
     }
 
@@ -192,14 +188,16 @@ class CertStore internal constructor(private val configuration: CertStoreConfigu
             thread.name = "SilentCertStoreUpdate"
             thread.priority = Process.THREAD_PRIORITY_BACKGROUND
             thread.uncaughtExceptionHandler =
-                    Thread.UncaughtExceptionHandler { t, e -> TODO("Log exception $e") }
+                    Thread.UncaughtExceptionHandler { t, e ->
+                        WultraDebug.error("Silent update failed, $t crashed with ${e}.")
+                    }
             thread.start()
         }
     }
 
     private fun processReceivedData(data: ByteArray, currentDate: Date): UpdateResult {
         val response = try {
-            CertStoreUtils.gson.fromJson(String(data), GetFingerprintResponse::class.java)
+            GSON.fromJson(String(data), GetFingerprintResponse::class.java)
         } catch (t: Throwable) {
             null
         } ?: return UpdateResult.INVALID_DATA
