@@ -101,14 +101,43 @@ public class CertStoreConfigurationTest {
 
     @Test
     public void testConfigurationWithFallbackCertificate() throws Exception {
-        CertStoreConfiguration config = configurationWithFallback(new Date());
+        CertStoreConfiguration config = configurationWithFallback(new Date(), null);
         assertNotNull(config.getFallbackCertificate());
         CertStore store = new CertStore(config, cryptoProvider, secureDataStore);
 
         byte[] fingerprint = new byte[32];
         Arrays.fill(fingerprint, (byte)0xff);
         ValidationResult result = store.validateFingerprint("api.fallback.org", fingerprint);
+        // TODO it should not be trusted the fingerprint is expired
         assertEquals(ValidationResult.TRUSTED, result);
+    }
+
+    @Test
+    public void testConfigurationWithNonMatchingExpectedCommonNames() throws Exception {
+        CertStoreConfiguration config = configurationWithFallback(new Date(), new String[]{"www.wultra.com"});
+        CertStore store = new CertStore(config, cryptoProvider, secureDataStore);
+
+        byte[] fingerprint = new byte[32];
+        Arrays.fill(fingerprint, (byte)0xff);
+        ValidationResult result = store.validateFingerprint("api.fallback.org", fingerprint);
+        assertEquals("Validate non-matching common name", ValidationResult.UNTRUSTED, result);
+
+        result = store.validateFingerprint("www.wultra.com", fingerprint);
+        assertEquals("Validate matching common name, no matching fingerprint", ValidationResult.EMPTY, result);
+    }
+
+    @Test
+    public void testConfigurationWithMatchingExpectedCommonNames() throws Exception {
+        CertStoreConfiguration config = configurationWithFallback(new Date(), new String[]{"api.fallback.org"});
+        CertStore store = new CertStore(config, cryptoProvider, secureDataStore);
+
+        byte[] fingerprint = new byte[32];
+        Arrays.fill(fingerprint, (byte)0xff);
+        ValidationResult result = store.validateFingerprint("api.fallback.org", fingerprint);
+        assertEquals("Validate matching common name", ValidationResult.TRUSTED, result);
+
+        result = store.validateFingerprint("www.wultra.com", fingerprint);
+        assertEquals("Validate non-matching common name", ValidationResult.UNTRUSTED, result);
     }
 
     private CertStoreConfiguration configuration(Date expiration) throws MalformedURLException {
@@ -121,7 +150,7 @@ public class CertStoreConfigurationTest {
         return builder.build();
     }
 
-    private CertStoreConfiguration configurationWithFallback(Date expiration) throws MalformedURLException {
+    private CertStoreConfiguration configurationWithFallback(Date expiration, String[] expectedCommonNames) throws MalformedURLException {
         URL serviceUrl = new URL("https://foo.wultra.com");
         String publicKey = "BEG6g28LNWRcmdFzexSNTKPBYZnDtKrCyiExFKbktttfKAF7wG4Cx1Nycr5PwCoICG1dRseLyuDxUilAmppPxAo=";
 
@@ -136,6 +165,7 @@ public class CertStoreConfigurationTest {
         CertStoreConfiguration.Builder builder = new CertStoreConfiguration.Builder(
                 serviceUrl, publicKey.getBytes())
                 .identifier(null)
+                .expectedCommonNames(expectedCommonNames)
                 .fallbackCertificate(fallbackData);
         return builder.build();
     }

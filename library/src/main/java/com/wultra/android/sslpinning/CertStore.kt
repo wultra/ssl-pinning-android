@@ -273,6 +273,8 @@ class CertStore internal constructor(private val configuration: CertStoreConfigu
     /**
      * Validates whether provided certificate fingerprint is valid for given common name.
      *
+     * Warning: Validation doesn't handle fingerprint expiration. Consider changing it.
+     *
      * @param commonName A common name from server's certificate
      * @param fingerprint A SHA-256 fingerprint calculated from certificate's data
      *
