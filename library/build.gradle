@@ -42,6 +42,7 @@ dependencies {
     testImplementation 'org.mockito:mockito-core:2.8.47'
     testImplementation "org.powermock:powermock-module-junit4:1.7.4"
     testImplementation "org.powermock:powermock-api-mockito2:1.7.4"
+    testImplementation 'org.bouncycastle:bcprov-jdk15on:1.60'
     androidTestImplementation 'com.android.support.test:runner:1.0.2'
     androidTestImplementation 'com.android.support.test.espresso:espresso-core:3.0.2'
 }

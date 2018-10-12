@@ -143,16 +143,14 @@ public class CertStoreConfigurationTest {
     private CertStoreConfiguration configuration(Date expiration) throws MalformedURLException {
         URL serviceUrl = new URL("https://foo.wultra.com");
         String publicKey = "BEG6g28LNWRcmdFzexSNTKPBYZnDtKrCyiExFKbktttfKAF7wG4Cx1Nycr5PwCoICG1dRseLyuDxUilAmppPxAo=";
-
-        CertStoreConfiguration.Builder builder = new CertStoreConfiguration.Builder(
-                serviceUrl, publicKey.getBytes())
-                .identifier(null);
-        return builder.build();
+        byte[] publicKeyBytes = java.util.Base64.getDecoder().decode(publicKey);
+        return TestUtils.getCertStoreConfiguration(expiration, null, serviceUrl, publicKeyBytes, null);
     }
 
     private CertStoreConfiguration configurationWithFallback(Date expiration, String[] expectedCommonNames) throws MalformedURLException {
         URL serviceUrl = new URL("https://foo.wultra.com");
         String publicKey = "BEG6g28LNWRcmdFzexSNTKPBYZnDtKrCyiExFKbktttfKAF7wG4Cx1Nycr5PwCoICG1dRseLyuDxUilAmppPxAo=";
+        byte[] publicKeyBytes = java.util.Base64.getDecoder().decode(publicKey);
 
         byte[] fingerprint = new byte[32];
         Arrays.fill(fingerprint, (byte)0xff);
@@ -162,11 +160,7 @@ public class CertStoreConfigurationTest {
         GetFingerprintResponse.Entry fallbackData = new GetFingerprintResponse.Entry(
                 "api.fallback.org", fingerprint, expiration, signature);
 
-        CertStoreConfiguration.Builder builder = new CertStoreConfiguration.Builder(
-                serviceUrl, publicKey.getBytes())
-                .identifier(null)
-                .expectedCommonNames(expectedCommonNames)
-                .fallbackCertificate(fallbackData);
-        return builder.build();
+        return TestUtils.getCertStoreConfiguration(expiration, expectedCommonNames, serviceUrl, publicKeyBytes, fallbackData);
     }
+
 }
