@@ -15,6 +15,7 @@ import com.wultra.android.sslpinning.service.UpdateScheduler
 import com.wultra.android.sslpinning.service.WultraDebug
 import com.wultra.android.sslpinning.util.ByteArrayTypeAdapter
 import com.wultra.android.sslpinning.util.CertUtils
+import com.wultra.android.sslpinning.util.DateTypeAdapter
 import java.lang.IllegalArgumentException
 import java.security.cert.X509Certificate
 import java.util.*
@@ -40,6 +41,7 @@ class CertStore internal constructor(private val configuration: CertStoreConfigu
     companion object {
         internal val GSON: Gson = GsonBuilder()
                 .registerTypeAdapter(ByteArray::class.java, ByteArrayTypeAdapter())
+                .registerTypeAdapter(Date::class.java, DateTypeAdapter())
                 .create()
     }
 
