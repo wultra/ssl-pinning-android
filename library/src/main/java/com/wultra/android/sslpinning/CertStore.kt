@@ -66,6 +66,7 @@ class CertStore internal constructor(private val configuration: CertStoreConfigu
 
     @Synchronized
     fun reset() {
+        WultraDebug.warning("CertStore: reset() hould not be used in production build.")
         cachedData = null
         secureDataStore.remove(key = instanceIdentifier)
     }
@@ -227,13 +228,16 @@ class CertStore internal constructor(private val configuration: CertStoreConfigu
 
                 val signedData = entry.dataForSignature()
                 if (signedData == null) {
-                    // failed to construct bytes for signature validation
+                    // Failed to construct bytes for signature validation. I think this may
+                    // never happen, unless "entry.name" contains some invalid UTF8 chars.
+                    WultraDebug.error("CertStore: Failed to prepare data for signature validation. CN = '${entry.name}'")
                     result = UpdateResult.INVALID_DATA
                     break
                 }
 
                 if (!cryptoProvider.ecdsaValidateSignatures(signedData, publicKey)) {
                     // detected invalid signature
+                    WultraDebug.error("CertStore: Invalid signature detected. CN = '${entry.name}'")
                     result = UpdateResult.INVALID_SIGNATURE
                     break
                 }
@@ -242,6 +246,7 @@ class CertStore internal constructor(private val configuration: CertStoreConfigu
                     if (!expectedCN.contains(newCertificateInfo.commonName)) {
                         // CertStore will stor ethis CertificateInfo, but validation will ignore
                         // this entry because it's not in expectedCommonNames
+                        WultraDebug.warning("CertStore: Loaded data contains name, which will not be trusted. CN = '${entry.name}'")
                     }
                 }
 
@@ -250,6 +255,7 @@ class CertStore internal constructor(private val configuration: CertStoreConfigu
 
             if (result == UpdateResult.OK && newCertificates.isEmpty()) {
                 // looks like it's time to update list of certificates stored on the server
+                WultraDebug.warning("CertStore: Database after update is still empty.")
                 result = UpdateResult.STORE_IS_EMPTY
             }
 

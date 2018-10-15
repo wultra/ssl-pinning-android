@@ -53,11 +53,12 @@ class RestApi(private val baseUrl: URL) : RemoteDataProvider {
             } else {
                 throw NetworkException()
             }
-
+        } catch (t: Throwable) {
+            WultraDebug.warning("RestAPI: HTTP request failed with error: ${t}")
+            throw t
         } finally {
             connection.disconnect()
         }
     }
-
 
 }
