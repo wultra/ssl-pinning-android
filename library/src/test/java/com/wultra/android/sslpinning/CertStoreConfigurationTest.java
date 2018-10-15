@@ -35,6 +35,7 @@ import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.Arrays;
 import java.util.Date;
+import java.util.concurrent.TimeUnit;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
@@ -101,6 +102,18 @@ public class CertStoreConfigurationTest {
 
     @Test
     public void testConfigurationWithFallbackCertificate() throws Exception {
+        CertStoreConfiguration config = configurationWithFallback(null, null);
+        assertNotNull(config.getFallbackCertificate());
+        CertStore store = new CertStore(config, cryptoProvider, secureDataStore);
+
+        byte[] fingerprint = new byte[32];
+        Arrays.fill(fingerprint, (byte)0xff);
+        ValidationResult result = store.validateFingerprint("api.fallback.org", fingerprint);
+        assertEquals(ValidationResult.TRUSTED, result);
+    }
+
+    @Test
+    public void testConfigurationWithFallbackCertificateExpired() throws Exception {
         CertStoreConfiguration config = configurationWithFallback(new Date(), null);
         assertNotNull(config.getFallbackCertificate());
         CertStore store = new CertStore(config, cryptoProvider, secureDataStore);
@@ -108,13 +121,12 @@ public class CertStoreConfigurationTest {
         byte[] fingerprint = new byte[32];
         Arrays.fill(fingerprint, (byte)0xff);
         ValidationResult result = store.validateFingerprint("api.fallback.org", fingerprint);
-        // TODO it should not be trusted the fingerprint is expired
-        assertEquals(ValidationResult.TRUSTED, result);
+        assertEquals(ValidationResult.EMPTY, result);
     }
 
     @Test
     public void testConfigurationWithNonMatchingExpectedCommonNames() throws Exception {
-        CertStoreConfiguration config = configurationWithFallback(new Date(), new String[]{"www.wultra.com"});
+        CertStoreConfiguration config = configurationWithFallback(null, new String[]{"www.wultra.com"});
         CertStore store = new CertStore(config, cryptoProvider, secureDataStore);
 
         byte[] fingerprint = new byte[32];
@@ -128,7 +140,7 @@ public class CertStoreConfigurationTest {
 
     @Test
     public void testConfigurationWithMatchingExpectedCommonNames() throws Exception {
-        CertStoreConfiguration config = configurationWithFallback(new Date(), new String[]{"api.fallback.org"});
+        CertStoreConfiguration config = configurationWithFallback(null, new String[]{"api.fallback.org"});
         CertStore store = new CertStore(config, cryptoProvider, secureDataStore);
 
         byte[] fingerprint = new byte[32];
@@ -141,6 +153,10 @@ public class CertStoreConfigurationTest {
     }
 
     private CertStoreConfiguration configuration(Date expiration) throws MalformedURLException {
+        if (expiration == null) {
+            // create valid date
+            expiration = new Date(new Date().getTime() + TimeUnit.SECONDS.toMillis(10));
+        }
         URL serviceUrl = new URL("https://foo.wultra.com");
         String publicKey = "BEG6g28LNWRcmdFzexSNTKPBYZnDtKrCyiExFKbktttfKAF7wG4Cx1Nycr5PwCoICG1dRseLyuDxUilAmppPxAo=";
         byte[] publicKeyBytes = java.util.Base64.getDecoder().decode(publicKey);
@@ -148,6 +164,10 @@ public class CertStoreConfigurationTest {
     }
 
     private CertStoreConfiguration configurationWithFallback(Date expiration, String[] expectedCommonNames) throws MalformedURLException {
+        if (expiration == null) {
+            // create valid date
+            expiration = new Date(new Date().getTime() + TimeUnit.SECONDS.toMillis(10));
+        }
         URL serviceUrl = new URL("https://foo.wultra.com");
         String publicKey = "BEG6g28LNWRcmdFzexSNTKPBYZnDtKrCyiExFKbktttfKAF7wG4Cx1Nycr5PwCoICG1dRseLyuDxUilAmppPxAo=";
         byte[] publicKeyBytes = java.util.Base64.getDecoder().decode(publicKey);
