@@ -114,7 +114,8 @@ public class CertStoreConfigurationTest {
 
     @Test
     public void testConfigurationWithFallbackCertificateExpired() throws Exception {
-        CertStoreConfiguration config = configurationWithFallback(new Date(), null);
+        Date expired = new Date(new Date().getTime() - TimeUnit.SECONDS.toMillis(1));
+        CertStoreConfiguration config = configurationWithFallback(expired, null);
         assertNotNull(config.getFallbackCertificate());
         CertStore store = new CertStore(config, cryptoProvider, secureDataStore);
 
