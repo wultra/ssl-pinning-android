@@ -3,12 +3,16 @@ package com.wultra.android.sslpinning.plugins.powerauth
 import android.content.Context
 import com.wultra.android.sslpinning.CertStore
 import com.wultra.android.sslpinning.CertStoreConfiguration
-import com.wultra.android.sslpinning.interfaces.ECPublicKey
+import com.wultra.android.sslpinning.ValidationResult
 import io.getlime.security.powerauth.networking.ssl.PA2ClientValidationStrategy
 import java.security.KeyManagementException
 import java.security.NoSuchAlgorithmException
+import java.security.cert.CertificateException
 import java.security.cert.X509Certificate
-import javax.net.ssl.*
+import javax.net.ssl.HostnameVerifier
+import javax.net.ssl.SSLContext
+import javax.net.ssl.SSLSocketFactory
+import javax.net.ssl.X509TrustManager
 
 /**
  * @author Tomas Kypta, tomas.kypta@wultra.com
@@ -33,7 +37,10 @@ class PowerAuthSslPinningValidationStrategy(private val certStore: CertStore) : 
         }
 
         override fun checkServerTrusted(chain: Array<out X509Certificate>, authType: String) {
-            certStore.validateCertificate(chain[0])
+            if (certStore.validateCertificate(chain[0]) != ValidationResult.TRUSTED) {
+                // reject
+                throw CertificateException("WultraSSLpinning doesn't trust the server certificate");
+            }
         }
 
         override fun getAcceptedIssuers(): Array<X509Certificate> {
