@@ -88,7 +88,7 @@ class CertStoreConfiguration(
 
         /**
          * Executor service on which silent updates will run.
-         * If not set, the silent updates will run on a not pooled thread.
+         * If not set, the silent updates will run on a separate thread.
          */
         val executorService: ExecutorService? = null) {
 

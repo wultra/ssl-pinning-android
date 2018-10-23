@@ -185,8 +185,9 @@ class CertStore internal constructor(private val configuration: CertStoreConfigu
         } else {
             if (needsSilentUpdate) {
                 doUpdateAsync(now)
+                return UpdateResult.SCHEDULED
             }
-            return UpdateResult.SCHEDULED
+            return UpdateResult.OK
         }
     }
 
