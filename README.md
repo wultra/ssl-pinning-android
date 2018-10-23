@@ -5,8 +5,6 @@
 - [Introduction](#introduction)
 - [Installation](#installation)
     - [Requirements](#requirements)
-    - [CocoaPods](#cocoapods)
-    - [Carthage](#carthage) (experimental)
 - [Usage](#usage)
     - [Configuration](#configuration)
     - [Update fingerprints](#update-fingerprints)
