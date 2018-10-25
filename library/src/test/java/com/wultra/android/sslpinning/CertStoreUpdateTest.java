@@ -23,7 +23,7 @@ import com.wultra.android.sslpinning.interfaces.CryptoProvider;
 import com.wultra.android.sslpinning.interfaces.ECPublicKey;
 import com.wultra.android.sslpinning.interfaces.SecureDataStore;
 import com.wultra.android.sslpinning.interfaces.SignedData;
-import com.wultra.android.sslpinning.plugins.powerauth.PA2ECPublicKey;
+import com.wultra.android.sslpinning.powerauth.PA2ECPublicKey;
 
 import org.bouncycastle.jce.provider.BouncyCastleProvider;
 import org.junit.Before;

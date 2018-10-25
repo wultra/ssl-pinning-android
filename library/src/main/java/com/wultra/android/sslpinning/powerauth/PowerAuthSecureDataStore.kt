@@ -14,7 +14,7 @@
  * and limitations under the License.
  */
 
-package com.wultra.android.sslpinning.plugins.powerauth
+package com.wultra.android.sslpinning.powerauth
 
 import android.content.Context
 import com.wultra.android.sslpinning.interfaces.SecureDataStore
@@ -28,7 +28,7 @@ import io.getlime.security.powerauth.keychain.PA2Keychain
  * @author Tomas Kypta, tomas.kypta@wultra.com
  */
 class PowerAuthSecureDataStore(private val context: Context,
-                               keychainIdentifier: String = PowerAuthSecureDataStore.defaultKeychainIdentifier) : SecureDataStore {
+                               keychainIdentifier: String = defaultKeychainIdentifier) : SecureDataStore {
 
     companion object {
         @JvmStatic

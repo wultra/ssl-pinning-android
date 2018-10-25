@@ -23,7 +23,7 @@ import com.wultra.android.sslpinning.interfaces.ECPublicKey;
 import com.wultra.android.sslpinning.interfaces.SecureDataStore;
 import com.wultra.android.sslpinning.interfaces.SignedData;
 import com.wultra.android.sslpinning.model.GetFingerprintResponse;
-import com.wultra.android.sslpinning.plugins.powerauth.PA2ECPublicKey;
+import com.wultra.android.sslpinning.powerauth.PA2ECPublicKey;
 
 import org.bouncycastle.jce.provider.BouncyCastleProvider;
 import org.junit.Before;
@@ -38,7 +38,6 @@ import org.powermock.modules.junit4.PowerMockRunner;
 import java.net.URL;
 import java.security.MessageDigest;
 import java.security.Security;
-import java.security.Signature;
 import java.security.cert.X509Certificate;
 import java.util.Base64;
 import java.util.Date;

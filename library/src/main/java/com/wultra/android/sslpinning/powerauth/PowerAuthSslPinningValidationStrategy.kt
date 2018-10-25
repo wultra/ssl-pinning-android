@@ -14,7 +14,7 @@
  * and limitations under the License.
  */
 
-package com.wultra.android.sslpinning.plugins.powerauth
+package com.wultra.android.sslpinning.powerauth
 
 import com.wultra.android.sslpinning.CertStore
 import com.wultra.android.sslpinning.ValidationResult
@@ -58,7 +58,8 @@ class PowerAuthSslPinningValidationStrategy(private val certStore: CertStore) : 
     override fun getSSLSocketFactory(): SSLSocketFactory? {
         // obtain default trust managers
         val originalTrustManagerFactory = TrustManagerFactory.getInstance("X509");
-        originalTrustManagerFactory.init(null as? KeyStore);
+        val keyStore: KeyStore? = null
+        originalTrustManagerFactory.init(keyStore);
         val originalTrustManagers = originalTrustManagerFactory.trustManagers;
 
         // use all trust managers - the first to run it WultraSSLPinning, then the rest
