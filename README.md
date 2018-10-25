@@ -5,6 +5,7 @@
 - [Introduction](#introduction)
 - [Installation](#installation)
     - [Requirements](#requirements)
+    - [Gradle](#gradle)
 - [Usage](#usage)
     - [Configuration](#configuration)
     - [Update fingerprints](#update-fingerprints)
@@ -44,14 +45,22 @@ Before you start using the library, you should also check our other related proj
 
 ## Installation
 
-<!--
-    jcenter()
-    implementation "com.wultra.android.sslpinning:ssl-pinning-android:$version"
--->
 
 ### Requirements
 
 - minSdkVersion 19 (Android 4.4 Kitkat)
+
+### Gradle
+
+To use **WultraSSLPinning** in you Android app.
+Add this depencency:
+
+```gradle
+implementation 'com.wultra.android.sslpinning:wultra-ssl-pinning:0.6.0'
+```
+
+Also make sure you have `jcenter()` repository among the project repositories.
+
 
 ## Usage
 
@@ -259,9 +268,29 @@ val powerAuth = PowerAuthSDK.Builder(powerAuthConfiguration)
 ### Can the library provide more debug information?
 
 Yes, you can change how much information is printed to the debug console:
-```swift
-WultraDebug.verboseLevel = .all
+```kotlin
+WultraDebug.loggingLevel = WultraLoggingLevel.RELEASE
 ```
+
+### Is there a dependency on PowerAuthSDK?
+
+There's an optional dependency on [PowerAuthSDK](https://github.com/wultra/powerauth-mobile-sdk). 
+
+However, the library requires several cryptographic primitives (see `CryptoProvider`)
+that are provided by **PowerAuthSDK**. 
+Also most of our clients are already using PowerAuthSDK in their applications. 
+Therefore it's a non-brainer to use **PowerAuthSDK** for the cryptography in **WultraSSLPinning**.
+
+If needed the library can be used without PowerAuthSDK. 
+In this case you can't use any class from `com.wultra.android.sslpinning.powerauth` package
+since they expect PowerAuthSDK to be present.
+Also you have to provide you own implementation of `CryptoProvider` and `SecureDataStore`.
+
+
+**PowerAuthSDK** already provides these functions.
+
+But not everything is lost. The core of the library is using `CryptoProvider` protocol and therefore is implementation independent. We'll provide the standalone version of the pinning library later. 
+
 
 
 ---
