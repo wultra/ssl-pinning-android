@@ -16,14 +16,15 @@
 
 package com.wultra.android.sslpinning.model
 
-import java.io.Serializable
 import java.util.*
 
 /**
+ * Data class for stored data - list of certificates and next update date.
+ *
  * @author Tomas Kypta, tomas.kypta@wultra.com
  */
 internal data class CachedData(var certificates: Array<CertificateInfo>,
-                               var nextUpdate: Date) : Serializable {
+                               var nextUpdate: Date) {
 
     internal fun numberOfValidCertificates(date: Date): Int {
         var result = 0

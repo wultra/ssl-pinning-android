@@ -25,9 +25,27 @@ package com.wultra.android.sslpinning.interfaces
  */
 interface SecureDataStore {
 
+    /**
+     * Save data to the secure data store.
+     *
+     * @param data Data to be saved
+     * @param key Identifier for the saved data
+     * @return True if the data has been properly saved
+     */
     fun save(data: ByteArray, key: String): Boolean
 
+    /**
+     * Loads data previously stored for given key.
+     *
+     * @param key Identifier for stored data
+     * @return Data object if the store contains previously stored data, null otherwise
+     */
     fun load(key: String): ByteArray?
 
+    /**
+     * Remove data previously stored for given key.
+     *
+     * @param key Identifier for the stored data
+     */
     fun remove(key: String)
 }

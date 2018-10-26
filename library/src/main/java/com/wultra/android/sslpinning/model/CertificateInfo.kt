@@ -20,6 +20,8 @@ import java.io.Serializable
 import java.util.*
 
 /**
+ * Data class for holding certificate info necessary for certificate validation.
+ *
  * @author Tomas Kypta, tomas.kypta@wultra.com
  */
 data class CertificateInfo(val commonName: String,
@@ -30,6 +32,9 @@ data class CertificateInfo(val commonName: String,
             this(commonName = responseEntry.name, fingerprint = responseEntry.fingerprint,
                     expires = responseEntry.expires)
 
+    /**
+     * Check if the info is expired.
+     */
     internal fun isExpired(date: Date): Boolean {
         return expires.before(date)
     }

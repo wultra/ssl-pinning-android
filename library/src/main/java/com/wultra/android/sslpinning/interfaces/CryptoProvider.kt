@@ -52,12 +52,11 @@ interface CryptoProvider {
 }
 
 /**
- * The `SignedData` structure contains data and signature calculated for that data.
+ * The `SignedData` structure contains data and signature calculated for the data.
  */
 data class SignedData(val data: ByteArray,
                       val signature: ByteArray)
 
-// TODO use java.security.interfaces.ECPublicKey??
 /**
  * The `ECPublicKey` protocol is an abstract interface representing
  * a public key in EC based cryptography.

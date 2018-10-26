@@ -22,6 +22,10 @@ import java.net.URL
 import javax.net.ssl.HttpsURLConnection
 
 /**
+ * Handling of network communication with the server.
+ * Used internally in [CertStore].
+ *
+ * @property baseUrl URL of the remote server.
  * @author Tomas Kypta, tomas.kypta@wultra.com
  */
 class RestApi(private val baseUrl: URL) : RemoteDataProvider {
@@ -34,10 +38,16 @@ class RestApi(private val baseUrl: URL) : RemoteDataProvider {
 
     }
 
-    class NetworkException : Exception() {
+    /**
+     * Exception denoting that the server request failed.
+     */
+    class NetworkException : Exception()
 
-    }
-
+    /**
+     * Perform REST request to get fingerprints from the remote server.
+     *
+     * @return Bytes as recieved from the remote server. Typically containing data in JSON format.
+     */
     @WorkerThread
     override fun getFingerprints(): ByteArray {
         val connection = baseUrl.openConnection() as HttpsURLConnection

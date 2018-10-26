@@ -20,6 +20,8 @@ import javax.security.auth.x500.X500Principal;
 /**
  * A distinguished name (DN) parser. This parser only supports extracting a string value from a DN.
  * It doesn't support values in the hex-string style.
+ *
+ * Note: This class is copied from OkHttp library.
  */
 final class DistinguishedNameParser {
     private final String dn;

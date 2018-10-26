@@ -80,7 +80,7 @@ class CertStoreConfiguration(
         val periodicUpdateIntervalMillis: Long,
 
         /**
-         * Defines the time window in milliseconds before some certificate expires.
+         * Defines the time window in milliseconds before a certificate expires.
          *
          * The default value is two weeks in milliseconds.
          */
@@ -101,6 +101,9 @@ class CertStoreConfiguration(
             expirationUpdateThresholdMillis = builder.expirationUpdateThresholdMillis,
             executorService = builder.executorService)
 
+    /**
+     * Validate that the configuration doesn't contain any errors.
+     */
     internal fun validate() {
         if (serviceUrl.protocol == "http") {
             WultraDebug.warning("CertStoreConfiguration: 'serviceUrl' should point to 'https' server.")
@@ -134,6 +137,12 @@ class CertStoreConfiguration(
         }
     }
 
+    /**
+     * Builder for constructing [CertStoreConfiguration].
+     *
+     * @param serviceUrl URL of remote update server.
+     * @param publicKey Public key for validating data received from the server.
+     */
     class Builder(
             val serviceUrl: URL,
             val publicKey: ByteArray
@@ -156,30 +165,55 @@ class CertStoreConfiguration(
         var executorService: ExecutorService? = null
             private set
 
+        /**
+         * Set expected common names.
+         */
         fun expectedCommonNames(expectedCommonNames: Array<String>?) = apply {
             this.expectedCommonNames = expectedCommonNames
         }
 
+        /**
+         * Set identifier.
+         *
+         * Necessary for multiple instances of [CertStore].
+         * If not set the identifier is "default".
+         */
         fun identifier(identifier: String?) = apply {
             this.identifier = identifier
         }
 
+        /**
+         * Fallback certificate fingerprint.
+         * Useful for situations when no fingerprints has been loaded from the server yet.
+         */
         fun fallbackCertificate(fallbackCertificate: GetFingerprintResponse.Entry?) = apply {
             this.fallbackCertificate = fallbackCertificate
         }
 
+        /**
+         * Update interval of fingerprints.
+         */
         fun periodicUpdateIntervalMillis(periodicUpdateIntervalMillis: Long) = apply {
             this.periodicUpdateIntervalMillis = periodicUpdateIntervalMillis
         }
 
+        /**
+         * Expiration interval for fingerprints.
+         */
         fun expirationUpdateThresholdMillis(expirationUpdateThresholdMillis: Long) = apply {
             this.expirationUpdateThresholdMillis = expirationUpdateThresholdMillis
         }
 
+        /**
+         * Executor service for performing silend updates of certificate fingerprints.
+         */
         fun executorService(executorService: ExecutorService?) = apply {
             this.executorService = executorService
         }
 
+        /**
+         * Builds [CertStoreConfiguration].
+         */
         fun build() = CertStoreConfiguration(this)
     }
 }

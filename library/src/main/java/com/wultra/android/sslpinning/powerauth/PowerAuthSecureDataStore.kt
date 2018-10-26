@@ -25,6 +25,9 @@ import io.getlime.security.powerauth.keychain.PA2Keychain
  * [PA2Keychain] as underlying data storage.
  * To initialize the data store, you have to provide keychain identifier.
  *
+ * @property contains Application context
+ * @param keychainIdentifier Identifier for the data store. Used to distinguish multiple instances.
+ *
  * @author Tomas Kypta, tomas.kypta@wultra.com
  */
 class PowerAuthSecureDataStore(private val context: Context,

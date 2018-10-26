@@ -17,13 +17,22 @@
 package com.wultra.android.sslpinning.service
 
 import android.support.annotation.WorkerThread
-import com.wultra.android.sslpinning.interfaces.ResultCallback
 
 /**
+ * Abstract remote APIs of SSL pinning library.
+ * Defines interface for getting fingerprints from remote server.
+ *
  * @author Tomas Kypta, tomas.kypta@wultra.com
  */
 interface RemoteDataProvider {
 
+    /**
+     * Gets data containing fingerprints from the remote server.
+     *
+     * Always invoke on a worker thread.
+     *
+     * @return Bytes as recieved from the remote server. Typically containing data in JSON format.
+     */
     @WorkerThread
     fun getFingerprints(): ByteArray
 }

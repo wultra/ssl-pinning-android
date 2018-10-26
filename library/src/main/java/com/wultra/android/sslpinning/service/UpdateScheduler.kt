@@ -21,6 +21,13 @@ import java.util.*
 import java.util.concurrent.TimeUnit
 
 /**
+ * Helper class for calculatinngn date of the next update.
+ *
+ * @property periodicUpdateIntervalMillis Defines interval between checks for update of certificate fingerprints
+ * @property expirationUpdateThresholdMillis Define time window in milliseconds before a certificate expires
+ * @property thresholdMultiplier A constant for calculating closer date when a certificate is going to expire soon.
+ * Should be smaller than 1.
+ *
  * @author Tomas Kypta, tomas.kypta@wultra.com
  */
 internal class UpdateScheduler(private val periodicUpdateIntervalMillis: Long,
@@ -28,6 +35,12 @@ internal class UpdateScheduler(private val periodicUpdateIntervalMillis: Long,
                                private val thresholdMultiplier: Double) {
 
 
+    /**
+     * Calculates the next date for silent update.
+     *
+     * @param certificates List of certificates from which the next update is calculated.
+     * @param currentDate Date from which to calculate the next update.
+     */
     fun scheduleNextUpdate(certificates: Array<CertificateInfo>,
                            currentDate: Date): Date {
 

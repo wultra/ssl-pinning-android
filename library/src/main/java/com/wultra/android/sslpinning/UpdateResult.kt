@@ -17,13 +17,34 @@
 package com.wultra.android.sslpinning
 
 /**
+ * Result of update request.
+ *
  * @author Tomas Kypta, tomas.kypta@wultra.com
  */
 enum class UpdateResult {
+    /**
+     * Update succeeded. Everything is ok.
+     */
     OK,
+    /**
+     * Update is scheduled and will be perfomed in background.
+     */
     SCHEDULED,
+    /**
+     * [CertStore] is empty. There's no valid certificate fingeprint to validate server cert against.
+     * Might happen when all the certificate fingerprints are already expired.
+     */
     STORE_IS_EMPTY,
+    /**
+     * There was an error in network communication with the server.
+     */
     NETWORK_ERROR,
+    /**
+     * The update request returned invalid data from the server.
+     */
     INVALID_DATA,
+    /**
+     * The update request returned data which did not pass the signature validation.
+     */
     INVALID_SIGNATURE
 }

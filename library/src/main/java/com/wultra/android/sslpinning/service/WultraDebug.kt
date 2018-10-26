@@ -19,10 +19,15 @@ package com.wultra.android.sslpinning.service
 import android.util.Log
 
 /**
+ * Simple logging abstraction for the library.
+ *
  * @author Tomas Kypta, tomas.kypta@wultra.com
  */
 internal class WultraDebug {
 
+    /**
+     * List of logging levels for [WultraDebug].
+     */
     enum class WultraLoggingLevel {
         /**
          * Log all log including debug logs.
@@ -45,20 +50,32 @@ internal class WultraDebug {
     companion object {
         const val LOG_TAG = "Wultra-SSL-Pinning"
 
+        /**
+         * Current logging level.
+         */
         var loggingLevel = WultraLoggingLevel.RELEASE
 
+        /**
+         * Log info level message.
+         */
         fun info(message: String) {
             if (loggingLevel == WultraLoggingLevel.DEBUG) {
-                Log.d(LOG_TAG, message)
+                Log.i(LOG_TAG, message)
             }
         }
 
+        /**
+         * Log warning level message.
+         */
         fun warning(message: String) {
             if (loggingLevel != WultraLoggingLevel.NONE) {
                 Log.w(LOG_TAG, message)
             }
         }
 
+        /**
+         * Log error level message.
+         */
         fun error(message: String) {
             if (loggingLevel != WultraLoggingLevel.NONE) {
                 Log.e(LOG_TAG, message)

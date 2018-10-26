@@ -21,6 +21,14 @@ import com.wultra.android.sslpinning.CertStore
 import com.wultra.android.sslpinning.CertStoreConfiguration
 
 /**
+ * Creates a new instance of [CertStore] preconfigured with [CryptoProvider] and [SecureDataStore]
+ * implemented on top of PowerAuthSDK.
+ *
+ * @param configuration Configuration for [CertStore]
+ * @param context Application context
+ * @param keychainIdentifier Identifier for the data store. Used to distinguish multiple instances.
+ * @return New instance of [CertStore].
+ *
  * @author Tomas Kypta, tomas.kypta@wultra.com
  */
 fun CertStore.Companion.powerAuthCertStore(configuration: CertStoreConfiguration,

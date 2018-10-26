@@ -23,7 +23,21 @@ package com.wultra.android.sslpinning
  */
 enum class ValidationResult {
 
+    /**
+     * The challenged server certificate is trusted.
+     */
     TRUSTED,
+    /**
+     * The challenged server certificate is not trusted.
+     */
     UNTRUSTED,
+    /**
+     * The fingerprint database is empty. Or there's no fingerprint for validated common name.
+     * Both these situations mean that the store is unable to determine whether the server
+     * can be trusted or not.
+     *
+     * In this case it is recommended to udpate the list of certificate fingerpritns
+     * and not to trust the server.
+     */
     EMPTY
 }

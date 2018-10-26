@@ -17,9 +17,22 @@
 package com.wultra.android.sslpinning
 
 /**
+ * Defines modes of update request.
+ *
  * @author Tomas Kypta, tomas.kypta@wultra.com
  */
 enum class UpdateMode {
+    /**
+     * Default update following periodicity defined in [CertStoreConfiguration].
+     */
     DEFAULT,
+
+    /**
+     * Forced update performed immediately.
+     * Use only if a "validate*" method returns [ValidationResult.EMPTY].
+     * Otherwise [DEFAULT] value is recommended.
+     *
+     * Note that this value causes synchronous (blocking) update request.
+     */
     FORCED
 }

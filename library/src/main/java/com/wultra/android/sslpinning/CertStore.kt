@@ -75,11 +75,18 @@ class CertStore internal constructor(private val configuration: CertStoreConfigu
                 secureDataStore: SecureDataStore) : this(configuration, cryptoProvider, secureDataStore, null) {
     }
 
+    /**
+     * Identifier of the instance.
+     * When nothing was provided "default" is returned.
+     */
     val instanceIdentifier: String
         get() {
             return configuration.identifier ?: "default"
         }
 
+    /**
+     * Reset [CertStore] data.
+     */
     @Synchronized
     fun reset() {
         WultraDebug.warning("CertStore: reset() hould not be used in production build.")
@@ -165,6 +172,8 @@ class CertStore internal constructor(private val configuration: CertStoreConfigu
      * either on a provided [ExecutorService] or on a dedicated [Thread].
      * In this case the method doesn't block the execution.
      *
+     * @param mode Update mode.
+     * @return Update result.
      */
     @WorkerThread
     fun update(mode: UpdateMode = UpdateMode.DEFAULT): UpdateResult {
@@ -296,12 +305,12 @@ class CertStore internal constructor(private val configuration: CertStoreConfigu
     /*** VALIDATION ***/
 
     /**
-     * Validates whether provided certificate fingerprint is valid for given common name.
+     * Validates whether provided certificate fingerprint is trusted for given common name.
      *
-     * @param commonName A common name from server's certificate
+     * @param commonName A common name
      * @param fingerprint A SHA-256 fingerprint calculated from certificate's data
      *
-     * @return validation result
+     * @return Validation result
      */
     fun validateFingerprint(commonName: String, fingerprint: ByteArray): ValidationResult {
         val expected = configuration.expectedCommonNames
@@ -337,11 +346,24 @@ class CertStore internal constructor(private val configuration: CertStoreConfigu
         }
     }
 
+    /**
+     * Validates whether provided certificate data in DER format is trusted for given common name.
+     *
+     * @param commonName Common name (CN).
+     * @param certificateData Certificate data in DER format.
+     * @return Validation result.
+     */
     fun validateCertificateData(commonName: String, certificateData: ByteArray): ValidationResult {
         val fingerprint = cryptoProvider.hashSha256(certificateData)
         return validateFingerprint(commonName, fingerprint)
     }
 
+    /**
+     * Validates whether provided certificate is trusted.
+     *
+     * @param certificate Certificate to test.
+     * @return Validation result.
+     */
     fun validateCertificate(certificate: X509Certificate): ValidationResult {
         val key = certificate.encoded
         val fingerprint = cryptoProvider.hashSha256(key)

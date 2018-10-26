@@ -21,15 +21,29 @@ import com.wultra.android.sslpinning.interfaces.SignedData
 import java.util.*
 
 /**
+ * Data class for JSON response received from the server.
+ *
+ * @property fingerprints List of entry objects
  * @author Tomas Kypta, tomas.kypta@wultra.com
  */
 data class GetFingerprintResponse(val fingerprints: Array<Entry>) {
 
+    /**
+     * Data class for an item in JSON response received from the server.
+     *
+     * @property name Common name
+     * @property fingerprint Fingerprint data
+     * @property expires Expiration date
+     * @property signature ECDSA signature
+     */
     data class Entry(val name: String,
                      val fingerprint: ByteArray,
                      val expires: Date,
                      val signature: ByteArray) {
 
+        /**
+         * Get normalized data which can be used for the signature validation.
+         */
         internal fun dataForSignature(): SignedData? {
             val expirationTimestamp = expires.time
             val signedString = "${name}&${Base64.encode(fingerprint, Base64.DEFAULT)}&${expirationTimestamp}"

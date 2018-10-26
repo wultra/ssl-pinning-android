@@ -32,9 +32,14 @@ import javax.net.ssl.*
  * It adds extra [X509TrustManager] to the SSLContext in front of the default trust managers.
  * This way first WultraSSLPinning is checked. Then the standard certificate validation
  * has its way.
+ *
+ * @property certStore Instance of [CertStore] based on PowerAuthSDK.
  */
 class PowerAuthSslPinningValidationStrategy(private val certStore: CertStore) : PA2ClientValidationStrategy {
 
+    /**
+     * Trust manager for validating server certificates with WultraSSLPinning.
+     */
     private val sslPinningTrustManager = object : X509TrustManager {
         override fun checkClientTrusted(chain: Array<out X509Certificate>, authType: String) {
         }

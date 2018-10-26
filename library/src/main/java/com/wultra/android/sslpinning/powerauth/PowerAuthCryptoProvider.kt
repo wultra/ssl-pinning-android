@@ -23,6 +23,9 @@ import io.getlime.security.powerauth.core.CryptoUtils
 import java.lang.IllegalArgumentException
 
 /**
+ * Implementation of [CryptoProvider] using crypto function provided by PowerAuthSDK.
+ * If your app is already using PowerAuth, this is the recommended implementation for you.
+ *
  * @author Tomas Kypta, tomas.kypta@wultra.com
  */
 class PowerAuthCryptoProvider : CryptoProvider {
@@ -43,5 +46,8 @@ class PowerAuthCryptoProvider : CryptoProvider {
     }
 }
 
-
+/**
+ * An implementation `ECPublicKey` protocol of a public key in EC based cryptography
+ * done with PowerAuth.
+ */
 data class PA2ECPublicKey(val data: ByteArray) : ECPublicKey

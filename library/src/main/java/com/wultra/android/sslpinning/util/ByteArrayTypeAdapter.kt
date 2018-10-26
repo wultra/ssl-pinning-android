@@ -21,6 +21,8 @@ import com.google.gson.*
 import java.lang.reflect.Type
 
 /**
+ * GSON type adapter for handling ByteArray - Base64 (de)serialization.
+ *
  * @author Tomas Kypta, tomas.kypta@wultra.com
  */
 class ByteArrayTypeAdapter : JsonSerializer<ByteArray>, JsonDeserializer<ByteArray> {
