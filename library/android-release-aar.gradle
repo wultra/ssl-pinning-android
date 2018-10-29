@@ -14,14 +14,71 @@
  * and limitations under the License.
  */
 
-apply plugin: 'maven'
-apply plugin: 'signing'
+apply plugin: 'com.jfrog.bintray'
+apply plugin: 'com.github.dcendents.android-maven'
 
-def groupId = project.GROUP_ID
-def artifactId = project.ARTIFACT_ID
-def version = project.VERSION_NAME
 
-def localReleaseDest = "${buildDir}/release/${version}"
+ext {
+    bintrayRepo = "WultraSSLPinning"
+    bintrayName = project.GROUP_ID
+    libraryName = project.ARTIFACT_ID
+
+    publishedGroupId = project.GROUP_ID
+    artifact = project.ARTIFACT_ID
+    libraryVersion = project.VERSION_NAME
+
+    libraryDescription = "Android library implementing dynamic SSL pinning"
+    siteUrl = "https://github.com/wultra/ssl-pinning-android"
+    gitUrl = "https://github.com/wultra/ssl-pinning-android.git"
+    developerId = "wultra"
+    developerName = "Wultra s.r.o."
+    developerEmail = "support@wultra.com"
+    licenseName = "Apache License Software License, Version 2.0"
+    licenseUrl = 'http://www.apache.org/licenses/LICENSE-2.0.txt'
+    allLicenses = ["Apache-2.0"]
+}
+
+group = publishedGroupId
+version = libraryVersion
+
+install {
+    repositories.mavenInstaller {
+        // This generates POM.xml with proper parameters
+        pom {
+            project {
+                packaging 'aar'
+                groupId publishedGroupId
+                artifactId artifact
+
+                // Add your description here
+                name libraryName
+                description libraryDescription
+                url siteUrl
+
+                // Set your license
+                licenses {
+                    license {
+                        name licenseName
+                        url licenseUrl
+                    }
+                }
+                developers {
+                    developer {
+                        id developerId
+                        name developerName
+                        email developerEmail
+                    }
+                }
+                scm {
+                    connection gitUrl
+                    developerConnection gitUrl
+                    url siteUrl
+
+                }
+            }
+        }
+    }
+}
 
 task androidJavadocs(type: Javadoc) {
     enabled = false // we have to disable because there are no java sources, only kotlin
@@ -48,59 +105,38 @@ task androidSourcesJar(type: Jar) {
 	from android.sourceSets.main.java.srcDirs
 }
 
-uploadArchives {
-	repositories.mavenDeployer {
-		pom.groupId = groupId
-		pom.artifactId = artifactId
-		pom.version = version
-		// Add other pom properties here if you want (developer details / licenses)
-		pom.project {
-            licenses {
-                license {
-                    name 'The Apache Software License, Version 2.0'
-                    url 'http://www.apache.org/licenses/LICENSE-2.0.txt'
-                }
-            }
-        }
-		repository(url: "file://${localReleaseDest}")
-	}
-}
-
-task zipRelease(type: Zip) {
-	from localReleaseDest
-	destinationDir buildDir
-	archiveName "release-${version}.zip"
-}
-
-task generateRelease {
-    doLast {
-        println "Release ${version} can be found at ${localReleaseDest}/"
-        println "Release ${version} zipped can be found ${buildDir}/release-${version}.zip"
-    }
-}
-
-generateRelease.dependsOn(uploadArchives)
-generateRelease.dependsOn(zipRelease)
-zipRelease.dependsOn(uploadArchives)
-
 artifacts {
 	archives androidSourcesJar
 	archives androidJavadocsJar
 }
 
+// Bintray
+Properties properties = new Properties()
+properties.load(project.rootProject.file('local.properties').newDataInputStream())
 
+bintray {
+    user = properties.getProperty("bintray.user")
+    key = properties.getProperty("bintray.apiKey")
 
-// signing
-
-if (project.hasProperty('signing.keyId')) {
-    signing {
-        sign configurations.archives
-    }
-
-    uploadArchives {
-        repositories {
-            mavenDeployer {
-                beforeDeployment { MavenDeployment deployment -> signing.signPom(deployment) }
+    configurations = ['archives']
+    pkg {
+        repo = bintrayRepo
+        name = bintrayName
+        userOrg = properties.getProperty("bintray.userOrg")
+        desc = libraryDescription
+        websiteUrl = siteUrl
+        vcsUrl = gitUrl
+        licenses = allLicenses
+        dryRun = false
+        publish = true
+        publicDownloadNumbers = false
+        override = false
+        version {
+            desc = libraryDescription
+            gpg {
+                sign = false //Determines whether to GPG sign the files. The default is false
+                passphrase = properties.getProperty("bintray.gpg.password")
+                //Optional. The passphrase for GPG signing'
             }
         }
     }
