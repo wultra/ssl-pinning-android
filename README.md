@@ -48,7 +48,7 @@ Before you start using the library, you should also check our other related proj
 
 ### Requirements
 
-- minSdkVersion 19 (Android 4.4 Kitkat)
+- minSdkVersion 16 (Android 4.1 Jelly Bean)
 
 ### Gradle
 
