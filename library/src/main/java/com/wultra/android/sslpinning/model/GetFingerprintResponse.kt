@@ -47,7 +47,7 @@ data class GetFingerprintResponse(val fingerprints: Array<Entry>) {
          */
         internal fun dataForSignature(): SignedData? {
             val expirationTimestampInSeconds = TimeUnit.MILLISECONDS.toSeconds(expires.time)
-            val fingerprintPart = String(Base64.encode(fingerprint, Base64.DEFAULT))
+            val fingerprintPart = String(Base64.encode(fingerprint, Base64.NO_WRAP))
             val signedString = "${name}&${fingerprintPart}&${expirationTimestampInSeconds}"
             return SignedData(data = signedString.toByteArray(Charsets.UTF_8), signature = signature)
         }
