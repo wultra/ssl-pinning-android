@@ -19,6 +19,7 @@ package com.wultra.android.sslpinning.model
 import android.util.Base64
 import com.wultra.android.sslpinning.interfaces.SignedData
 import java.util.*
+import java.util.concurrent.TimeUnit
 
 /**
  * Data class for JSON response received from the server.
@@ -45,8 +46,9 @@ data class GetFingerprintResponse(val fingerprints: Array<Entry>) {
          * Get normalized data which can be used for the signature validation.
          */
         internal fun dataForSignature(): SignedData? {
-            val expirationTimestamp = expires.time
-            val signedString = "${name}&${Base64.encode(fingerprint, Base64.DEFAULT)}&${expirationTimestamp}"
+            val expirationTimestampInSeconds = TimeUnit.MILLISECONDS.toSeconds(expires.time)
+            val fingerprintPart = String(Base64.encode(fingerprint, Base64.DEFAULT))
+            val signedString = "${name}&${fingerprintPart}&${expirationTimestampInSeconds}"
             return SignedData(data = signedString.toByteArray(Charsets.UTF_8), signature = signature)
         }
     }
