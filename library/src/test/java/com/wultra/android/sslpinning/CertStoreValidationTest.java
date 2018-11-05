@@ -27,6 +27,7 @@ import com.wultra.android.sslpinning.powerauth.PA2ECPublicKey;
 
 import org.bouncycastle.jce.provider.BouncyCastleProvider;
 import org.junit.Before;
+import org.junit.BeforeClass;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
@@ -43,6 +44,11 @@ import java.util.Base64;
 import java.util.Date;
 import java.util.concurrent.TimeUnit;
 
+import io.getlime.security.powerauth.crypto.lib.config.PowerAuthConfiguration;
+import io.getlime.security.powerauth.crypto.lib.util.SignatureUtils;
+import io.getlime.security.powerauth.provider.CryptoProviderUtil;
+import io.getlime.security.powerauth.provider.CryptoProviderUtilBouncyCastle;
+
 import static org.junit.Assert.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
@@ -55,7 +61,9 @@ import static org.mockito.Mockito.when;
 @RunWith(PowerMockRunner.class)
 @PowerMockIgnore({
         "javax.net.ssl.*",
-        "javax.security.auth.x500.*"
+        "javax.security.auth.x500.*",
+        "org.bouncycastle.*",
+        "java.security.*"
 })
 @PrepareForTest({
         android.util.Base64.class,
@@ -69,14 +77,22 @@ public class CertStoreValidationTest {
     @Mock
     SecureDataStore secureDataStore;
 
+    @BeforeClass
+    public static void setUpClass() {
+        Security.addProvider(new BouncyCastleProvider());
+        PowerAuthConfiguration.INSTANCE.setKeyConvertor(new CryptoProviderUtilBouncyCastle());
+    }
+
     @Before
     public void setUp() {
-        Security.addProvider(new BouncyCastleProvider());
-
         PowerMockito.mockStatic(android.util.Base64.class);
         when(android.util.Base64.encodeToString(any(byte[].class), anyInt()))
                 .thenAnswer(invocation ->
                         new String(java.util.Base64.getEncoder().encode((byte[]) invocation.getArgument(0)))
+                );
+        when(android.util.Base64.encode(any(byte[].class), anyInt()))
+                .thenAnswer(invocation ->
+                        java.util.Base64.getEncoder().encode((byte[]) invocation.getArgument(0))
                 );
         when(android.util.Base64.decode(anyString(), anyInt()))
                 .thenAnswer(invocation ->
@@ -100,12 +116,13 @@ public class CertStoreValidationTest {
                 );
         when(cryptoProvider.ecdsaValidateSignatures(any(SignedData.class), any(ECPublicKey.class)))
                 .thenAnswer(invocation -> {
-                    // TODO validate in java
-//                    Signature ecdsaVerify = Signature.getInstance("SHA256withECDSA", "BC");
-//                    ECPublicKey publicKey = (ECPublicKey) invocation.getArgument(1);
-//                    java.security.interfaces.ECPublicKey ecPublicKey =
-//                    ecdsaVerify.initVerify();
-                    return true;
+                    SignatureUtils utils = new SignatureUtils();
+                    SignedData signedData = invocation.getArgument(0);
+                    PA2ECPublicKey pubKey = invocation.getArgument(1);
+                    final CryptoProviderUtil keyConvertor = PowerAuthConfiguration.INSTANCE.getKeyConvertor();
+                    return utils.validateECDSASignature(signedData.getData(),
+                            signedData.getSignature(),
+                            keyConvertor.convertBytesToPublicKey(pubKey.getData()));
                 });
     }
 
@@ -148,7 +165,7 @@ public class CertStoreValidationTest {
         CertStoreConfiguration config = TestUtils.getCertStoreConfiguration(
                 new Date(),
                 new String[]{"github.com"},
-                new URL(" https://gist.githubusercontent.com/hvge/7c5a3f9ac50332a52aa974d90ea2408c/raw/c5b021db0fcd40b1262ab513bf375e4641834925/ssl-pinning-signatures.json"),
+                new URL("https://gist.githubusercontent.com/hvge/7c5a3f9ac50332a52aa974d90ea2408c/raw/c5b021db0fcd40b1262ab513bf375e4641834925/ssl-pinning-signatures.json"),
                 publicKeyBytes,
                 null);
         CertStore store = new CertStore(config, cryptoProvider, secureDataStore);

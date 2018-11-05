@@ -30,6 +30,7 @@ import com.wultra.android.sslpinning.interfaces.SignedData;
 
 import org.bouncycastle.jce.provider.BouncyCastleProvider;
 import org.junit.Before;
+import org.junit.BeforeClass;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
@@ -50,7 +51,11 @@ import javax.net.ssl.HttpsURLConnection;
 import javax.net.ssl.SSLHandshakeException;
 import javax.net.ssl.SSLSocketFactory;
 
+import io.getlime.security.powerauth.crypto.lib.config.PowerAuthConfiguration;
+import io.getlime.security.powerauth.crypto.lib.util.SignatureUtils;
 import io.getlime.security.powerauth.networking.ssl.PA2ClientValidationStrategy;
+import io.getlime.security.powerauth.provider.CryptoProviderUtil;
+import io.getlime.security.powerauth.provider.CryptoProviderUtilBouncyCastle;
 
 import static org.junit.Assert.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
@@ -68,7 +73,9 @@ import static org.mockito.Mockito.when;
 @RunWith(PowerMockRunner.class)
 @PowerMockIgnore({
         "javax.net.ssl.*",
-        "javax.security.auth.x500.*"
+        "javax.security.auth.x500.*",
+        "org.bouncycastle.*",
+        "java.security.*"
 })
 @PrepareForTest({
         android.util.Base64.class,
@@ -82,14 +89,22 @@ public class PowerAuthSslPinningValidationStrategyTest {
     @Mock
     SecureDataStore secureDataStore;
 
+    @BeforeClass
+    public static void setUpClass() {
+        Security.addProvider(new BouncyCastleProvider());
+        PowerAuthConfiguration.INSTANCE.setKeyConvertor(new CryptoProviderUtilBouncyCastle());
+    }
+
     @Before
     public void setUp() {
-        Security.addProvider(new BouncyCastleProvider());
-
         PowerMockito.mockStatic(android.util.Base64.class);
         when(android.util.Base64.encodeToString(any(byte[].class), anyInt()))
                 .thenAnswer(invocation ->
                         new String(java.util.Base64.getEncoder().encode((byte[]) invocation.getArgument(0)))
+                );
+        when(android.util.Base64.encode(any(byte[].class), anyInt()))
+                .thenAnswer(invocation ->
+                        java.util.Base64.getEncoder().encode((byte[]) invocation.getArgument(0))
                 );
         when(android.util.Base64.decode(anyString(), anyInt()))
                 .thenAnswer(invocation ->
@@ -113,7 +128,13 @@ public class PowerAuthSslPinningValidationStrategyTest {
                 );
         when(cryptoProvider.ecdsaValidateSignatures(any(SignedData.class), any(ECPublicKey.class)))
                 .thenAnswer(invocation -> {
-                    return true;
+                    SignatureUtils utils = new SignatureUtils();
+                    SignedData signedData = invocation.getArgument(0);
+                    PA2ECPublicKey pubKey = invocation.getArgument(1);
+                    final CryptoProviderUtil keyConvertor = PowerAuthConfiguration.INSTANCE.getKeyConvertor();
+                    return utils.validateECDSASignature(signedData.getData(),
+                            signedData.getSignature(),
+                            keyConvertor.convertBytesToPublicKey(pubKey.getData()));
                 });
     }
 
