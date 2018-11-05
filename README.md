@@ -56,7 +56,7 @@ To use **WultraSSLPinning** in you Android app.
 Add this depencency:
 
 ```gradle
-implementation 'com.wultra.android.sslpinning:wultra-ssl-pinning:0.7.0'
+implementation 'com.wultra.android.sslpinning:wultra-ssl-pinning:0.7.1'
 ```
 
 Also make sure you have `jcenter()` repository among the project repositories.
