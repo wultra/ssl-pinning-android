@@ -43,3 +43,30 @@ fun CertStore.Companion.powerAuthCertStore(configuration: CertStoreConfiguration
             cryptoProvider = PowerAuthCryptoProvider(),
             secureDataStore = secureDataStore)
 }
+
+/**
+ * Compatibility API mainly for usage from Java.
+ *
+ * Allows calling [CertStore#powerAuthCertStore()] with [PowerAuthCertStore#createInstance()].
+ */
+class PowerAuthCertStore {
+    companion object {
+
+        /**
+         * Creates a new instance of [CertStore] preconfigured with [CryptoProvider] and [SecureDataStore]
+         * implemented on top of PowerAuthSDK.
+         *
+         * @param configuration Configuration for [CertStore]
+         * @param context Application context
+         * @param keychainIdentifier Identifier for the data store. Used to distinguish multiple instances.
+         * @return New instance of [CertStore].
+         */
+        @JvmStatic
+        @JvmOverloads
+        fun createInstance(configuration: CertStoreConfiguration,
+                           context: Context,
+                           keychainIdentifier: String? = null): CertStore {
+            return CertStore.powerAuthCertStore(configuration, context, keychainIdentifier)
+        }
+    }
+}

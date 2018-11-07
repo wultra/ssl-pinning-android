@@ -56,7 +56,7 @@ To use **WultraSSLPinning** in you Android app.
 Add this depencency:
 
 ```gradle
-implementation 'com.wultra.android.sslpinning:wultra-ssl-pinning:0.7.2'
+implementation 'com.wultra.android.sslpinning:wultra-ssl-pinning:0.8.0'
 ```
 
 Also make sure you have `jcenter()` repository among the project repositories.
@@ -238,7 +238,7 @@ val certStoreConfiguration = CertStoreConfiguration.Builder(
                     .fallbackCertificateData(fallbackData)
                     .build()
                     
-val powerAuthCertStore = CertStore.powerAuthCertStore(certStoreConfiguration)
+val powerAuthCertStore = CertStore.powerAuthCertStore(certStoreConfiguration, appContext)
 
 
 val powerAuthConfiguration = PowerAuthConfiguration.Builder(
@@ -258,9 +258,27 @@ val powerAuth = PowerAuthSDK.Builder(powerAuthConfiguration)
                 .clientContifuration(powerAuthClientConfiguration)
                 .build(appContext)
                     
-``` 
+```
 
----
+## PowerAuth integration from Java
+
+Some of the Kotlin's PowerAuthSDK integration APIs are inconvenient in Java.
+A `CertStore` integrating PowerAuthSDK can be created with:
+
+```java
+CertStore store = PowerAuthCertStore.createInstance(configuration, context);
+```
+
+or
+
+```java
+CertStore store = PowerAuthCertStore.createInstance(configuration, context, "my-keychain-identifier");
+```
+
+Note that Kotlin's way of construction `CertStore.powerAuthCertStore` is not available in Java.
+Call this in Java is too cumbersome: `PowerAuthIntegrationKt.powerAuthCertStore(CertStore.Companion, configuration, context, null)`.
+
+-----------------------------------------------------------------------------------------------
 
 ## FAQ
 
