@@ -30,8 +30,8 @@ import io.getlime.security.powerauth.keychain.PA2Keychain
  *
  * @author Tomas Kypta, tomas.kypta@wultra.com
  */
-class PowerAuthSecureDataStore(private val context: Context,
-                               keychainIdentifier: String = defaultKeychainIdentifier) : SecureDataStore {
+class PowerAuthSecureDataStore @JvmOverloads constructor(private val context: Context,
+                                                         keychainIdentifier: String = defaultKeychainIdentifier) : SecureDataStore {
 
     companion object {
         @JvmStatic
