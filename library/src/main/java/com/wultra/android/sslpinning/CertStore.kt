@@ -231,6 +231,11 @@ class CertStore internal constructor(private val configuration: CertStoreConfigu
             null
         } ?: return UpdateResult.INVALID_DATA
 
+        if (response.fingerprints == null) {
+            // this can be caused by invalid data in json
+            return UpdateResult.INVALID_DATA
+        }
+
         val publicKey = cryptoProvider.importECPublicKey(publicKey = configuration.publicKey)
                 ?: throw IllegalArgumentException("Illegal configuration public key")
 

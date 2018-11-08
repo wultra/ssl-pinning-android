@@ -32,9 +32,12 @@ import javax.net.ssl.HttpsURLConnection
  *
  * @author Tomas Kypta, tomas.kypta@wultra.com
  */
-val remoteDataProvider: RemoteDataProvider = object : RemoteDataProvider {
-    override fun getFingerprints(): kotlin.ByteArray {
-        return jsonData.toByteArray(Charsets.UTF_8)
+val remoteDataProvider = getRemoteDataProvider()
+fun getRemoteDataProvider(json: String = jsonData): RemoteDataProvider {
+    return object : RemoteDataProvider {
+        override fun getFingerprints(): kotlin.ByteArray {
+            return json.toByteArray(Charsets.UTF_8)
+        }
     }
 }
 
@@ -50,6 +53,10 @@ val jsonData = """
   ]
 }
 """
+
+val jsonDataFingerprintsEmpty = "{\"fingerprints\":[]}"
+val jsonDataAllEmpty = "{}"
+
 
 val url = URL("https://gist.githubusercontent.com/hvge/7c5a3f9ac50332a52aa974d90ea2408c/raw/c5b021db0fcd40b1262ab513bf375e4641834925/ssl-pinning-signatures.json")
 val publicKey = "BC3kV9OIDnMuVoCdDR9nEA/JidJLTTDLuSA2TSZsGgODSshfbZg31MS90WC/HdbU/A5WL5GmyDkE/iks6INv+XE="
