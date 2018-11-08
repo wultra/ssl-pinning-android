@@ -43,6 +43,19 @@ public class CertStoreUpdateTestJava {
 
 
     @Test
+    public void testLocalUpdateSignatureGithub_InvalidUrlUpdate() throws Exception {
+        Context appContext = InstrumentationRegistry.getTargetContext();
+
+        // empty
+        URL url = new URL("https://gist.githubusercontent.com/TomasKypta/ae4fa795a8c1ffa1ed0144c49b95e63c/raw/761483b6c1fa3039f0b9d7b05c5d43532fc1556a/ssl-pinning-signatures_invalid_url.json");
+        CertStoreConfiguration config = new CertStoreConfiguration.Builder(url, getPublicKeyBytes()).build();
+        CertStore store = PowerAuthCertStore.createInstance(config, appContext);
+
+        UpdateResult updateResult = store.update(UpdateMode.FORCED);
+        assertEquals(UpdateResult.NETWORK_ERROR, updateResult);
+    }
+
+    @Test
     public void testLocalUpdateSignatureGithub_EmptyUpdate() throws Exception {
         Context appContext = InstrumentationRegistry.getTargetContext();
 

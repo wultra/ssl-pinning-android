@@ -202,7 +202,11 @@ class CertStore internal constructor(private val configuration: CertStoreConfigu
 
     @WorkerThread
     private fun doUpdate(currentDate: Date): UpdateResult {
-        val bytes = remoteDataProvider.getFingerprints()
+        val bytes = try {
+            remoteDataProvider.getFingerprints()
+        } catch (e: Exception) {
+            return UpdateResult.NETWORK_ERROR
+        }
         return processReceivedData(bytes, currentDate)
     }
 
