@@ -11,6 +11,8 @@
     - [Update fingerprints](#update-fingerprints)
     - [Fingerprint validation](#fingerprint-validation)
     - [PowerAuth integration](#powerauth-integration)
+    - [PowerAuth integration from Java](#powerauth-integration-from-java)
+    - [Integration](#integration)
 - [FAQ](#faq)
 - [License](#license)
 - [Contact](#contact)
@@ -218,7 +220,6 @@ if (validationResult != ValidationResult.TRUSTED) {
 }
 ```
 
-
 ## PowerAuth integration
 
 The WultraSSLPinning library contains classes for integration with the PowerAuth SDK. 
@@ -278,7 +279,12 @@ CertStore store = PowerAuthCertStore.createInstance(configuration, context, "my-
 Note that Kotlin's way of construction `CertStore.powerAuthCertStore` is not available in Java.
 Call this in Java is too cumbersome: `PowerAuthIntegrationKt.powerAuthCertStore(CertStore.Companion, configuration, context, null)`.
 
------------------------------------------------------------------------------------------------
+## Integration
+
+For integration with HttpsUrlConnection or [OkHttp](http://square.github.io/okhttp/)
+use classes `SSLPinningIntegration` and `SSLPinningX509TrustManager`.
+These provide the necessary SSLSocketFactory and X509TrustManager.
+
 
 ## FAQ
 
@@ -300,7 +306,7 @@ Also most of our clients are already using PowerAuthSDK in their applications.
 Therefore it's a non-brainer to use **PowerAuthSDK** for the cryptography in **WultraSSLPinning**.
 
 If needed the library can be used without PowerAuthSDK. 
-In this case you can't use any class from `com.wultra.android.sslpinning.powerauth` package
+In this case you can't use any class from `com.wultra.android.sslpinning.integration.powerauth` package
 since they expect PowerAuthSDK to be present.
 Also you have to provide you own implementation of `CryptoProvider` and `SecureDataStore`.
 
