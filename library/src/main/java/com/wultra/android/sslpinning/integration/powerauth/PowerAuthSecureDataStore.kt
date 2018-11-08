@@ -14,7 +14,7 @@
  * and limitations under the License.
  */
 
-package com.wultra.android.sslpinning.powerauth
+package com.wultra.android.sslpinning.integration.powerauth
 
 import android.content.Context
 import com.wultra.android.sslpinning.interfaces.SecureDataStore

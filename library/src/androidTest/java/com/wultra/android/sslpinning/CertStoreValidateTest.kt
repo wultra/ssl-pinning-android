@@ -19,7 +19,7 @@ package com.wultra.android.sslpinning
 import android.support.test.InstrumentationRegistry
 import android.support.test.runner.AndroidJUnit4
 import com.wultra.android.sslpinning.model.GetFingerprintResponse
-import com.wultra.android.sslpinning.powerauth.powerAuthCertStore
+import com.wultra.android.sslpinning.integration.powerauth.powerAuthCertStore
 import org.junit.Assert
 import org.junit.Test
 import org.junit.runner.RunWith

@@ -19,12 +19,11 @@ package com.wultra.android.sslpinning;
 import android.support.annotation.NonNull;
 import android.util.Log;
 
-import com.google.gson.Gson;
 import com.wultra.android.sslpinning.interfaces.CryptoProvider;
 import com.wultra.android.sslpinning.interfaces.ECPublicKey;
 import com.wultra.android.sslpinning.interfaces.SecureDataStore;
 import com.wultra.android.sslpinning.interfaces.SignedData;
-import com.wultra.android.sslpinning.powerauth.PA2ECPublicKey;
+import com.wultra.android.sslpinning.integration.powerauth.PA2ECPublicKey;
 import com.wultra.android.sslpinning.service.RemoteDataProvider;
 
 import org.bouncycastle.jce.provider.BouncyCastleProvider;
@@ -49,7 +48,6 @@ import io.getlime.security.powerauth.crypto.lib.config.PowerAuthConfiguration;
 import io.getlime.security.powerauth.crypto.lib.util.SignatureUtils;
 import io.getlime.security.powerauth.provider.CryptoProviderUtil;
 import io.getlime.security.powerauth.provider.CryptoProviderUtilBouncyCastle;
-import javassist.bytecode.ByteArray;
 
 import static org.junit.Assert.assertEquals;
 import static org.mockito.ArgumentMatchers.any;

@@ -14,15 +14,15 @@
  * and limitations under the License.
  */
 
-package com.wultra.android.sslpinning.powerauth;
+package com.wultra.android.sslpinning.integration;
 
 import android.content.Context;
 
 import com.wultra.android.sslpinning.CertStore;
 import com.wultra.android.sslpinning.CertStoreConfiguration;
+import com.wultra.android.sslpinning.integration.powerauth.PowerAuthCertStore;
 
 import org.junit.Assert;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
@@ -30,47 +30,35 @@ import org.mockito.junit.MockitoJUnitRunner;
 
 import java.net.URL;
 
+import javax.net.ssl.SSLSocketFactory;
+
 /**
  * Testing format of Java compatible APIs.
  *
  * @author Tomas Kypta, tomas.kypta@wultra.com
  */
 @RunWith(MockitoJUnitRunner.class)
-public class PowerAuthIntegrationTest {
+public class SSLPinningIntegrationTest {
 
     @Mock
     Context context;
 
     @Test
-    public void testPowerAuthCertStoreApis() throws Exception {
+    public void testSSLPinningIntegrationApis() throws Exception {
         URL url = new URL("https://gist.githubusercontent.com/hvge/7c5a3f9ac50332a52aa974d90ea2408c/raw/c5b021db0fcd40b1262ab513bf375e4641834925/ssl-pinning-signatures.json");
         String publicKey = "BC3kV9OIDnMuVoCdDR9nEA/JidJLTTDLuSA2TSZsGgODSshfbZg31MS90WC/HdbU/A5WL5GmyDkE/iks6INv+XE=";
         byte[] publicKeyBytes = java.util.Base64.getDecoder().decode(publicKey);
 
         CertStoreConfiguration configuration = new CertStoreConfiguration.Builder(url, publicKeyBytes)
                 .build();
-        CertStore store1 = PowerAuthCertStore.Companion.createInstance(configuration, context, null);
-        Assert.assertNotNull(store1);
-        CertStore store2 = PowerAuthCertStore.createInstance(configuration, context, null);
-        Assert.assertNotNull(store2);
-        CertStore store3 = PowerAuthCertStore.createInstance(configuration, context);
-        Assert.assertNotNull(store3);
+        CertStore store = PowerAuthCertStore.createInstance(configuration, context);
+        Assert.assertNotNull(store);
 
-        // Kotlin API inconvenient for calling from Java
-        CertStore store4 = PowerAuthIntegrationKt.powerAuthCertStore(CertStore.Companion, configuration, context, "");
-        Assert.assertNotNull(store4);
-    }
+        SSLSocketFactory factory1 = SSLPinningIntegration.createSSLPinningSocketFactory(store);
+        Assert.assertNotNull(factory1);
 
-    @Test
-    public void testPowerAuthSecureDataStoreApis() {
-        PowerAuthSecureDataStore secureDataStore1 = new PowerAuthSecureDataStore(context, "");
-        Assert.assertNotNull(secureDataStore1);
-        PowerAuthSecureDataStore secureDataStore2 = new PowerAuthSecureDataStore(context);
-        Assert.assertNotNull(secureDataStore2);
-    }
-
-    @Test(expected = IllegalArgumentException.class)
-    public void testPowerAuthSecureDataStoreApisCrash() {
-        new PowerAuthSecureDataStore(context, null);
+        SSLPinningX509TrustManager trustManager = new SSLPinningX509TrustManager(store);
+        SSLSocketFactory factory2 = SSLPinningIntegration.createSSLPinningSocketFactory(trustManager);
+        Assert.assertNotNull(factory2);
     }
 }
