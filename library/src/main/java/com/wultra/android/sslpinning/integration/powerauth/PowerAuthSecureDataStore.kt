@@ -38,11 +38,7 @@ class PowerAuthSecureDataStore @JvmOverloads constructor(private val context: Co
         val defaultKeychainIdentifier = "com.wultra.WultraCertStore"
     }
 
-    private val keychain: PA2Keychain
-
-    init {
-        keychain = PA2Keychain(keychainIdentifier)
-    }
+    private val keychain: PA2Keychain = PA2Keychain(keychainIdentifier)
 
 
     override fun save(data: ByteArray, key: String): Boolean {

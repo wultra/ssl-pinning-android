@@ -61,4 +61,4 @@ data class SignedData(val data: ByteArray,
  * The `ECPublicKey` protocol is an abstract interface representing
  * a public key in EC based cryptography.
  */
-interface ECPublicKey {}
+interface ECPublicKey

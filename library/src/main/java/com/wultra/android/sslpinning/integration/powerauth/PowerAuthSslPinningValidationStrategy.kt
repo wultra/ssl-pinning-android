@@ -20,10 +20,9 @@ import com.wultra.android.sslpinning.CertStore
 import com.wultra.android.sslpinning.integration.SSLPinningIntegration
 import com.wultra.android.sslpinning.integration.SSLPinningX509TrustManager
 import io.getlime.security.powerauth.networking.ssl.PA2ClientValidationStrategy
-import java.security.KeyManagementException
-import java.security.KeyStore
-import java.security.NoSuchAlgorithmException
-import javax.net.ssl.*
+import javax.net.ssl.HostnameVerifier
+import javax.net.ssl.SSLSocketFactory
+import javax.net.ssl.X509TrustManager
 
 /**
  * Validation strategy for PowerAuth SDK incorporating WultraSSLPinning.

@@ -19,8 +19,6 @@ package com.wultra.android.sslpinning.integration.powerauth
 import android.content.Context
 import com.wultra.android.sslpinning.CertStore
 import com.wultra.android.sslpinning.CertStoreConfiguration
-import com.wultra.android.sslpinning.integration.powerauth.PowerAuthCertStore
-import com.wultra.android.sslpinning.integration.powerauth.powerAuthCertStore
 import org.junit.Assert
 import org.junit.Test
 import org.junit.runner.RunWith
