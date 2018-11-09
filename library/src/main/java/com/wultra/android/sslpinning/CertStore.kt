@@ -72,8 +72,7 @@ class CertStore internal constructor(private val configuration: CertStoreConfigu
 
     constructor(configuration: CertStoreConfiguration,
                 cryptoProvider: CryptoProvider,
-                secureDataStore: SecureDataStore) : this(configuration, cryptoProvider, secureDataStore, null) {
-    }
+                secureDataStore: SecureDataStore) : this(configuration, cryptoProvider, secureDataStore, null)
 
     /**
      * Identifier of the instance.
@@ -332,13 +331,13 @@ class CertStore internal constructor(private val configuration: CertStoreConfigu
             return ValidationResult.EMPTY
         }
 
-        val now = Date();
+        val now = Date()
         var matchAttempts = 0
         // iterate over all entries and check common name and fingerprint
         // filter out already expired certificates (including the fallback certificate)
         for (info in certificates) {
             if (info.isExpired(now)) {
-                continue;
+                continue
             }
             if (info.commonName == commonName) {
                 if (info.fingerprint.contentEquals(fingerprint)) {
