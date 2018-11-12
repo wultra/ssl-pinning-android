@@ -18,8 +18,8 @@ package com.wultra.android.sslpinning.service
 
 import android.support.annotation.WorkerThread
 import java.lang.Exception
+import java.net.HttpURLConnection
 import java.net.URL
-import javax.net.ssl.HttpsURLConnection
 
 /**
  * Handling of network communication with the server.
@@ -50,7 +50,7 @@ class RestApi(private val baseUrl: URL) : RemoteDataProvider {
      */
     @WorkerThread
     override fun getFingerprints(): ByteArray {
-        val connection = baseUrl.openConnection() as HttpsURLConnection
+        val connection = baseUrl.openConnection() as HttpURLConnection
         connection.requestMethod = "GET"
         connection.addRequestProperty("Accept", CONTENT_TYPE)
         try {
