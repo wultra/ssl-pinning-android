@@ -3,12 +3,13 @@
 `WultraSSLPinning` is an Android library implementing dynamic SSL pinning, written in Kotlin.
 
 - [Introduction](#introduction)
+    - [What is pinned](#what-is-pinned)
 - [Installation](#installation)
     - [Requirements](#requirements)
     - [Gradle](#gradle)
 - [Usage](#usage)
     - [Configuration](#configuration)
-    - [Update fingerprints](#update-fingerprints)
+    - [Update fingerprints](#updating-fingerprints)
     - [Fingerprint validation](#fingerprint-validation)
     - [PowerAuth integration](#powerauth-integration)
     - [PowerAuth integration from Java](#powerauth-integration-from-java)
@@ -21,28 +22,60 @@
 
 The SSL pinning (or [public key, or certificate pinning](https://en.wikipedia.org/wiki/Transport_Layer_Security#Certificate_pinning)) 
 is a technique mitigating [Man-in-the-middle attacks](https://en.wikipedia.org/wiki/Man-in-the-middle_attack) against the secure HTTPS communication. 
-The typical Android solution is to bundle the hash of the certificate, 
-or the exact data of the certificate to the application.
-The connection is then validated via `X509TrustManager`. 
-Popular `OkHttp` library has built in `CertificatePinner` class that simplifies the integration.
-In general, this works well, but it has, unfortunately, one major drawback of the certificate's expiration date. 
-The certificate expiration forces you to update your application regularly before the certificate expires, 
-but still, some percentage of the users don't update their apps automatically. 
-So, the users on the older version, will not be able to contact the application servers.
 
-The solution to this problem is the **dynamic SSL pinning**, 
-where the list of certificate fingerprints are securely downloaded from the remote server. 
+The typical Android solution is to bundle the hash of the certificate,
+or the exact data of the certificate into the application.
+The connection is then validated via `X509TrustManager`.
+Popular `OkHttp` library has built in `CertificatePinner` class that simplifies the integration.
+
+In general, this works well, but it has, unfortunately, one major drawback in the certificate's expiration date.
+The certificate expiration forces you to update your application regularly before the certificate expires.
+Unfortunatelly, some percentage of users don't update their apps automatically.
+In effect, users on older versions, will not be able to contact the application servers.
+
+A solution to this problem is the **dynamic SSL pinning**,
+where the list of certificate fingerprints is securely downloaded from the remote server.
 
 `WultraSSLPinning` library does precisely this:
 
-- Manages the dynamic list of certificates, downloaded from the remote server
+- Manages the dynamic list of certificates, downloaded from the remote server.
 - All entries in the list are signed with your private key and validated in the library using the public key (we're using ECDSA-SHA-256 algorithm)
 - Provides easy to use fingerprint validation on the TLS handshake.
 
 Before you start using the library, you should also check our other related projects:
 
-- [Dynamic SSL Pinning Tool](https://github.com/wultra/ssl-pinning-tool) - the command line tool written in Java, for generating JSON data consumed by this library.
+- [Dynamic SSL Pinning Tool](https://github.com/wultra/ssl-pinning-tool) - the command line tool written in Java, for generating update JSON data consumed by this library.
 - [iOS version](https://github.com/wultra/ssl-pinning-ios) of the library
+
+### What is pinned
+
+In SSL pinning there are [two options](https://www.owasp.org/index.php/Certificate_and_Public_Key_Pinning#What_Should_Be_Pinned.3F) of what to pin:
+1. **Pin the certificate** (DER encoding)
+2. **Pin the public key**
+
+**WultraSSLpinning** tooling ([this Android version](https://github.com/wultra/ssl-pinning-android),
+[iOS version](https://github.com/wultra/ssl-pinning-ios)
+and [Dynamic SSL Pinning Tool](https://github.com/wultra/ssl-pinning-tool))
+use *option 1 - they pin the certificate*.
+
+In Java (Android) world this means that the library computes the fingerprint
+from:
+```java
+Certificate certificate = …
+byte[] bytesToComputeFringerprintFrom = certificate.getEncoded()
+```
+
+Note: Many blog posts and tools for certificate pinning on Android instead mention/use option 2 - public key pinning.
+An example is [CertificatePinner](https://square.github.io/okhttp/3.x/okhttp/okhttp3/CertificatePinner.html)
+from popular [OkHttp](http://square.github.io/okhttp/) library.
+
+In case of public key pinning the fingerprint is computed from:
+```java
+Certificate certificate = …
+byte[] bytesToComputeFringerprintFrom = certificate.getPublicKey().getEncoded()
+```
+
+This means that `CertificatePinner` cannot be readily used with **WultraSSLPinning** library.
 
 
 ## Installation
@@ -54,11 +87,10 @@ Before you start using the library, you should also check our other related proj
 
 ### Gradle
 
-To use **WultraSSLPinning** in you Android app.
-Add this depencency:
+To use **WultraSSLPinning** in you Android app add this dependency:
 
 ```gradle
-implementation 'com.wultra.android.sslpinning:wultra-ssl-pinning:0.8.0'
+implementation 'com.wultra.android.sslpinning:wultra-ssl-pinning:0.8.1'
 ```
 
 Also make sure you have `jcenter()` repository among the project repositories.
@@ -86,14 +118,13 @@ val configuration = CertStoreConfiguration.Builder(
                         .build()
 val certStore = CertStore(configuration, cryptoProvider, secureDataStore)
 ```
+
 The configuration has the following properties:
 
-- `serviceUrl` - parameter defining URL with a remote list of certificates. 
-It is recommended that `serviceUrl` points to a different domain than you're going to protect with pinning. 
-See the [FAQ](#faq) section for more details.
-- `publicKey` - byte array containing the public key counterpart to the private key, used for data signing. 
+- `serviceUrl` - parameter defining URL with a remote list of certificates (JSON).
+- `publicKey` - byte array containing the public key counterpart to the private key, used for fingerprint signing.
 - `expectedCommonNames` - an optional array of strings, defining which domains you expect in certificate validation.
-- `identifier` - optional string identifier for scenarios, where multiple `CertStore` instances are used in the application
+- `identifier` - optional string identifier for scenarios, where multiple `CertStore` instances are used in the application.
 - `fallbackCertificateData` - optional hardcoded data for a fallback fingerprint. See the next chapter of this document for details.
 - `periodicUpdateIntervalMillis` - defines interval for silent updates. The default value is 1 week.
 - `expirationUpdateTreshold` - defines time window before the next certificate will expire. 
@@ -107,7 +138,7 @@ If not defined silent updates run on a dedicated thread (not pooled).
 
 The `CertStoreConfiguration` may contain an optional data with predefined certificate fingerprint. 
 This technique can speed up the first application's startup when the database of fingerprints is empty. 
-You still need to update your application, once the fallback fingerprint expires. 
+You still need to update your application, once the fallback fingerprint expires.
 
 To configure the property, you need to provide `GetFingerprintResponse.Entry` with a fallback certificate fingerprint. 
 The data should contain the same data as are usually received from the server, 
@@ -128,16 +159,16 @@ val certStore = CertStore.powerAuthCertStore(configuration = configuration, appC
 ```
 
 
-## Update fingerprints
+## Updating fingerprints
 
-To update list of fingerprints from the remote server, use the following code:
+To update the list of fingerprints from the remote server, use the following code:
 
 ```kotlin
-val updateResult = certStore.update()
+val updateResult = certStore.update(updateMode)
 ```
 
-The app (not the library) is responsible for invoking updates. The library only makes sure
-that the update is run when necessary.
+The app (not the library) is responsible for invoking updates.
+The library performs the update only when it's forced to or the stored fingerprints are expired or about to expire.
 
 The app has to typically call the update during the application's startup, 
 before a secure HTTPS request is initiated to a server that's supposed to be validated with the pinning. 
@@ -145,21 +176,26 @@ before a secure HTTPS request is initiated to a server that's supposed to be val
 The update function works in two basic modes:
 
 - **Blocking mode**, when your application has to wait for downloading the list of certificates.
-This typically happens when all certificate fingerprints did expire, 
-or during the application's first start (e.g. there's no list of certificates)
-In such case the call to `certStore.update()` is blocking. Therefore it should be run on a worker thread.
+This happens when the update is forced (`UpdateMode.FORCED`), when there are no fingerprints or when all certificate fingerprints are expired.
+In such cases the calls to `certStore.update()` are blocking. Therefore it should be run on a worker thread.
+
 - **Silent update mode**, the execution of the update is handled on a background thread.
 and `update()` method does not block the thread, it returns immedieately with result `UpdateResult.SCHEDULED`.
 The purpose of the silent update is to avoid blocking the app's startup while keeping the list of fingerprints up to date. 
 
 If the update is called more often then the value that's predefined and determined by the configuration.
-The update returns immediately with `UpdateResult.OK` and no update is permformed. 
+The update returns immediately with `UpdateResult.OK` and no update is performed.
 
 The silent update is performed on an `ExecutorService` defined in the configuration,
 if not defined the update run on its own dedicated thread.
 
 The direct update (blocking mode) runs on the thread the method is invoked on.
 
+### Switching server certificate
+
+Certificate pinning is great for your app's security and at the same time it's a dangerous technology.
+Be careful with the update parameters for `CertStoreConfiguration`.
+Also it's recommended to call forced update when validation on a pinned domain fails.
 
 ## Fingerprint validation
 
@@ -222,7 +258,7 @@ if (validationResult != ValidationResult.TRUSTED) {
 
 ## PowerAuth integration
 
-The WultraSSLPinning library contains classes for integration with the PowerAuth SDK. 
+The **WultraSSLPinning** library contains classes for integration with the PowerAuth SDK.
 The most important one is the `PowerAuthSslPinningValidationStrategy` class, 
 which implements `PA2ClientValidationStrategy` with SSL pinning. 
 You can simply instantiate in with an existing `CertStore` and set it in `PA2ClientConfiguration`. 
@@ -283,7 +319,7 @@ Call this in Java is too cumbersome: `PowerAuthIntegrationKt.powerAuthCertStore(
 
 For integration with HttpsUrlConnection or [OkHttp](http://square.github.io/okhttp/)
 use classes `SSLPinningIntegration` and `SSLPinningX509TrustManager`.
-These provide the necessary SSLSocketFactory and X509TrustManager.
+These provide the necessary `SSLSocketFactory` and `X509TrustManager`.
 
 
 ## FAQ
@@ -313,20 +349,50 @@ Also you have to provide you own implementation of `CryptoProvider` and `SecureD
 
 **PowerAuthSDK** already provides these functions.
 
-But not everything is lost. The core of the library is using `CryptoProvider` protocol and therefore is implementation independent. We'll provide the standalone version of the pinning library later. 
+If you do not desire to integrate PowerAuthSDK you can implement necessary interfaces yourself.
+The core of the library is using `CryptoProvider` and `SecureDataStore` interfaces and therefore is implementation independent.
 
 
+### How to use public key pinning instead of certificate pinning?
+
+If you really want to use public key pinning instead of certificate pinning
+(e.g. because you are fond of OkHttp's `CertificatePinner`).
+You have to do couple of things:
+
+* You need different fingerprints in the update json.
+[Dynamic SSL Pinning Tool](https://github.com/wultra/ssl-pinning-tool)
+computes only certificate pinning. Therefore you need to generate those
+fingerprints yourself.
+* Don't use these classes/methods (they are bound to certificate pinning):
+   * `CertStore.validateCertificate(X509Certificate)`
+   * `SSLPinningX509TrustManager`
+   * `SSLPinningIntegration.createSSLPinningSocketFactory(CertStore)`
+   * `PowerAuthSslPinningValidationStrategy`
+
+You can use `CertStore.validateCertficateData(commonName, byteArray)`
+only if you pass public key bytes as `byteArray`.
+
+For validating certificates, utilize `CertStore.validateFingerprint()` this way:
+```kotlin
+fun validateCertWithPublicKeyPinning(certificate: X509Certificate): ValidationResult {
+    val key = certificate.publicKey.encoded
+    val fingerprint = cryptoProvider.hashSha256(key)
+    val commonName = CertUtils.parseCommonName(certificate)
+    return validateFingerprint(commonName, fingerprint)
+}
+```
+
+If you need `SSLSocketFactory`, reimplement `X509TrustManager`
+using the above `validateCertWithPublicKeyPinning()` method.
 
 ---
 
 ## License
 
-
 All sources are licensed using Apache 2.0 license. You can use them with no restriction. 
 If you are using this library, please let us know. We will be happy to share and promote your project.
 
 ## Contact
-
 
 If you need any assistance, do not hesitate to drop us a line at hello@wultra.com 
 or our official [gitter.im/wultra](https://gitter.im/wultra) channel.
