@@ -16,9 +16,12 @@
 
 package com.wultra.android.sslpinning;
 
+import android.os.Handler;
+
 import com.wultra.android.sslpinning.model.GetFingerprintResponse;
 
 import java.io.IOException;
+import java.lang.reflect.Field;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.security.cert.Certificate;
@@ -52,5 +55,11 @@ public class TestUtils {
                 .expectedCommonNames(expectedCommonNames)
                 .fallbackCertificate(fallback);
         return builder.build();
+    }
+
+    public static void assignHandler(CertStore certStore, Handler handler) throws Exception {
+        Field handlerField = CertStore.class.getDeclaredField("mainThreadHandler");
+        handlerField.setAccessible(true);
+        handlerField.set(certStore, handler);
     }
 }

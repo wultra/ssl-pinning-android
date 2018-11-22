@@ -17,42 +17,28 @@
 package com.wultra.android.sslpinning;
 
 import android.support.annotation.NonNull;
-import android.util.Log;
 
+import com.wultra.android.sslpinning.integration.powerauth.PA2ECPublicKey;
 import com.wultra.android.sslpinning.interfaces.CryptoProvider;
 import com.wultra.android.sslpinning.interfaces.ECPublicKey;
-import com.wultra.android.sslpinning.interfaces.SecureDataStore;
 import com.wultra.android.sslpinning.interfaces.SignedData;
-import com.wultra.android.sslpinning.integration.powerauth.PA2ECPublicKey;
 import com.wultra.android.sslpinning.service.RemoteDataProvider;
 
-import org.bouncycastle.jce.provider.BouncyCastleProvider;
-import org.junit.Before;
-import org.junit.BeforeClass;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.mockito.Mock;
-import org.powermock.api.mockito.PowerMockito;
-import org.powermock.core.classloader.annotations.PowerMockIgnore;
-import org.powermock.core.classloader.annotations.PrepareForTest;
 import org.powermock.modules.junit4.PowerMockRunner;
 
-import java.net.MalformedURLException;
 import java.net.URL;
 import java.security.MessageDigest;
-import java.security.Security;
 import java.util.Base64;
 import java.util.Date;
 
 import io.getlime.security.powerauth.crypto.lib.config.PowerAuthConfiguration;
 import io.getlime.security.powerauth.crypto.lib.util.SignatureUtils;
 import io.getlime.security.powerauth.provider.CryptoProviderUtil;
-import io.getlime.security.powerauth.provider.CryptoProviderUtilBouncyCastle;
 
 import static org.junit.Assert.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyInt;
-import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -62,63 +48,7 @@ import static org.mockito.Mockito.when;
  * @author Tomas Kypta, tomas.kypta@wultra.com
  */
 @RunWith(PowerMockRunner.class)
-@PowerMockIgnore({
-        "javax.net.ssl.*",
-        "javax.security.auth.x500.*",
-        "org.bouncycastle.*",
-        "java.security.*"
-})
-@PrepareForTest({
-        android.util.Base64.class,
-        Log.class
-})
-public class CertStoreUpdateTest {
-
-    @Mock
-    CryptoProvider cryptoProvider;
-
-    @Mock
-    SecureDataStore secureDataStore;
-
-    @BeforeClass
-    public static void setUpClass() {
-        Security.addProvider(new BouncyCastleProvider());
-        PowerAuthConfiguration.INSTANCE.setKeyConvertor(new CryptoProviderUtilBouncyCastle());
-    }
-
-    @Before
-    public void setUp() {
-        PowerMockito.mockStatic(android.util.Base64.class);
-        when(android.util.Base64.encodeToString(any(byte[].class), anyInt()))
-                .thenAnswer(invocation ->
-                        new String(java.util.Base64.getEncoder().encode((byte[]) invocation.getArgument(0)))
-                );
-        when(android.util.Base64.encode(any(byte[].class), anyInt()))
-                .thenAnswer(invocation ->
-                        java.util.Base64.getEncoder().encode((byte[]) invocation.getArgument(0))
-                );
-        when(android.util.Base64.decode(anyString(), anyInt()))
-                .thenAnswer(invocation ->
-                        Base64.getDecoder().decode((String)invocation.getArgument(0))
-                );
-
-        PowerMockito.mockStatic(Log.class);
-        when(Log.e(anyString(), anyString()))
-                .then(invocation -> {
-                    System.out.println((String) invocation.getArgument(1));
-                    return 0;
-                });
-        when(cryptoProvider.hashSha256(any(byte[].class)))
-                .thenAnswer(invocation -> {
-                    MessageDigest digest = MessageDigest.getInstance("SHA-256");
-                    return digest.digest(invocation.getArgument(0));
-                });
-        when(cryptoProvider.importECPublicKey(any(byte[].class)))
-                .thenAnswer(invocation ->
-                        new PA2ECPublicKey(invocation.getArgument(0))
-                );
-
-    }
+public class CertStoreUpdateTest extends CommonJavaTest {
 
     @Test
     public void testCorrectUpdate() throws Exception {
@@ -203,12 +133,13 @@ public class CertStoreUpdateTest {
                 });
 
         CertStore store = new CertStore(config, cryptoProvider, secureDataStore, remoteDataProvider);
+        TestUtils.assignHandler(store, handler);
         UpdateResult updateResult = store.update(UpdateMode.FORCED);
         assertEquals(UpdateResult.OK, updateResult);
     }
 
     @NonNull
-    private UpdateResult performForcedUpdate(String pinningJsonUrl) throws MalformedURLException {
+    private UpdateResult performForcedUpdate(String pinningJsonUrl) throws Exception {
         String publicKey = "BC3kV9OIDnMuVoCdDR9nEA/JidJLTTDLuSA2TSZsGgODSshfbZg31MS90WC/HdbU/A5WL5GmyDkE/iks6INv+XE=";
         byte[] publicKeyBytes = Base64.getDecoder().decode(publicKey);
 
@@ -219,6 +150,7 @@ public class CertStoreUpdateTest {
                 publicKeyBytes,
                 null);
         CertStore store = new CertStore(config, cryptoProvider, secureDataStore);
+        TestUtils.assignHandler(store, handler);
         return store.update(UpdateMode.FORCED);
     }
 }

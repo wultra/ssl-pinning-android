@@ -16,17 +16,16 @@
 
 package com.wultra.android.sslpinning.integration;
 
-import android.content.Context;
-
 import com.wultra.android.sslpinning.CertStore;
 import com.wultra.android.sslpinning.CertStoreConfiguration;
+import com.wultra.android.sslpinning.CommonJavaTest;
+import com.wultra.android.sslpinning.TestUtils;
 import com.wultra.android.sslpinning.integration.powerauth.PowerAuthCertStore;
 
 import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.mockito.Mock;
-import org.mockito.junit.MockitoJUnitRunner;
+import org.powermock.modules.junit4.PowerMockRunner;
 
 import java.net.URL;
 
@@ -37,11 +36,8 @@ import javax.net.ssl.SSLSocketFactory;
  *
  * @author Tomas Kypta, tomas.kypta@wultra.com
  */
-@RunWith(MockitoJUnitRunner.class)
-public class SSLPinningIntegrationTest {
-
-    @Mock
-    Context context;
+@RunWith(PowerMockRunner.class)
+public class SSLPinningIntegrationTest extends CommonJavaTest {
 
     @Test
     public void testSSLPinningIntegrationApis() throws Exception {
@@ -52,6 +48,8 @@ public class SSLPinningIntegrationTest {
         CertStoreConfiguration configuration = new CertStoreConfiguration.Builder(url, publicKeyBytes)
                 .build();
         CertStore store = PowerAuthCertStore.createInstance(configuration, context);
+        TestUtils.assignHandler(store, handler);
+
         Assert.assertNotNull(store);
 
         SSLSocketFactory factory1 = SSLPinningIntegration.createSSLPinningSocketFactory(store);

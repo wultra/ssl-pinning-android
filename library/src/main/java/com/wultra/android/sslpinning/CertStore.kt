@@ -16,6 +16,8 @@
 
 package com.wultra.android.sslpinning
 
+import android.os.Handler
+import android.os.Looper
 import android.os.Process
 import android.support.annotation.WorkerThread
 import com.google.gson.Gson
@@ -53,6 +55,9 @@ class CertStore internal constructor(private val configuration: CertStoreConfigu
     private var cacheIsLoaded = false
     private var cachedData: CachedData? = null
     private var fallbackCertificate: CertificateInfo? = null
+
+    private val validationObservers: MutableSet<ValidationObserver> = mutableSetOf()
+    private val mainThreadHandler = Handler(Looper.getMainLooper())
 
     companion object {
         internal val GSON: Gson = GsonBuilder()
@@ -323,11 +328,13 @@ class CertStore internal constructor(private val configuration: CertStoreConfigu
     fun validateFingerprint(commonName: String, fingerprint: ByteArray): ValidationResult {
         val expected = configuration.expectedCommonNames
         if (expected != null && !expected.contains(commonName)) {
+            notifyValidationObservers(commonName, ValidationObserver::onValidationUntrusted)
             return ValidationResult.UNTRUSTED
         }
 
         val certificates = getCertificates()
         if (certificates.isEmpty()) {
+            notifyValidationObservers(commonName, ValidationObserver::onValidationEmpty)
             return ValidationResult.EMPTY
         }
 
@@ -348,8 +355,10 @@ class CertStore internal constructor(private val configuration: CertStoreConfigu
         }
 
         return if (matchAttempts > 0) {
+            notifyValidationObservers(commonName, ValidationObserver::onValidationUntrusted)
             ValidationResult.UNTRUSTED
         } else {
+            notifyValidationObservers(commonName, ValidationObserver::onValidationEmpty)
             ValidationResult.EMPTY
         }
     }
@@ -379,4 +388,69 @@ class CertStore internal constructor(private val configuration: CertStoreConfigu
         return validateFingerprint(commonName, fingerprint)
     }
 
+    /*** GLOBAL VALIDATION OBSERVERS ***/
+
+    /**
+     * Add global validation observer to be notified about all validation failures (
+     * either [ValidationResult.UNTRUSTED] or [ValidationResult.EMPTY]).
+     *
+     * All observers are held with a strong reference.
+     *
+     * @param observer Observer to be added.
+     *
+     * @since 0.9.0
+     */
+    fun addValidationObserver(observer: ValidationObserver) {
+        synchronized(validationObservers) {
+            validationObservers.add(observer)
+        }
+    }
+
+    /**
+     * Remove global validation observer.
+     *
+     * @param observer Observer to be removed.
+     *
+     * @since 0.9.0
+     */
+    fun removeValidationObserver(observer: ValidationObserver) {
+        if (!validationObservers.contains(observer)) {
+            throw IllegalArgumentException("Cannot remove unknown ValidationObserver")
+        }
+        synchronized(validationObservers) {
+            validationObservers.remove(observer)
+        }
+    }
+
+    /**
+     * Remove all global validation observers.
+     *
+     * @since 0.9.0
+     */
+    fun removeAllValidationObservers() {
+        synchronized(validationObservers) {
+            validationObservers.clear()
+        }
+    }
+
+    /**
+     * Notify all global validation observers with callback about a validation failure.
+     *
+     * The observers are notified on the main thread.
+     *
+     * @param commonName Notify that there was a problem with validation of this common name.
+     * @param observerCallback Notify all observers with this validation observer callback.
+     *
+     * @since 0.9.0
+     */
+    private fun notifyValidationObservers(commonName: String, observerCallback: ValidationObserver.(String) -> Unit) {
+        synchronized(validationObservers) {
+            validationObservers.forEach { observer ->
+                mainThreadHandler.post {
+                    observer.observerCallback(commonName)
+                }
+                return@forEach
+            }
+        }
+    }
 }

@@ -11,6 +11,7 @@
     - [Configuration](#configuration)
     - [Update fingerprints](#updating-fingerprints)
     - [Fingerprint validation](#fingerprint-validation)
+        - [Global validation observers](#global-validation-observers)
     - [PowerAuth integration](#powerauth-integration)
     - [PowerAuth integration from Java](#powerauth-integration-from-java)
     - [Integration](#integration)
@@ -255,6 +256,18 @@ if (validationResult != ValidationResult.TRUSTED) {
     throw javax.net.ssl.SSLException()
 }
 ```
+
+### Global validation observers
+
+In order to be notified about all validation failures there is `ValidationObserver`
+interface and methods on `CertStore` for adding/removing global validation observers.
+
+Motivation for these global validation observers is that some validation failures
+(e.g. those happening in `SSLSocketFactory` instances created by `SSLSocketIntegration.createSSLPinningSocketFactory(CertStore)`)
+are out of reach of the app integrating the pinning library.
+These global validation observers are notified about all such validation failures.
+The app can then react with force updating the fingerprints.
+
 
 ## PowerAuth integration
 

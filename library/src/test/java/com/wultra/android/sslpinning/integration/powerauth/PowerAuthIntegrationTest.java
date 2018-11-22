@@ -16,19 +16,15 @@
 
 package com.wultra.android.sslpinning.integration.powerauth;
 
-import android.content.Context;
-
 import com.wultra.android.sslpinning.CertStore;
 import com.wultra.android.sslpinning.CertStoreConfiguration;
-import com.wultra.android.sslpinning.integration.powerauth.PowerAuthCertStore;
-import com.wultra.android.sslpinning.integration.powerauth.PowerAuthIntegrationKt;
-import com.wultra.android.sslpinning.integration.powerauth.PowerAuthSecureDataStore;
+import com.wultra.android.sslpinning.CommonJavaTest;
+import com.wultra.android.sslpinning.TestUtils;
 
 import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.mockito.Mock;
-import org.mockito.junit.MockitoJUnitRunner;
+import org.powermock.modules.junit4.PowerMockRunner;
 
 import java.net.URL;
 
@@ -37,11 +33,8 @@ import java.net.URL;
  *
  * @author Tomas Kypta, tomas.kypta@wultra.com
  */
-@RunWith(MockitoJUnitRunner.class)
-public class PowerAuthIntegrationTest {
-
-    @Mock
-    Context context;
+@RunWith(PowerMockRunner.class)
+public class PowerAuthIntegrationTest extends CommonJavaTest {
 
     @Test
     public void testPowerAuthCertStoreApis() throws Exception {
@@ -52,14 +45,18 @@ public class PowerAuthIntegrationTest {
         CertStoreConfiguration configuration = new CertStoreConfiguration.Builder(url, publicKeyBytes)
                 .build();
         CertStore store1 = PowerAuthCertStore.Companion.createInstance(configuration, context, null);
+        TestUtils.assignHandler(store1, handler);
         Assert.assertNotNull(store1);
         CertStore store2 = PowerAuthCertStore.createInstance(configuration, context, null);
+        TestUtils.assignHandler(store2, handler);
         Assert.assertNotNull(store2);
         CertStore store3 = PowerAuthCertStore.createInstance(configuration, context);
+        TestUtils.assignHandler(store3, handler);
         Assert.assertNotNull(store3);
 
         // Kotlin API inconvenient for calling from Java
         CertStore store4 = PowerAuthIntegrationKt.powerAuthCertStore(CertStore.Companion, configuration, context, "");
+        TestUtils.assignHandler(store4, handler);
         Assert.assertNotNull(store4);
     }
 
