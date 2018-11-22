@@ -16,14 +16,14 @@
 
 package com.wultra.android.sslpinning.integration.powerauth
 
-import android.content.Context
 import com.wultra.android.sslpinning.CertStore
 import com.wultra.android.sslpinning.CertStoreConfiguration
+import com.wultra.android.sslpinning.CommonKotlinTest
+import com.wultra.android.sslpinning.TestUtils
 import org.junit.Assert
 import org.junit.Test
 import org.junit.runner.RunWith
-import org.mockito.Mock
-import org.mockito.junit.MockitoJUnitRunner
+import org.powermock.modules.junit4.PowerMockRunner
 import java.net.URL
 
 /**
@@ -31,11 +31,8 @@ import java.net.URL
  *
  * @author Tomas Kypta, tomas.kypta@wultra.com
  */
-@RunWith(MockitoJUnitRunner::class)
-class PowerAuthIntegrationTestKt {
-
-    @Mock
-    internal lateinit var context: Context
+@RunWith(PowerMockRunner::class)
+class PowerAuthIntegrationTestKt : CommonKotlinTest() {
 
     @Test
     fun testApis() {
@@ -46,12 +43,15 @@ class PowerAuthIntegrationTestKt {
         val configuration = CertStoreConfiguration.Builder(url, publicKeyBytes)
                 .build()
         val store1 = PowerAuthCertStore.createInstance(configuration, context, null)
+        TestUtils.assignHandler(store1, handler)
         Assert.assertNotNull(store1)
         val store2 = PowerAuthCertStore.createInstance(configuration, context)
+        TestUtils.assignHandler(store2, handler)
         Assert.assertNotNull(store2)
 
         // Kotlin API
         val store3 = CertStore.powerAuthCertStore(configuration, context, "")
+        TestUtils.assignHandler(store3, handler)
         Assert.assertNotNull(store3)
     }
 }
