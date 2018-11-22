@@ -28,9 +28,13 @@ android {
         versionName VERSION_NAME
 
         testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
+        testInstrumentationRunnerArguments clearPackageData: 'true'
     }
 
     buildTypes {
+        debug {
+            testCoverageEnabled true
+        }
         release {
             minifyEnabled false
             consumerProguardFiles 'proguard-rules.pro'
@@ -72,4 +76,4 @@ dependencies {
 }
 
 apply from: 'android-release-aar.gradle'
-
+apply from: 'android-coverage.gradle'

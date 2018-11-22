@@ -17,6 +17,7 @@
 buildscript {
     ext.kotlin_version = '1.2.71'
     ext.dokkaVersion = '0.9.17'
+    ext.jacocoVersion = "0.8.2"
     repositories {
         jcenter()
         google()
@@ -28,6 +29,7 @@ buildscript {
         // releasing
         classpath "com.jfrog.bintray.gradle:gradle-bintray-plugin:1.8.4"
         classpath "com.github.dcendents:android-maven-gradle-plugin:2.1"
+        classpath "org.jacoco:org.jacoco.core:${jacocoVersion}"
     }
 }
 
