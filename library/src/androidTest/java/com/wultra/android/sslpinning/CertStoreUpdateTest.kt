@@ -22,7 +22,6 @@ import android.util.Base64
 import com.wultra.android.sslpinning.integration.powerauth.PowerAuthCryptoProvider
 import com.wultra.android.sslpinning.integration.powerauth.PowerAuthSecureDataStore
 import com.wultra.android.sslpinning.integration.powerauth.powerAuthCertStore
-import org.junit.Assert.assertEquals
 import org.junit.Test
 import org.junit.runner.RunWith
 
@@ -41,8 +40,7 @@ class CertStoreUpdateTest {
         val config = CertStoreConfiguration.Builder(url, getPublicKeyBytes()).build()
         val store = CertStore(config, PowerAuthCryptoProvider(), PowerAuthSecureDataStore(appContext), remoteDataProvider)
 
-        val updateResult = store.update(UpdateMode.FORCED)
-        assertEquals(UpdateResult.OK, updateResult)
+        updateAndCheck(store, UpdateMode.FORCED, UpdateResult.OK)
     }
 
     @Test
@@ -52,8 +50,7 @@ class CertStoreUpdateTest {
         val config = CertStoreConfiguration.Builder(url, getPublicKeyBytes()).build()
         val store = CertStore.powerAuthCertStore(config, appContext)
 
-        val updateResult = store.update(UpdateMode.FORCED)
-        assertEquals(UpdateResult.OK, updateResult)
+        updateAndCheck(store, UpdateMode.FORCED, UpdateResult.OK)
     }
 
     @Test
@@ -67,7 +64,6 @@ class CertStoreUpdateTest {
         val config = CertStoreConfiguration.Builder(url, publicKeyBytes).build()
         val store = CertStore.powerAuthCertStore(config, appContext)
 
-        val updateResult = store.update(UpdateMode.FORCED)
-        assertEquals(UpdateResult.INVALID_SIGNATURE, updateResult)
+        updateAndCheck(store, UpdateMode.FORCED, UpdateResult.INVALID_SIGNATURE)
     }
 }

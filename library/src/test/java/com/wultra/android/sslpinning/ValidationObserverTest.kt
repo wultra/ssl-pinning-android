@@ -60,8 +60,7 @@ class ValidationObserverTest : CommonKotlinTest() {
         verify(observer, times(1)).onValidationEmpty(anyString())
         store.removeValidationObserver(observer)
 
-        val updateResult = store.update(UpdateMode.FORCED)
-        assertEquals(UpdateResult.OK, updateResult)
+        TestUtils.updateAndCheck(store, UpdateMode.FORCED, UpdateResult.OK)
 
         observer = mock(ValidationObserver::class.java)
         store.addValidationObserver(observer)

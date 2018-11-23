@@ -31,7 +31,7 @@ import static com.wultra.android.sslpinning.TestUtilsKt.getJsonDataAllEmpty;
 import static com.wultra.android.sslpinning.TestUtilsKt.getJsonDataFingerprintsEmpty;
 import static com.wultra.android.sslpinning.TestUtilsKt.getPublicKeyBytes;
 import static com.wultra.android.sslpinning.TestUtilsKt.getRemoteDataProvider;
-import static org.junit.Assert.assertEquals;
+import static com.wultra.android.sslpinning.TestUtilsKt.updateAndCheck;
 
 /**
  * Instrumentation test for update signature validation on a device/emulator.
@@ -51,8 +51,7 @@ public class CertStoreUpdateTestJava {
         CertStoreConfiguration config = new CertStoreConfiguration.Builder(url, getPublicKeyBytes()).build();
         CertStore store = PowerAuthCertStore.createInstance(config, appContext);
 
-        UpdateResult updateResult = store.update(UpdateMode.FORCED);
-        assertEquals(UpdateResult.NETWORK_ERROR, updateResult);
+        updateAndCheck(store, UpdateMode.FORCED, UpdateResult.NETWORK_ERROR);
     }
 
     @Test
@@ -64,8 +63,7 @@ public class CertStoreUpdateTestJava {
         CertStoreConfiguration config = new CertStoreConfiguration.Builder(url, getPublicKeyBytes()).build();
         CertStore store = new CertStore(config, new PowerAuthCryptoProvider(), new PowerAuthSecureDataStore(appContext), getRemoteDataProvider(getJsonDataAllEmpty()));
 
-        UpdateResult updateResult = store.update(UpdateMode.FORCED);
-        assertEquals(UpdateResult.INVALID_DATA, updateResult);
+        updateAndCheck(store, UpdateMode.FORCED, UpdateResult.INVALID_DATA);
     }
 
     @Test
@@ -77,8 +75,7 @@ public class CertStoreUpdateTestJava {
         CertStoreConfiguration config = new CertStoreConfiguration.Builder(url, getPublicKeyBytes()).build();
         CertStore store = new CertStore(config, new PowerAuthCryptoProvider(), new PowerAuthSecureDataStore(appContext), getRemoteDataProvider(getJsonDataFingerprintsEmpty()));
 
-        UpdateResult updateResult = store.update(UpdateMode.FORCED);
-        assertEquals(UpdateResult.STORE_IS_EMPTY, updateResult);
+        updateAndCheck(store, UpdateMode.FORCED, UpdateResult.STORE_IS_EMPTY);
     }
 
     @Test
@@ -90,7 +87,6 @@ public class CertStoreUpdateTestJava {
         CertStoreConfiguration config = new CertStoreConfiguration.Builder(url, getPublicKeyBytes()).build();
         CertStore store = PowerAuthCertStore.createInstance(config, appContext);
 
-        UpdateResult updateResult = store.update(UpdateMode.FORCED);
-        assertEquals(UpdateResult.STORE_IS_EMPTY, updateResult);
+        updateAndCheck(store, UpdateMode.FORCED, UpdateResult.STORE_IS_EMPTY);
     }
 }

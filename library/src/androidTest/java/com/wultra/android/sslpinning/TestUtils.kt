@@ -21,10 +21,14 @@ import com.google.gson.GsonBuilder
 import com.wultra.android.sslpinning.service.RemoteDataProvider
 import com.wultra.android.sslpinning.util.ByteArrayTypeAdapter
 import com.wultra.android.sslpinning.util.DateTypeAdapter
+import org.junit.Assert.assertEquals
+import org.junit.Assert.assertTrue
 import java.net.HttpURLConnection
 import java.net.URL
 import java.security.cert.X509Certificate
 import java.util.*
+import java.util.concurrent.CountDownLatch
+import java.util.concurrent.TimeUnit
 import javax.net.ssl.HttpsURLConnection
 
 /**
@@ -80,4 +84,20 @@ fun getCertificateFromUrl(urlString: String): X509Certificate {
     } finally {
         connection.disconnect()
     }
+}
+
+@Throws(Exception::class)
+fun updateAndCheck(store: CertStore, updateMode: UpdateMode, expectedUpdateResult: UpdateResult) {
+    val latch = CountDownLatch(1)
+    val updateResultWrapper = UpdateResultWrapper()
+    val updateStarted = store.update(updateMode, object : UpdateObserver {
+        override fun onUpdateFinished(result: UpdateResult) {
+            updateResultWrapper.updateResult = result
+            latch.countDown()
+        }
+    })
+    if (updateStarted) {
+        assertTrue(latch.await(3, TimeUnit.SECONDS))
+    }
+    assertEquals(expectedUpdateResult, updateResultWrapper.updateResult)
 }

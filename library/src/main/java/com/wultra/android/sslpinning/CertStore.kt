@@ -169,39 +169,66 @@ class CertStore internal constructor(private val configuration: CertStoreConfigu
     /**
      * Tells `CertStore` to update its database of certificates from the remote location.
      *
-     * Run this method on a worker thread.
-     * This method might block the execution in case an update is necessary.
+     * This method checks if the update is necessary based on the stored data and update mode.
+     * If it decides update is not necessary, it will not start the update and return false.
      *
-     * If the update is not critically needed, it is scheduled
-     * either on a provided [ExecutorService] or on a dedicated [Thread].
-     * In this case the method doesn't block the execution.
+     * The update is scheduled either on an [ExecutorService] provided in the configuration
+     * or on a dedicated [Thread] if no [ExecutorService] was defined in the configuration.
+     *
+     * The update observer is delivered on the main thread.
+     * The update observer is held with a strong reference.
      *
      * @param mode Update mode.
-     * @return Update result.
+     * @param updateObserver Observer for update result
+     * @return True if an update is started in the background, false if no update is started.
      */
-    @WorkerThread
-    fun update(mode: UpdateMode = UpdateMode.DEFAULT): UpdateResult {
+    @JvmOverloads
+    fun update(mode: UpdateMode = UpdateMode.DEFAULT, updateObserver: UpdateObserver? = null): Boolean {
+        val pair = checkUpdateNeededInternal()
+        val now = Date()
+        var needsDirectUpdate = pair.first || mode == UpdateMode.FORCED
+        var needsSilentUpdate = pair.second
+
+        if (needsDirectUpdate) {
+            doUpdateAsync(now, updateObserver)
+            return true
+        } else {
+            if (needsSilentUpdate) {
+                doUpdateAsync(now, updateObserver)
+                return true
+            }
+        }
+        return false
+    }
+
+    /**
+     * Check if an update (either direct or silent) is necessary based on the cached data.
+     *
+     * This check performs the same check that happens inside [update] method.
+     * If the method returns true, it's recommended to perform an update.
+     *
+     * @return True if either direct or silent update is necessary.
+     *
+     * @since 0.9.0
+     */
+    fun checkUpdateNeeded(): Boolean {
+        val pair = checkUpdateNeededInternal()
+        return pair.first || pair.second
+    }
+
+    private fun checkUpdateNeededInternal(): Pair<Boolean, Boolean> {
         val now = Date()
         val cachedData = getCachedData()
         var needsDirectUpdate = true
         var needsSilentUpdate = false
 
         cachedData?.let {
-            needsDirectUpdate = it.numberOfValidCertificates(now) == 0 || mode == UpdateMode.FORCED
+            needsDirectUpdate = it.numberOfValidCertificates(now) == 0
             if (!needsDirectUpdate) {
                 needsSilentUpdate = it.nextUpdate.before(now)
             }
         }
-
-        if (needsDirectUpdate) {
-            return doUpdate(now)
-        } else {
-            if (needsSilentUpdate) {
-                doUpdateAsync(now)
-                return UpdateResult.SCHEDULED
-            }
-            return UpdateResult.OK
-        }
+        return Pair(needsDirectUpdate, needsSilentUpdate)
     }
 
     @WorkerThread
@@ -214,13 +241,20 @@ class CertStore internal constructor(private val configuration: CertStoreConfigu
         return processReceivedData(bytes, currentDate)
     }
 
-    private fun doUpdateAsync(currentDate: Date) {
+    private fun doUpdateAsync(currentDate: Date, updateObserver: UpdateObserver? = null) {
         val updateRunnable = Runnable {
-            doUpdate(currentDate)
+            val result = doUpdate(currentDate)
+            updateObserver?.let {
+                mainThreadHandler.post {
+                    updateObserver.onUpdateFinished(result)
+                }
+            }
         }
+
         configuration.executorService?.let {
             it.submit(updateRunnable)
         } ?: run {
+            // run on a dedicated thread as a fallback
             val thread = Thread(updateRunnable)
             thread.name = "SilentCertStoreUpdate"
             thread.priority = Process.THREAD_PRIORITY_BACKGROUND
