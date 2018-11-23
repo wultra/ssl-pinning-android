@@ -20,6 +20,8 @@ import android.os.Handler;
 
 import com.wultra.android.sslpinning.model.GetFingerprintResponse;
 
+import org.jetbrains.annotations.NotNull;
+
 import java.io.IOException;
 import java.lang.reflect.Field;
 import java.net.HttpURLConnection;
@@ -27,8 +29,13 @@ import java.net.URL;
 import java.security.cert.Certificate;
 import java.security.cert.X509Certificate;
 import java.util.Date;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
 
 import javax.net.ssl.HttpsURLConnection;
+
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 
 
 /**
@@ -61,5 +68,24 @@ public class TestUtils {
         Field handlerField = CertStore.class.getDeclaredField("mainThreadHandler");
         handlerField.setAccessible(true);
         handlerField.set(certStore, handler);
+    }
+
+    public static UpdateResult updateAndCheck(CertStore store, UpdateMode updateMode, UpdateResult expectedUpdateResult) throws Exception {
+        CountDownLatch latch = new CountDownLatch(1);
+        UpdateResultWrapper updateResultWrapper = new UpdateResultWrapper();
+        boolean updateStarted = store.update(updateMode, new UpdateObserver() {
+            @Override
+            public void onUpdateFinished(@NotNull UpdateResult result) {
+                updateResultWrapper.setUpdateResult(result);
+                latch.countDown();
+            }
+        });
+        if (updateStarted) {
+            assertTrue(latch.await(3, TimeUnit.SECONDS));
+        }
+        if (expectedUpdateResult != null) {
+            assertEquals(expectedUpdateResult, updateResultWrapper.getUpdateResult());
+        }
+        return updateResultWrapper.getUpdateResult();
     }
 }

@@ -54,8 +54,7 @@ class CertStoreValidateTest {
         val config = CertStoreConfiguration.Builder(url, getPublicKeyBytes())
                 .build()
         val store = CertStore.powerAuthCertStore(config, appContext)
-        val updateResult = store.update(UpdateMode.FORCED)
-        Assert.assertEquals(UpdateResult.OK, updateResult)
+        updateAndCheck(store, UpdateMode.FORCED, UpdateResult.OK)
 
         val cert = getCertificateFromUrl("https://github.com")
         val result = store.validateCertificate(cert)

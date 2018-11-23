@@ -134,8 +134,7 @@ public class CertStoreUpdateTest extends CommonJavaTest {
 
         CertStore store = new CertStore(config, cryptoProvider, secureDataStore, remoteDataProvider);
         TestUtils.assignHandler(store, handler);
-        UpdateResult updateResult = store.update(UpdateMode.FORCED);
-        assertEquals(UpdateResult.OK, updateResult);
+        TestUtils.updateAndCheck(store, UpdateMode.FORCED, UpdateResult.OK);
     }
 
     @NonNull
@@ -151,6 +150,7 @@ public class CertStoreUpdateTest extends CommonJavaTest {
                 null);
         CertStore store = new CertStore(config, cryptoProvider, secureDataStore);
         TestUtils.assignHandler(store, handler);
-        return store.update(UpdateMode.FORCED);
+
+        return TestUtils.updateAndCheck(store, UpdateMode.FORCED, null);
     }
 }

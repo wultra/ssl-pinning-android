@@ -45,8 +45,7 @@ class SSLPinningIntegrationTest {
         val config = CertStoreConfiguration.Builder(url, getPublicKeyBytes())
                 .build()
         val store = CertStore.powerAuthCertStore(config, appContext)
-        val updateResult = store.update(UpdateMode.FORCED)
-        Assert.assertEquals(UpdateResult.OK, updateResult)
+        updateAndCheck(store, UpdateMode.FORCED, UpdateResult.OK)
 
         val url = URL("https://github.com")
 
@@ -70,8 +69,7 @@ class SSLPinningIntegrationTest {
         val config = CertStoreConfiguration.Builder(url, getPublicKeyBytes())
                 .build()
         val store = CertStore.powerAuthCertStore(config, appContext)
-        val updateResult = store.update(UpdateMode.FORCED)
-        Assert.assertEquals(UpdateResult.OK, updateResult)
+        updateAndCheck(store, UpdateMode.FORCED, UpdateResult.OK)
 
         val url = URL("https://google.com")
 
@@ -95,8 +93,7 @@ class SSLPinningIntegrationTest {
         val config = CertStoreConfiguration.Builder(url, getPublicKeyBytes())
                 .build()
         val store = CertStore.powerAuthCertStore(config, appContext)
-        val updateResult = store.update(UpdateMode.FORCED)
-        Assert.assertEquals(UpdateResult.OK, updateResult)
+        updateAndCheck(store, UpdateMode.FORCED, UpdateResult.OK)
 
         val url = URL("https://github.com")
 
@@ -125,8 +122,7 @@ class SSLPinningIntegrationTest {
         val config = CertStoreConfiguration.Builder(url, getPublicKeyBytes())
                 .build()
         val store = CertStore.powerAuthCertStore(config, appContext)
-        val updateResult = store.update(UpdateMode.FORCED)
-        Assert.assertEquals(UpdateResult.OK, updateResult)
+        updateAndCheck(store, UpdateMode.FORCED, UpdateResult.OK)
 
         val url = URL("https://google.com")
 

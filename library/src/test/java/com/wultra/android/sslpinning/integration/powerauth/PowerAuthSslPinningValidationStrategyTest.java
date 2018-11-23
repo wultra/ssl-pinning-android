@@ -65,8 +65,7 @@ public class PowerAuthSslPinningValidationStrategyTest extends CommonJavaTest {
                 null);
         CertStore store = new CertStore(config, cryptoProvider, secureDataStore);
         TestUtils.assignHandler(store, handler);
-        UpdateResult updateResult = store.update(UpdateMode.FORCED);
-        assertEquals(UpdateResult.OK, updateResult);
+        TestUtils.updateAndCheck(store, UpdateMode.FORCED, UpdateResult.OK);
 
         PA2ClientValidationStrategy strategy = new PowerAuthSslPinningValidationStrategy(store);
 
