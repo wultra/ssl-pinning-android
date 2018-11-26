@@ -9,15 +9,20 @@
     - [Gradle](#gradle)
 - [Usage](#usage)
     - [Configuration](#configuration)
+        - [Predefined fingerprint](#predefined-fingerprint)
     - [Update fingerprints](#updating-fingerprints)
+        - [Checking if update is necessary](#checking-if-update-is-necessary)
+        - [Switching server certificate](#switching-server-certificate)
     - [Fingerprint validation](#fingerprint-validation)
         - [Global validation observers](#global-validation-observers)
-    - [PowerAuth integration](#powerauth-integration)
-    - [PowerAuth integration from Java](#powerauth-integration-from-java)
     - [Integration](#integration)
+        - [PowerAuth integration](#powerauth-integration)
+        - [PowerAuth integration from Java](#powerauth-integration-from-java)
+        - [Integration with HttpsUrlConnection and OkHttp](#integration-with-httpsurlconnection-and-okhttp)
 - [FAQ](#faq)
 - [License](#license)
 - [Contact](#contact)
+    - [Security Disclosure](#security-disclosure)
 
 ## Introduction
 
@@ -127,19 +132,19 @@ The configuration has the following properties:
 - `expectedCommonNames` - an optional array of strings, defining which domains you expect in certificate validation.
 - `identifier` - optional string identifier for scenarios, where multiple `CertStore` instances are used in the application.
 - `fallbackCertificateData` - optional hardcoded data for a fallback fingerprint. See the next chapter of this document for details.
-- `periodicUpdateIntervalMillis` - defines interval for silent updates. The default value is 1 week.
+- `periodicUpdateIntervalMillis` - defines interval for default updates. The default value is 1 week.
 - `expirationUpdateTreshold` - defines time window before the next certificate will expire. 
 In this time window `CertStore` will try to update the list of fingerprints more often than usual. 
 Default value is 2 weeks before the next expiration.
-- `executorService` - defines `java.util.concurrent.ExecutorService` for running silent updates.
-If not defined silent updates run on a dedicated thread (not pooled).
+- `executorService` - defines `java.util.concurrent.ExecutorService` for running updates.
+If not defined updates run on a dedicated thread (not pooled).
 
 
 ### Predefined fingerprint
 
 The `CertStoreConfiguration` may contain an optional data with predefined certificate fingerprint. 
 This technique can speed up the first application's startup when the database of fingerprints is empty. 
-You still need to update your application, once the fallback fingerprint expires.
+You still need to [update](#updating-fingerprints) your application, once the fallback fingerprint expires.
 
 To configure the property, you need to provide `GetFingerprintResponse.Entry` with a fallback certificate fingerprint. 
 The data should contain the same data as are usually received from the server, 
@@ -165,43 +170,60 @@ val certStore = CertStore.powerAuthCertStore(configuration = configuration, appC
 To update the list of fingerprints from the remote server, use the following code:
 
 ```kotlin
-val updateResult = certStore.update(updateMode)
+val updateStarted = certStore.update(updateMode, updateObserver)
+```
+
+The method is asynchronous. It returns boolean value. True signifies that the udpate is has been started,
+false means that the method internally decided that update is not necessary based on
+the cached data and input parameters.
+Result of the udpate is returned in `UpdateObserver` passed as a second argument.
+It is notified on the main thread.
+The observer is optional. Update can be called this way:
+```java
+boolean updateStarted = certStore.update(updateMode)
 ```
 
 The app (not the library) is responsible for invoking updates.
-The library performs the update only when it's forced to or the stored fingerprints are expired or about to expire.
+If the update is not forced the library does the actual update only
+if the stored fingerprints are expired or about to expire.
 
 The app has to typically call the update during the application's startup, 
 before a secure HTTPS request is initiated to a server that's supposed to be validated with the pinning. 
 
 The update function works in two basic modes:
 
-- **Blocking mode**, when your application has to wait for downloading the list of certificates.
-This happens when the update is forced (`UpdateMode.FORCED`), when there are no fingerprints or when all certificate fingerprints are expired.
-In such cases the calls to `certStore.update()` are blocking. Therefore it should be run on a worker thread.
+- **Forced mode**, this happens when the mode is forced (`UpdateMode.FORCED`).
+- **Default mode**, this mode does internal evaluation of the stored data and configuration
+and tries to avoid unnecessary downloads when the data are ok.
+Note that the method does not evaluate whether the cert on the server endpoints was updated.
+The frequency of default update is predefined and determined by the configuration and currently stored data (fingerprints).
 
-- **Silent update mode**, the execution of the update is handled on a background thread.
-and `update()` method does not block the thread, it returns immedieately with result `UpdateResult.SCHEDULED`.
-The purpose of the silent update is to avoid blocking the app's startup while keeping the list of fingerprints up to date. 
+The both updates are performed on an `ExecutorService` defined in the configuration,
+if not defined, the update run on a dedicated thread.
 
-If the update is called more often then the value that's predefined and determined by the configuration.
-The update returns immediately with `UpdateResult.OK` and no update is performed.
+### Checking if update is necessary
 
-The silent update is performed on an `ExecutorService` defined in the configuration,
-if not defined the update run on its own dedicated thread.
+To check if udpate is needed based on the stored data and configuration,
+there is `certStore.checkUpdateNeeded()` method.
 
-The direct update (blocking mode) runs on the thread the method is invoked on.
+If the method returns true, update would be performed even when not forced.
+Otherwise default update mode would omit the update.
 
 ### Switching server certificate
 
-Certificate pinning is great for your app's security and at the same time it's a dangerous technology.
-Be careful with the update parameters for `CertStoreConfiguration`.
-Also it's recommended to call forced update when validation on a pinned domain fails.
+Certificate pinning is great for your app's security and at the same time
+it's a very dangerous technology.
+Be careful with the update parameters in `CertStoreConfiguration` serving for default updates.
+
+Sudden change of a certificate on a pinned domain is best resolved by utilizing
+a [global validation observer](#global-validation-observers). The observer
+is notified about validation failures. The app can then
+force update the fingerprints to resolve the failing TLS handshakes.
 
 ## Fingerprint validation
 
 The `CertStore` provides several methods for certificate fingerprint validation. 
-You can choose the one which suits best for your scenario:
+You can choose the one which suits best your scenario:
 
 ```kotlin
 // [ 1 ]  If you already have the common name (e.g. domain) and certificate fingerprint
@@ -265,11 +287,12 @@ interface and methods on `CertStore` for adding/removing global validation obser
 Motivation for these global validation observers is that some validation failures
 (e.g. those happening in `SSLSocketFactory` instances created by `SSLSocketIntegration.createSSLPinningSocketFactory(CertStore)`)
 are out of reach of the app integrating the pinning library.
-These global validation observers are notified about all such validation failures.
+These global validation observers are notified about all validation failures.
 The app can then react with force updating the fingerprints.
 
+## Integration
 
-## PowerAuth integration
+### PowerAuth integration
 
 The **WultraSSLPinning** library contains classes for integration with the PowerAuth SDK.
 The most important one is the `PowerAuthSslPinningValidationStrategy` class, 
@@ -310,7 +333,7 @@ val powerAuth = PowerAuthSDK.Builder(powerAuthConfiguration)
                     
 ```
 
-## PowerAuth integration from Java
+### PowerAuth integration from Java
 
 Some of the Kotlin's PowerAuthSDK integration APIs are inconvenient in Java.
 A `CertStore` integrating PowerAuthSDK can be created with:
@@ -328,7 +351,7 @@ CertStore store = PowerAuthCertStore.createInstance(configuration, context, "my-
 Note that Kotlin's way of construction `CertStore.powerAuthCertStore` is not available in Java.
 Call this in Java is too cumbersome: `PowerAuthIntegrationKt.powerAuthCertStore(CertStore.Companion, configuration, context, null)`.
 
-## Integration
+### Integration with HttpsUrlConnection and OkHttp
 
 For integration with HttpsUrlConnection or [OkHttp](http://square.github.io/okhttp/)
 use classes `SSLPinningIntegration` and `SSLPinningX509TrustManager`.

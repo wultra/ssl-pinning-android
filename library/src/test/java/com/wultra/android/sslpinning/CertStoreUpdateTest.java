@@ -18,8 +18,6 @@ package com.wultra.android.sslpinning;
 
 import android.support.annotation.NonNull;
 
-import com.wultra.android.sslpinning.integration.powerauth.PA2ECPublicKey;
-import com.wultra.android.sslpinning.interfaces.CryptoProvider;
 import com.wultra.android.sslpinning.interfaces.ECPublicKey;
 import com.wultra.android.sslpinning.interfaces.SignedData;
 import com.wultra.android.sslpinning.service.RemoteDataProvider;
@@ -29,15 +27,13 @@ import org.junit.runner.RunWith;
 import org.powermock.modules.junit4.PowerMockRunner;
 
 import java.net.URL;
-import java.security.MessageDigest;
 import java.util.Base64;
 import java.util.Date;
-
-import io.getlime.security.powerauth.crypto.lib.config.PowerAuthConfiguration;
-import io.getlime.security.powerauth.crypto.lib.util.SignatureUtils;
-import io.getlime.security.powerauth.provider.CryptoProviderUtil;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
@@ -111,30 +107,49 @@ public class CertStoreUpdateTest extends CommonJavaTest {
                         "}";
         when(remoteDataProvider.getFingerprints()).thenReturn(jsonData.getBytes());
 
-        CryptoProvider cryptoProvider = mock(CryptoProvider.class);
-        when(cryptoProvider.hashSha256(any(byte[].class)))
-                .thenAnswer(invocation -> {
-                    MessageDigest digest = MessageDigest.getInstance("SHA-256");
-                    return digest.digest(invocation.getArgument(0));
-                });
-        when(cryptoProvider.importECPublicKey(any(byte[].class)))
-                .thenAnswer(invocation ->
-                        new PA2ECPublicKey(invocation.getArgument(0))
-                );
-        when(cryptoProvider.ecdsaValidateSignatures(any(SignedData.class), any(ECPublicKey.class)))
-                .thenAnswer(invocation -> {
-                    SignatureUtils utils = new SignatureUtils();
-                    SignedData signedData = invocation.getArgument(0);
-                    PA2ECPublicKey pubKey = invocation.getArgument(1);
-                    final CryptoProviderUtil keyConvertor = PowerAuthConfiguration.INSTANCE.getKeyConvertor();
-                    return utils.validateECDSASignature(signedData.getData(),
-                            signedData.getSignature(),
-                            keyConvertor.convertBytesToPublicKey(pubKey.getData()));
+        CertStore store = new CertStore(config, cryptoProvider, secureDataStore, remoteDataProvider);
+        TestUtils.assignHandler(store, handler);
+        TestUtils.updateAndCheck(store, UpdateMode.FORCED, UpdateResult.OK);
+    }
+
+    @Test
+    public void testUpdateWithNoUpdateObserver() throws Exception {
+        String publicKey = "BC3kV9OIDnMuVoCdDR9nEA/JidJLTTDLuSA2TSZsGgODSshfbZg31MS90WC/HdbU/A5WL5GmyDkE/iks6INv+XE=";
+        byte[] publicKeyBytes = java.util.Base64.getDecoder().decode(publicKey);
+
+        CertStoreConfiguration config = TestUtils.getCertStoreConfiguration(
+                new Date(),
+                new String[]{"github.com"},
+                new URL("https://gist.githubusercontent.com/hvge/7c5a3f9ac50332a52aa974d90ea2408c/raw/c5b021db0fcd40b1262ab513bf375e4641834925/ssl-pinning-signatures.json"),
+                publicKeyBytes,
+                null);
+        RemoteDataProvider remoteDataProvider = mock(RemoteDataProvider.class);
+        String jsonData =
+                "{\n" +
+                        "  \"fingerprints\": [\n" +
+                        "    {\n" +
+                        "      \"name\" : \"github.com\",\n" +
+                        "      \"fingerprint\" : \"MRFQDEpmASza4zPsP8ocnd5FyVREDn7kE3Fr/zZjwHQ=\",\n" +
+                        "      \"expires\" : 1591185600,\n" +
+                        "      \"signature\" : \"MEUCIQD8nGyux9GM8u3XCrRiuJj/N2eEuB0oiHzTEpGyy2gE9gIgYIRfyed6ykDzZbK1ougq1SoRW8UBe5q3VmWihHuL2JY=\"\n" +
+                        "    }\n" +
+                        "  ]\n" +
+                        "}";
+
+        CountDownLatch latch = new CountDownLatch(1);
+        when(remoteDataProvider.getFingerprints()).thenAnswer(
+                invocation -> {
+                    byte[] bytes = jsonData.getBytes();
+                    latch.countDown();
+                    return bytes;
                 });
 
         CertStore store = new CertStore(config, cryptoProvider, secureDataStore, remoteDataProvider);
         TestUtils.assignHandler(store, handler);
-        TestUtils.updateAndCheck(store, UpdateMode.FORCED, UpdateResult.OK);
+
+        boolean updateStarted = store.update(UpdateMode.FORCED);
+        assertTrue(latch.await(2, TimeUnit.SECONDS));
+        assertTrue(updateStarted);
     }
 
     @NonNull
