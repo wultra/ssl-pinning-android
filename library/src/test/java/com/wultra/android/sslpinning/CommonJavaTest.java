@@ -134,7 +134,8 @@ public abstract class CommonJavaTest {
         when(handler.post(any()))
                 .thenAnswer(invocation -> {
                     Runnable runnable = invocation.getArgument(0);
-                    runnable.run();
+                    Thread t = new Thread(runnable);
+                    t.start();
                     return true;
                 });
     }
