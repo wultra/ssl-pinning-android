@@ -21,7 +21,7 @@ import java.util.*
 import java.util.concurrent.TimeUnit
 
 /**
- * Helper class for calculatinngn date of the next update.
+ * Helper class for calculating date of the next update.
  *
  * @property periodicUpdateIntervalMillis Defines interval between checks for update of certificate fingerprints
  * @property expirationUpdateThresholdMillis Define time window in milliseconds before a certificate expires

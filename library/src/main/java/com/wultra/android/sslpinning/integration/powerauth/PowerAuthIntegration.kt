@@ -21,7 +21,9 @@ import com.wultra.android.sslpinning.CertStore
 import com.wultra.android.sslpinning.CertStoreConfiguration
 
 /**
- * Creates a new instance of [CertStore] preconfigured with [CryptoProvider] and [SecureDataStore]
+ * Creates a new instance of [CertStore] preconfigured with
+ * [com.wultra.android.sslpinning.interfaces.CryptoProvider]
+ * and [com.wultra.android.sslpinning.interfaces.SecureDataStore]
  * implemented on top of PowerAuthSDK.
  *
  * @param configuration Configuration for [CertStore]
@@ -53,7 +55,9 @@ class PowerAuthCertStore {
     companion object {
 
         /**
-         * Creates a new instance of [CertStore] preconfigured with [CryptoProvider] and [SecureDataStore]
+         * Creates a new instance of [CertStore] preconfigured with
+         * [com.wultra.android.sslpinning.interfaces.CryptoProvider]
+         * and [com.wultra.android.sslpinning.interfaces.SecureDataStore]
          * implemented on top of PowerAuthSDK.
          *
          * @param configuration Configuration for [CertStore]

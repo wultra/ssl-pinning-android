@@ -39,7 +39,7 @@ import java.security.cert.X509Certificate
 import java.util.*
 
 /**
- * The main class that provides features of the dynamic SSL pinng library.
+ * The main class that provides features of the dynamic SSL pinning library.
  *
  * @author Tomas Kypta, tomas.kypta@wultra.com
  */
@@ -93,7 +93,7 @@ class CertStore internal constructor(private val configuration: CertStoreConfigu
      */
     @Synchronized
     fun reset() {
-        WultraDebug.warning("CertStore: reset() hould not be used in production build.")
+        WultraDebug.warning("CertStore: reset() should not be used in production build.")
         cachedData = null
         secureDataStore.remove(key = instanceIdentifier)
     }
@@ -320,7 +320,7 @@ class CertStore internal constructor(private val configuration: CertStoreConfigu
 
                 configuration.expectedCommonNames?.let { expectedCN ->
                     if (!expectedCN.contains(newCertificateInfo.commonName)) {
-                        // CertStore will stor ethis CertificateInfo, but validation will ignore
+                        // CertStore will store this CertificateInfo, but validation will ignore
                         // this entry because it's not in expectedCommonNames
                         WultraDebug.warning("CertStore: Loaded data contains name, which will not be trusted. CN = '${entry.name}'")
                     }

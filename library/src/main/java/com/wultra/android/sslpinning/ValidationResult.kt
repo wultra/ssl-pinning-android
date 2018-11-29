@@ -36,7 +36,7 @@ enum class ValidationResult {
      * Both these situations mean that the store is unable to determine whether the server
      * can be trusted or not.
      *
-     * In this case it is recommended to udpate the list of certificate fingerpritns
+     * In this case it is recommended to update the list of certificate fingerprints
      * and not to trust the server.
      */
     EMPTY
