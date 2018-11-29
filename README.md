@@ -18,7 +18,8 @@
     - [Integration](#integration)
         - [PowerAuth integration](#powerauth-integration)
         - [PowerAuth integration from Java](#powerauth-integration-from-java)
-        - [Integration with HttpsUrlConnection and OkHttp](#integration-with-httpsurlconnection-and-okhttp)
+        - [Integration with HttpsUrlConnection](#integration-with-httpsurlconnection)
+        - [Integration with OkHttp](#integration-with-okhttp)
 - [FAQ](#faq)
 - [License](#license)
 - [Contact](#contact)
@@ -366,12 +367,33 @@ CertStore store = PowerAuthCertStore.createInstance(configuration, context, "my-
 Note that Kotlin's way of construction `CertStore.powerAuthCertStore` is not available in Java.
 Call this in Java is too cumbersome: `PowerAuthIntegrationKt.powerAuthCertStore(CertStore.Companion, configuration, context, null)`.
 
-### Integration with HttpsUrlConnection and OkHttp
+### Integration with HttpsUrlConnection
 
-For integration with HttpsUrlConnection or [OkHttp](http://square.github.io/okhttp/)
-use classes `SSLPinningIntegration` and `SSLPinningX509TrustManager`.
-These provide the necessary `SSLSocketFactory` and `X509TrustManager`.
+For integration with HttpsUrlConnection use `SSLSocketFactory` provided by `SSLPinningIntegration.createSSLPinningSocketFactory(…)` methods.
+The code will look like this:
+```kotlin
+val url = URL(…)
+val connection = url.openConnection() as HttpsURLConnection
 
+connection.sslSocketFactory = SSLPinningIntegration.createSSLPinningSocketFactory(…)
+
+connection.connect()
+```
+
+### Integration with OkHttp
+
+OkHttp provides nice API in the form of [CertificatePinner](https://square.github.io/okhttp/3.x/okhttp/okhttp3/CertificatePinner.html).
+Unfortunately, WultraSSLPinning doesn't support it since it requires public key pinning while [we use certificate pinning](#what-is-pinned).
+
+Fortunately, it's still possible to use OkHttp. You just have to use this way:
+```kotlin
+val okhttpClient = OkHttpClient.Builder()
+                .sslSocketFactory(sslSocketFactory, trustManager)
+                .build()
+```
+
+In the code above use `SSLSocketFactory` provided by `SSLPinningIntegration.createSSLPinningSocketFactory(…)`
+and use `SSLPinningX509TrustManager`.
 
 ## FAQ
 
@@ -435,6 +457,16 @@ fun validateCertWithPublicKeyPinning(certificate: X509Certificate): ValidationRe
 
 If you need `SSLSocketFactory`, reimplement `X509TrustManager`
 using the above `validateCertWithPublicKeyPinning()` method.
+
+### How can use OkHttp to pin only some domains?
+
+If your app connects to both pinned and not pinned domains, then
+create two instances of OkHttp client.
+
+Use one instance to communicate with pinned domains. Setup it up according to [Integration with OkHttp](#integration-with-okhttp).
+
+Use the second instance to communicate with not pinned domains.
+Use normal setup for this one, don't use `SSLSocketFactory` and `TrustManager` provided by this library.
 
 ---
 
