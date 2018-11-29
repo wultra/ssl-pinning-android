@@ -92,7 +92,7 @@ fun updateAndCheck(store: CertStore, updateMode: UpdateMode, expectedUpdateResul
     val latch = CountDownLatch(1)
     val updateResultWrapper = UpdateWrapper()
     val updateStarted = store.update(updateMode, object : UpdateObserver {
-        override fun onUpdateInitiated(type: UpdateType) {
+        override fun onUpdateStarted(type: UpdateType) {
             updateResultWrapper.updateType = type
             initLatch.countDown();
         }

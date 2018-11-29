@@ -151,7 +151,7 @@ public class CertStoreUpdateTest extends CommonJavaTest {
 
         store.update(UpdateMode.FORCED, new UpdateObserver() {
             @Override
-            public void onUpdateInitiated(@NotNull UpdateType type) {
+            public void onUpdateStarted(@NotNull UpdateType type) {
                 assertEquals(UpdateType.DIRECT, type);
             }
 

@@ -77,7 +77,7 @@ public class TestUtils {
         UpdateWrapper updateWrapper = new UpdateWrapper();
         store.update(updateMode, new UpdateObserver() {
             @Override
-            public void onUpdateInitiated(@NotNull UpdateType type) {
+            public void onUpdateStarted(@NotNull UpdateType type) {
                 updateWrapper.setUpdateType(type);
                 initLatch.countDown();
             }
