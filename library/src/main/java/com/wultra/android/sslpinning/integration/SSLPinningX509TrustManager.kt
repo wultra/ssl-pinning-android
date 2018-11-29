@@ -16,6 +16,7 @@
 
 package com.wultra.android.sslpinning.integration
 
+import android.annotation.SuppressLint
 import com.wultra.android.sslpinning.CertStore
 import com.wultra.android.sslpinning.ValidationResult
 import java.security.cert.CertificateException
@@ -29,6 +30,7 @@ import javax.net.ssl.X509TrustManager
  */
 class SSLPinningX509TrustManager(private val certStore: CertStore) : X509TrustManager {
 
+    @SuppressLint("TrustAllX509TrustManager")
     override fun checkClientTrusted(chain: Array<out X509Certificate>, authType: String) {
     }
 

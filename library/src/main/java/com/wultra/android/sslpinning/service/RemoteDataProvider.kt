@@ -31,7 +31,7 @@ interface RemoteDataProvider {
      *
      * Always invoke on a worker thread.
      *
-     * @return Bytes as recieved from the remote server. Typically containing data in JSON format.
+     * @return Bytes as received from the remote server. Typically containing data in JSON format.
      */
     @WorkerThread
     fun getFingerprints(): ByteArray

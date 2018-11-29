@@ -23,7 +23,7 @@ import java.net.URL
 
 /**
  * Handling of network communication with the server.
- * Used internally in [CertStore].
+ * Used internally in [com.wultra.android.sslpinning.CertStore].
  *
  * @property baseUrl URL of the remote server.
  * @author Tomas Kypta, tomas.kypta@wultra.com
@@ -46,7 +46,7 @@ class RestApi(private val baseUrl: URL) : RemoteDataProvider {
     /**
      * Perform REST request to get fingerprints from the remote server.
      *
-     * @return Bytes as recieved from the remote server. Typically containing data in JSON format.
+     * @return Bytes as received from the remote server. Typically containing data in JSON format.
      */
     @WorkerThread
     override fun getFingerprints(): ByteArray {

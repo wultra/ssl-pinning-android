@@ -28,7 +28,7 @@ import java.util.*
 import org.mockito.Mockito.`when` as wh
 
 /**
- * Test gloval validation observers.
+ * Test global validation observers.
  *
  * @author Tomas Kypta, tomas.kypta@wultra.com
  */

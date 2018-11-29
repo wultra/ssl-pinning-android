@@ -205,7 +205,7 @@ class CertStoreConfiguration(
         }
 
         /**
-         * Executor service for performing silend updates of certificate fingerprints.
+         * Executor service for performing silent updates of certificate fingerprints.
          */
         fun executorService(executorService: ExecutorService?) = apply {
             this.executorService = executorService
