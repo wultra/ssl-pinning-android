@@ -171,15 +171,15 @@ class CertStore internal constructor(private val configuration: CertStoreConfigu
      *
      * The method checks if the update is necessary based on the stored data and update mode.
      * It internally computes [UpdateType] as in [getUpdateType] method.
-     * The observer returns [UpdateType] in [UpdateObserver.onUpdateInitiated] method after
+     * The observer returns [UpdateType] in [UpdateObserver.onUpdateStarted] method after
      * the method is called. And [UpdateObserver.onUpdateFinished] with [UpdateResult]
      * is called after update was performed.
      *
      * If the method decides update is not necessary ([UpdateType.NO_UPDATE]),
      * it will not start the update and [UpdateObserver.onUpdateFinished] is called after
-     * [UpdateObserver.onUpdateInitiated].
+     * [UpdateObserver.onUpdateStarted].
      *
-     * In every case both callbacks [UpdateObserver.onUpdateInitiated]
+     * In every case both callbacks [UpdateObserver.onUpdateStarted]
      * and [UpdateObserver.onUpdateFinished] are always called.
      *
      * The update is scheduled either on an [java.util.concurrent.ExecutorService] provided in the configuration
@@ -200,7 +200,7 @@ class CertStore internal constructor(private val configuration: CertStoreConfigu
         }
 
         mainThreadHandler.post {
-            updateObserver.onUpdateInitiated(updateType)
+            updateObserver.onUpdateStarted(updateType)
         }
 
         if (!updateType.isPerformingUpdate) {

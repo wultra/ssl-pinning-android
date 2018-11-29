@@ -31,17 +31,17 @@ import android.support.annotation.MainThread
 interface UpdateObserver {
 
     /**
-     * Called when an update is initiated and [UpdateType] is evaluated.
+     * Called when an update has been started and [UpdateType] has been evaluated.
      *
      * @param type Type of updated that was selected based on the input parameters and stored data.
      */
     @MainThread
-    fun onUpdateInitiated(type: UpdateType)
+    fun onUpdateStarted(type: UpdateType)
 
     /**
      * Called when an update finishes.
      *
-     * In case of [UpdateType.NO_UPDATE], it's called immediately after [onUpdateInitiated].
+     * In case of [UpdateType.NO_UPDATE], it's called immediately after [onUpdateStarted].
      *
      * @param result Result of the update.
      */

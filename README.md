@@ -176,7 +176,7 @@ certStore.update(updateMode, updateObserver)
 The method is asynchronous.
 
 `UpdateObserver` has two callbacks:
-- `onUpdateInitiated(UpdateType)` tells you what type of update has been started
+- `onUpdateStarted(UpdateType)` tells you what type of update has been started
 - `onUpdateFinished(UpdateResult)` tells you the result fo the update
 
 Both callbacks are notified on the main thread.
@@ -205,7 +205,7 @@ if not defined, the update run on a dedicated thread.
 Note that the app is responsible for invoking update method.
 The app has to typically call the update during the application's startup,
 before a secure HTTPS request is initiated to a server that's supposed to be validated with the pinning.
-If the update type is **not** `UpdateType.DIRECT` the app can resume work right after `onUpdateInitiated()`
+If the update type is **not** `UpdateType.DIRECT` the app can resume work right after `onUpdateStarted()`
 is called.
 
 The update function works in two basic modes:
