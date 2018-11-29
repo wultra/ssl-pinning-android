@@ -88,15 +88,22 @@ fun getCertificateFromUrl(urlString: String): X509Certificate {
 
 @Throws(Exception::class)
 fun updateAndCheck(store: CertStore, updateMode: UpdateMode, expectedUpdateResult: UpdateResult) {
+    val initLatch = CountDownLatch(1)
     val latch = CountDownLatch(1)
-    val updateResultWrapper = UpdateResultWrapper()
+    val updateResultWrapper = UpdateWrapper()
     val updateStarted = store.update(updateMode, object : UpdateObserver {
+        override fun onUpdateInitiated(type: UpdateType) {
+            updateResultWrapper.updateType = type
+            initLatch.countDown();
+        }
+
         override fun onUpdateFinished(result: UpdateResult) {
             updateResultWrapper.updateResult = result
             latch.countDown()
         }
     })
-    if (updateStarted) {
+    initLatch.await(500, TimeUnit.MILLISECONDS)
+    updateResultWrapper.updateType?.isPerformingUpdate?.let {
         assertTrue(latch.await(3, TimeUnit.SECONDS))
     }
     assertEquals(expectedUpdateResult, updateResultWrapper.updateResult)

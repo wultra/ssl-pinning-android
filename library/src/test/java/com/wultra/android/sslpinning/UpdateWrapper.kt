@@ -17,8 +17,9 @@
 package com.wultra.android.sslpinning
 
 /**
- * Helper wrapper for passing update result outside of callbacks.
+ * Helper wrapper for passing update type and result outside of callbacks.
  *
  * @author Tomas Kypta, tomas.kypta@wultra.com
  */
-data class UpdateResultWrapper(var updateResult: UpdateResult? = null)
+data class UpdateWrapper(var updateResult: UpdateResult? = null,
+                         var updateType: UpdateType? = null)

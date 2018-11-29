@@ -169,66 +169,71 @@ class CertStore internal constructor(private val configuration: CertStoreConfigu
     /**
      * Tells `CertStore` to update its database of certificates from the remote location.
      *
-     * This method checks if the update is necessary based on the stored data and update mode.
-     * If it decides update is not necessary, it will not start the update and return false.
+     * The method checks if the update is necessary based on the stored data and update mode.
+     * It internally computes [UpdateType] as in [getUpdateType] method.
+     * The observer returns [UpdateType] in [UpdateObserver.onUpdateInitiated] method after
+     * the method is called. And [UpdateObserver.onUpdateFinished] with [UpdateResult]
+     * is called after update was performed.
      *
-     * The update is scheduled either on an [ExecutorService] provided in the configuration
-     * or on a dedicated [Thread] if no [ExecutorService] was defined in the configuration.
+     * If the method decides update is not necessary ([UpdateType.NO_UPDATE]),
+     * it will not start the update and [UpdateObserver.onUpdateFinished] is called after
+     * [UpdateObserver.onUpdateInitiated].
+     *
+     * In every case both callbacks [UpdateObserver.onUpdateInitiated]
+     * and [UpdateObserver.onUpdateFinished] are always called.
+     *
+     * The update is scheduled either on an [java.util.concurrent.ExecutorService] provided in the configuration
+     * or on a dedicated [Thread] if no [java.util.concurrent.ExecutorService] was defined in the configuration.
      *
      * The update observer is delivered on the main thread.
      * The update observer is held with a strong reference.
      *
      * @param mode Update mode.
-     * @param updateObserver Observer for update result
-     * @return True if an update is started in the background, false if no update is started.
+     * @param updateObserver Observer for [UpdateType] and [UpdateResult].
      */
-    @JvmOverloads
-    fun update(mode: UpdateMode = UpdateMode.DEFAULT, updateObserver: UpdateObserver? = null): Boolean {
-        val pair = checkUpdateNeededInternal()
+    fun update(mode: UpdateMode = UpdateMode.DEFAULT, updateObserver: UpdateObserver) {
         val now = Date()
-        var needsDirectUpdate = pair.first || mode == UpdateMode.FORCED
-        var needsSilentUpdate = pair.second
-
-        if (needsDirectUpdate) {
-            doUpdateAsync(now, updateObserver)
-            return true
+        val updateType = if (mode == UpdateMode.FORCED) {
+            UpdateType.DIRECT
         } else {
-            if (needsSilentUpdate) {
-                doUpdateAsync(now, updateObserver)
-                return true
-            }
+            getUpdateType()
         }
-        return false
+
+        mainThreadHandler.post {
+            updateObserver.onUpdateInitiated(updateType)
+        }
+
+        if (!updateType.isPerformingUpdate) {
+            mainThreadHandler.post {
+                updateObserver.onUpdateFinished(UpdateResult.OK)
+            }
+        } else {
+            doUpdateAsync(now, updateObserver)
+        }
     }
 
     /**
-     * Check if an update (either direct or silent) is necessary based on the cached data.
+     * Get type of an update (either direct or silent) that would be started
+     * based on the cached fingerprint data when started with [UpdateMode.DEFAULT].
      *
-     * This check performs the same check that happens inside [update] method.
-     * If the method returns true, it's recommended to perform an update.
-     *
-     * @return True if either direct or silent update is necessary.
+     * @return Type of the update that would be performed.
      *
      * @since 0.9.0
      */
-    fun checkUpdateNeeded(): Boolean {
-        val pair = checkUpdateNeededInternal()
-        return pair.first || pair.second
-    }
-
-    private fun checkUpdateNeededInternal(): Pair<Boolean, Boolean> {
+    fun getUpdateType(): UpdateType {
         val now = Date()
         val cachedData = getCachedData()
-        var needsDirectUpdate = true
-        var needsSilentUpdate = false
 
         cachedData?.let {
-            needsDirectUpdate = it.numberOfValidCertificates(now) == 0
-            if (!needsDirectUpdate) {
-                needsSilentUpdate = it.nextUpdate.before(now)
+            if (it.numberOfValidCertificates(now) == 0) {
+                return UpdateType.DIRECT
+            }
+
+            if (it.nextUpdate.before(now)) {
+                return UpdateType.SILENT
             }
         }
-        return Pair(needsDirectUpdate, needsSilentUpdate)
+        return UpdateType.NO_UPDATE
     }
 
     @WorkerThread
@@ -241,13 +246,11 @@ class CertStore internal constructor(private val configuration: CertStoreConfigu
         return processReceivedData(bytes, currentDate)
     }
 
-    private fun doUpdateAsync(currentDate: Date, updateObserver: UpdateObserver? = null) {
+    private fun doUpdateAsync(currentDate: Date, updateObserver: UpdateObserver) {
         val updateRunnable = Runnable {
             val result = doUpdate(currentDate)
-            updateObserver?.let {
-                mainThreadHandler.post {
-                    updateObserver.onUpdateFinished(result)
-                }
+            mainThreadHandler.post {
+                updateObserver.onUpdateFinished(result)
             }
         }
 
@@ -260,7 +263,7 @@ class CertStore internal constructor(private val configuration: CertStoreConfigu
             thread.priority = Process.THREAD_PRIORITY_BACKGROUND
             thread.uncaughtExceptionHandler =
                     Thread.UncaughtExceptionHandler { t, e ->
-                        WultraDebug.error("Silent update failed, $t crashed with ${e}.")
+                        WultraDebug.error("Silent update failed, $t crashed with $e.")
                     }
             thread.start()
         }

@@ -22,6 +22,7 @@ import com.wultra.android.sslpinning.interfaces.ECPublicKey;
 import com.wultra.android.sslpinning.interfaces.SignedData;
 import com.wultra.android.sslpinning.service.RemoteDataProvider;
 
+import org.jetbrains.annotations.NotNull;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.powermock.modules.junit4.PowerMockRunner;
@@ -147,9 +148,19 @@ public class CertStoreUpdateTest extends CommonJavaTest {
         CertStore store = new CertStore(config, cryptoProvider, secureDataStore, remoteDataProvider);
         TestUtils.assignHandler(store, handler);
 
-        boolean updateStarted = store.update(UpdateMode.FORCED);
+
+        store.update(UpdateMode.FORCED, new UpdateObserver() {
+            @Override
+            public void onUpdateInitiated(@NotNull UpdateType type) {
+                assertEquals(UpdateType.DIRECT, type);
+            }
+
+            @Override
+            public void onUpdateFinished(@NotNull UpdateResult result) {
+
+            }
+        });
         assertTrue(latch.await(2, TimeUnit.SECONDS));
-        assertTrue(updateStarted);
     }
 
     @NonNull
