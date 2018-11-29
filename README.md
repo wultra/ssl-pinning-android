@@ -170,44 +170,56 @@ val certStore = CertStore.powerAuthCertStore(configuration = configuration, appC
 To update the list of fingerprints from the remote server, use the following code:
 
 ```kotlin
-val updateStarted = certStore.update(updateMode, updateObserver)
+certStore.update(updateMode, updateObserver)
 ```
 
-The method is asynchronous. It returns boolean value. True signifies that the udpate is has been started,
-false means that the method internally decided that update is not necessary based on
-the cached data and input parameters.
-Result of the udpate is returned in `UpdateObserver` passed as a second argument.
-It is notified on the main thread.
-The observer is optional. Update can be called this way:
-```java
-boolean updateStarted = certStore.update(updateMode)
-```
+The method is asynchronous.
 
-The app (not the library) is responsible for invoking updates.
-If the update is not forced the library does the actual update only
-if the stored fingerprints are expired or about to expire.
+`UpdateObserver` has two callbacks:
+- `onUpdateInitiated(UpdateType)` tells you what type of update has been started
+- `onUpdateFinished(UpdateResult)` tells you the result fo the update
 
-The app has to typically call the update during the application's startup, 
-before a secure HTTPS request is initiated to a server that's supposed to be validated with the pinning. 
+Both callbacks are notified on the main thread.
+
+There are three update types:
+- `UpdateType.DIRECT` - The update is either **forced** or the
+library is missing essential data (fingerprints). The app is not advised to continue
+until the update is finished because there's a high risk of failing network requests
+due to server certificates evaluated as untrusted.
+- `UpdateType.SILENT` - The update is not critical but will be performed.
+The library has data but the data are going to expire soon. There's low risk
+of failing network requests due to server certificates evaluated as untrusted.
+- `UpdateType.NO_UPDATE` - No update will be performed. The library
+has data and they are not going to expire soon. There's low risk
+of failing network requests due to server certificates evaluated as untrusted.
+
+Note that in any update type there's still risk of failing network requests
+due to server certificates evaluated as untrusted. This is due to the fact
+that server certificate might be replaced at any time and the library might
+not be aware of it. To mitigate this cases it's recommended to implement
+a [global validation observer](#global-validation-observers).
+
+Updates are performed on an `ExecutorService` defined in the configuration,
+if not defined, the update run on a dedicated thread.
+
+Note that the app is responsible for invoking update method.
+The app has to typically call the update during the application's startup,
+before a secure HTTPS request is initiated to a server that's supposed to be validated with the pinning.
+If the update type is **not** `UpdateType.DIRECT` the app can resume work right after `onUpdateInitiated()`
+is called.
 
 The update function works in two basic modes:
 
 - **Forced mode**, this happens when the mode is forced (`UpdateMode.FORCED`).
 - **Default mode**, this mode does internal evaluation of the stored data and configuration
 and tries to avoid unnecessary downloads when the data are ok.
-Note that the method does not evaluate whether the cert on the server endpoints was updated.
-The frequency of default update is predefined and determined by the configuration and currently stored data (fingerprints).
-
-The both updates are performed on an `ExecutorService` defined in the configuration,
-if not defined, the update run on a dedicated thread.
+Note that the method does not evaluate whether the certificates on the server endpoints were updated.
+The frequency of the default update is predefined by the configuration and currently stored data (fingerprints).
 
 ### Checking if update is necessary
 
 To check if udpate is needed based on the stored data and configuration,
-there is `certStore.checkUpdateNeeded()` method.
-
-If the method returns true, update would be performed even when not forced.
-Otherwise default update mode would omit the update.
+there is `certStore.getUpdateType()` method which returns `UpdateType`.
 
 ### Switching server certificate
 
@@ -219,6 +231,9 @@ Sudden change of a certificate on a pinned domain is best resolved by utilizing
 a [global validation observer](#global-validation-observers). The observer
 is notified about validation failures. The app can then
 force update the fingerprints to resolve the failing TLS handshakes.
+
+Note that failed validation itself doesn't affect the stored fingerprints,
+update is necessary to make a change.
 
 ## Fingerprint validation
 

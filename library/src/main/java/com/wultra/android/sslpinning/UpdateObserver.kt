@@ -16,9 +16,13 @@
 
 package com.wultra.android.sslpinning
 
+import android.support.annotation.MainThread
+
 /**
- * Observer for receiving update rusults from asynchronous
+ * Observer for receiving update results from asynchronous
  * [CertStore.update] method.
+ *
+ * Callbacks are executed on the main thread.
  *
  * @author Tomas Kypta, tomas.kypta@wultra.com
  *
@@ -27,9 +31,20 @@ package com.wultra.android.sslpinning
 interface UpdateObserver {
 
     /**
+     * Called when an update is initiated and [UpdateType] is evaluated.
+     *
+     * @param type Type of updated that was selected based on the input parameters and stored data.
+     */
+    @MainThread
+    fun onUpdateInitiated(type: UpdateType)
+
+    /**
      * Called when an update finishes.
+     *
+     * In case of [UpdateType.NO_UPDATE], it's called immediately after [onUpdateInitiated].
      *
      * @param result Result of the update.
      */
+    @MainThread
     fun onUpdateFinished(result: UpdateResult)
 }

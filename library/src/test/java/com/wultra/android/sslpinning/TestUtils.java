@@ -35,6 +35,7 @@ import java.util.concurrent.TimeUnit;
 import javax.net.ssl.HttpsURLConnection;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
 
@@ -71,21 +72,30 @@ public class TestUtils {
     }
 
     public static UpdateResult updateAndCheck(CertStore store, UpdateMode updateMode, UpdateResult expectedUpdateResult) throws Exception {
+        CountDownLatch initLatch = new CountDownLatch(1);
         CountDownLatch latch = new CountDownLatch(1);
-        UpdateResultWrapper updateResultWrapper = new UpdateResultWrapper();
-        boolean updateStarted = store.update(updateMode, new UpdateObserver() {
+        UpdateWrapper updateWrapper = new UpdateWrapper();
+        store.update(updateMode, new UpdateObserver() {
+            @Override
+            public void onUpdateInitiated(@NotNull UpdateType type) {
+                updateWrapper.setUpdateType(type);
+                initLatch.countDown();
+            }
+
             @Override
             public void onUpdateFinished(@NotNull UpdateResult result) {
-                updateResultWrapper.setUpdateResult(result);
+                updateWrapper.setUpdateResult(result);
                 latch.countDown();
             }
         });
-        if (updateStarted) {
+        initLatch.await(500, TimeUnit.MILLISECONDS);
+        assertNotNull(updateWrapper.getUpdateType());
+        if (updateWrapper.getUpdateType().isPerformingUpdate()) {
             assertTrue(latch.await(3, TimeUnit.SECONDS));
         }
         if (expectedUpdateResult != null) {
-            assertEquals(expectedUpdateResult, updateResultWrapper.getUpdateResult());
+            assertEquals(expectedUpdateResult, updateWrapper.getUpdateResult());
         }
-        return updateResultWrapper.getUpdateResult();
+        return updateWrapper.getUpdateResult();
     }
 }

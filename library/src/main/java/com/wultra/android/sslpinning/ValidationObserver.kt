@@ -16,10 +16,12 @@
 
 package com.wultra.android.sslpinning
 
+import android.support.annotation.MainThread
+
 /**
  * Observer for validation failures.
  *
- * When registered receives all validation failures happending on the given [CertStore].
+ * When registered receives all validation failures happening on the given [CertStore].
  * Callbacks are executed on the main thread.
  *
  * @author Tomas Kypta, tomas.kypta@wultra.com
@@ -33,6 +35,7 @@ interface ValidationObserver {
      *
      * @param commonName The common name that was validated with result [ValidationResult.UNTRUSTED].
      */
+    @MainThread
     fun onValidationUntrusted(commonName: String)
 
     /**
@@ -40,5 +43,6 @@ interface ValidationObserver {
      *
      * @param commonName The common name that was validated with result [ValidationResult.EMPTY].
      */
+    @MainThread
     fun onValidationEmpty(commonName: String)
 }
