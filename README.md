@@ -3,7 +3,6 @@
 `WultraSSLPinning` is an Android library implementing dynamic SSL pinning, written in Kotlin.
 
 - [Introduction](#introduction)
-    - [What is pinned](#what-is-pinned)
 - [Installation](#installation)
     - [Requirements](#requirements)
     - [Gradle](#gradle)
@@ -12,7 +11,6 @@
         - [Predefined fingerprint](#predefined-fingerprint)
     - [Update fingerprints](#updating-fingerprints)
         - [Checking if update is necessary](#checking-if-update-is-necessary)
-        - [Switching server certificate](#switching-server-certificate)
     - [Fingerprint validation](#fingerprint-validation)
         - [Global validation observers](#global-validation-observers)
     - [Integration](#integration)
@@ -20,6 +18,7 @@
         - [PowerAuth integration from Java](#powerauth-integration-from-java)
         - [Integration with HttpsUrlConnection](#integration-with-httpsurlconnection)
         - [Integration with OkHttp](#integration-with-okhttp)
+- [Switching server certificate](#switching-server-certificate)
 - [FAQ](#faq)
 - [License](#license)
 - [Contact](#contact)
@@ -54,39 +53,7 @@ Before you start using the library, you should also check our other related proj
 - [Dynamic SSL Pinning Tool](https://github.com/wultra/ssl-pinning-tool) - the command line tool written in Java, for generating update JSON data consumed by this library.
 - [iOS version](https://github.com/wultra/ssl-pinning-ios) of the library
 
-### What is pinned
-
-In SSL pinning there are [two options](https://www.owasp.org/index.php/Certificate_and_Public_Key_Pinning#What_Should_Be_Pinned.3F) of what to pin:
-1. **Pin the certificate** (DER encoding)
-2. **Pin the public key**
-
-**WultraSSLpinning** tooling ([this Android version](https://github.com/wultra/ssl-pinning-android),
-[iOS version](https://github.com/wultra/ssl-pinning-ios)
-and [Dynamic SSL Pinning Tool](https://github.com/wultra/ssl-pinning-tool))
-use *option 1 - they pin the certificate*.
-
-In Java (Android) world this means that the library computes the fingerprint
-from:
-```java
-Certificate certificate = …
-byte[] bytesToComputeFringerprintFrom = certificate.getEncoded()
-```
-
-Note: Many blog posts and tools for certificate pinning on Android instead mention/use option 2 - public key pinning.
-An example is [CertificatePinner](https://square.github.io/okhttp/3.x/okhttp/okhttp3/CertificatePinner.html)
-from popular [OkHttp](http://square.github.io/okhttp/) library.
-
-In case of public key pinning the fingerprint is computed from:
-```java
-Certificate certificate = …
-byte[] bytesToComputeFringerprintFrom = certificate.getPublicKey().getEncoded()
-```
-
-This means that `CertificatePinner` cannot be readily used with **WultraSSLPinning** library.
-
-
 ## Installation
-
 
 ### Requirements
 
@@ -102,7 +69,6 @@ implementation 'com.wultra.android.sslpinning:wultra-ssl-pinning:0.9.0'
 
 Also make sure you have `jcenter()` repository among the project repositories.
 
-
 ## Usage
 
 - `CertStore` - the main class which provides all the library features
@@ -115,15 +81,15 @@ The next chapters of this document will explain how to configure and use `CertSt
 An example for `CertStore` configuration in Kotlin:
 
 ```kotlin
-val publicKey: ByteArray
+val publicKey: ByteArray = Base64.decode("BMne....kdh2ak=", Base64.NO_WRAP)
 val configuration = CertStoreConfiguration.Builder(
-                            serviceUrl = URL("https://…"), 
+                            serviceUrl = URL("https://..."), 
                             publicKey = publicKey)
                         .identifier(identifier)
                         .expectedCommonNames(expectedCommonNames)
                         .fallbackCertificate(fallbackCertificate)
                         .build()
-val certStore = CertStore(configuration, cryptoProvider, secureDataStore)
+val certStore = CertStore.powerAuthCertStore(configuration = configuration, appContext)
 ```
 
 The configuration has the following properties:
@@ -139,7 +105,6 @@ In this time window `CertStore` will try to update the list of fingerprints more
 Default value is 2 weeks before the next expiration.
 - `executorService` - defines `java.util.concurrent.ExecutorService` for running updates.
 If not defined updates run on a dedicated thread (not pooled).
-
 
 ### Predefined fingerprint
 
@@ -165,24 +130,54 @@ val configuration = CertStoreConfiguration.Builder(
 val certStore = CertStore.powerAuthCertStore(configuration = configuration, appContext)
 ```
 
-
 ## Updating fingerprints
 
 To update the list of fingerprints from the remote server, use the following code:
 
 ```kotlin
-certStore.update(updateMode, updateObserver)
+certStore.update(UpdateMode.DEFAULT, UpdateMode.DEFAULT, object : DefaultUpdateObserver() {
+    override fun continueExecution() {
+        // Certstore is likely up-to-date, you can resume execution of your code.
+    }
+
+    override fun handleFailedUpdate(type: UpdateType, result: UpdateResult) {
+        // There was an error during the update, present an error to the user.
+    }
+
+})
 ```
 
-The method is asynchronous.
+The method is asynchronous. `DefaultUpdateObserver` has two callbacks:
 
-`UpdateObserver` has two callbacks:
+- `continueExecution()` tells you that the certstore likely contains up-to-date data and your application should continue with the flow.
+- `handleFailedUpdate(UpdateType, UpdateResult)` tells you that there was an error during the update execution you should handle.
+
+Both callbacks are notified on the main thread.
+
+`DefaultUpdateObserver` is the default implementation of `UpdateObserver`. In case you need more control over the flow, you can use the interface directly:
+
+```kotlin
+certStore.update(UpdateMode.DEFAULT, UpdateMode.DEFAULT, object : UpdateObserver() {
+    override fun onUpdateStarted(type: UpdateType) {
+        // Certstore update started, either in DIRECT, SILENT or NO_UPDATE mode 
+    }
+
+    override fun onUpdateFinished(type: UpdateType, result: UpdateResult) {
+        // Certstore update of a given type finished asynchronously with some result.
+    }
+
+})
+```
+
+The method is asynchronous. `UpdateObserver` has two callbacks:
+
 - `onUpdateStarted(UpdateType)` tells you what type of update has been started
 - `onUpdateFinished(UpdateType, UpdateResult)` tells you the result and type of the update
 
 Both callbacks are notified on the main thread.
 
 There are three update types:
+
 - `UpdateType.DIRECT` - The update is either **forced** or the
 library is missing essential data (fingerprints). The app is not advised to continue
 until the update is finished because there's a high risk of failing network requests
@@ -194,51 +189,25 @@ of failing network requests due to server certificates evaluated as untrusted.
 has data and they are not going to expire soon. There's low risk
 of failing network requests due to server certificates evaluated as untrusted.
 
-To simplify integration, the library offers `DefaultUpdateObserver`
-that offers abstract method `continueExecution()` that will be called
-when it's recommended to continue execution based on the evaluated `UpdateType`.
-
-Note that in any update type there's still risk of failing network requests
-due to server certificates evaluated as untrusted. This is due to the fact
-that server certificate might be replaced at any time and the library might
-not be aware of it. To mitigate this cases it's recommended to implement
-a [global validation observer](#global-validation-observers).
-
-Updates are performed on an `ExecutorService` defined in the configuration,
-if not defined, the update run on a dedicated thread.
-
-Note that the app is responsible for invoking update method.
-The app has to typically call the update during the application's startup,
-before a secure HTTPS request is initiated to a server that's supposed to be validated with the pinning.
-If the update type is **not** `UpdateType.DIRECT` the app can resume work right after `onUpdateStarted()`
-is called.
-
 The update function works in two basic modes:
 
 - **Forced mode**, this happens when the mode is forced (`UpdateMode.FORCED`).
 - **Default mode**, this mode does internal evaluation of the stored data and configuration
 and tries to avoid unnecessary downloads when the data are ok.
-Note that the method does not evaluate whether the certificates on the server endpoints were updated.
-The frequency of the default update is predefined by the configuration and currently stored data (fingerprints).
 
-### Checking if update is necessary
+_Note: In any update type, there's still a risk of failing network requests
+due to server certificates evaluated as untrusted. This is due to the fact
+that server certificate might be replaced at any time and the library might
+not be aware of it yet. To mitigate this cases it's recommended to implement
+a [global validation observer](#global-validation-observers)._
 
-To check if udpate is needed based on the stored data and configuration,
-there is `certStore.getUpdateType()` method which returns `UpdateType`.
+Updates are performed on an `ExecutorService` defined in the configuration,
+if not defined, the update run on a dedicated thread.
 
-### Switching server certificate
-
-Certificate pinning is great for your app's security and at the same time
-it's a very dangerous technology.
-Be careful with the update parameters in `CertStoreConfiguration` serving for default updates.
-
-Sudden change of a certificate on a pinned domain is best resolved by utilizing
-a [global validation observer](#global-validation-observers). The observer
-is notified about validation failures. The app can then
-force update the fingerprints to resolve the failing TLS handshakes.
-
-Note that failed validation itself doesn't affect the stored fingerprints,
-update is necessary to make a change.
+Note that your app is responsible for invoking the update method.
+The app typically has to call the update during the application's startup,
+before the first secure HTTPS request is initiated to a server that's supposed
+to be validated with the pinning.
 
 ## Fingerprint validation
 
@@ -249,12 +218,12 @@ You can choose the one which suits best your scenario:
 // [ 1 ]  If you already have the common name (e.g. domain) and certificate fingerprint
 
 val commonName = "yourdomain.com"
-val fingerprint: ByteArray = …
+val fingerprint: ByteArray = ...
 val validationResult = certStore.validateFingerprint(commonName, fingerprint)
 
 // [ 2 ]  If you already have the common name and the certificate data (in DER format)
 val commonName = "yourdomain.com"
-val certData: ByteArray = …
+val certData: ByteArray = ...
 val validationResult = certStore.validateCertificateData(commonName, certData)
 
 // [ 3 ]  You want to validate java.security.cert.X509Certificate
@@ -262,7 +231,7 @@ val certificate: java.security.cert.X509Certificate = connection.getServerCertif
 val validationResult = certStore.validateCertificate(certificate)
 ```
 
-Each `validate…` method returns `ValidationResult` enum with following options:
+Each `validate...` method returns `ValidationResult` enum with following options:
 
 - `ValidationResult.TRUSTED` - the server certificate is trusted. You can continue with the connection
 
@@ -323,8 +292,6 @@ Then the class will provide SSL pinning for all communication initiated within t
 For example, this is how the configuration sequence may look like if you want to use both, `PowerAuthSDK` and `CertStore`:
 
 ```kotlin
-
-
 val certStoreConfiguration = CertStoreConfiguration.Builder(
                             serviceUrl = URL("https://..."),
                             publicKey= publicKey)
@@ -350,10 +317,9 @@ val powerAuthClientConfiguration = PowerAuthClientConfiguration.Builder()
 val powerAuth = PowerAuthSDK.Builder(powerAuthConfiguration)
                 .clientContifuration(powerAuthClientConfiguration)
                 .build(appContext)
-                    
 ```
 
-### PowerAuth integration from Java
+### PowerAuth Integration From Java
 
 Some of the Kotlin's PowerAuthSDK integration APIs are inconvenient in Java.
 A `CertStore` integrating PowerAuthSDK can be created with:
@@ -369,42 +335,64 @@ CertStore store = PowerAuthCertStore.createInstance(configuration, context, "my-
 ```
 
 Note that Kotlin's way of construction `CertStore.powerAuthCertStore` is not available in Java.
-Call this in Java is too cumbersome: `PowerAuthIntegrationKt.powerAuthCertStore(CertStore.Companion, configuration, context, null)`.
+Calling this in Java would be way too cumbersome, but will work:
 
-### Integration with HttpsUrlConnection
+```java
+PowerAuthIntegrationKt.powerAuthCertStore(CertStore.Companion, configuration, context, null);`
+```
 
-For integration with HttpsUrlConnection use `SSLSocketFactory` provided by `SSLPinningIntegration.createSSLPinningSocketFactory(…)` methods.
+### Integration with `HttpsUrlConnection`
+
+For integration with HttpsUrlConnection use `SSLSocketFactory` provided by `SSLPinningIntegration.createSSLPinningSocketFactory(...)` methods.
+
 The code will look like this:
+
 ```kotlin
-val url = URL(…)
+val url = URL(...)
 val connection = url.openConnection() as HttpsURLConnection
 
-connection.sslSocketFactory = SSLPinningIntegration.createSSLPinningSocketFactory(…)
+connection.sslSocketFactory = SSLPinningIntegration.createSSLPinningSocketFactory(store)
 
 connection.connect()
 ```
 
-### Integration with OkHttp
+### Integration with `OkHttp`
 
-OkHttp provides nice API in the form of [CertificatePinner](https://square.github.io/okhttp/3.x/okhttp/okhttp3/CertificatePinner.html).
-Unfortunately, WultraSSLPinning doesn't support it since it requires public key pinning while [we use certificate pinning](#what-is-pinned).
-
-Fortunately, it's still possible to use OkHttp. You just have to use this way:
+ To integrate with OkHttp, use following code:
+ 
 ```kotlin
+val sslSocketFactory = SSLPinningIntegration.createSSLPinningSocketFactory(certStore);
+val trustManager = SSLPinningX509TrustManager(certStore)
+
 val okhttpClient = OkHttpClient.Builder()
                 .sslSocketFactory(sslSocketFactory, trustManager)
                 .build()
 ```
 
-In the code above use `SSLSocketFactory` provided by `SSLPinningIntegration.createSSLPinningSocketFactory(…)`
-and use `SSLPinningX509TrustManager`.
+In the code above, use `SSLSocketFactory` provided by `SSLPinningIntegration.createSSLPinningSocketFactory(...)`
+and an instance of `SSLPinningX509TrustManager`.
+
+## Switching server certificate
+
+Certificate pinning is great for your app's security but at the same time, it requires
+care when deploying it to your customers.
+Be careful with the update parameters in `CertStoreConfiguration` serving for default
+the updates, namely with setting the frequencies of update.
+
+Sudden change of a certificate on a pinned domain is best resolved by utilizing
+a [global validation observer](#global-validation-observers). The observer
+is notified about validation failures. The app can then
+force update the fingerprints to resolve the failing TLS handshakes.
+
+Note that failed validation itself doesn't affect the stored fingerprints,
+update is necessary to make a change.
 
 ## FAQ
-
 
 ### Can the library provide more debug information?
 
 Yes, you can change how much information is printed to the debug console:
+
 ```kotlin
 WultraDebug.loggingLevel = WultraLoggingLevel.RELEASE
 ```
@@ -422,6 +410,38 @@ If needed the library can be used without PowerAuthSDK.
 In this case you can't use any class from `com.wultra.android.sslpinning.integration.powerauth` package
 since they expect PowerAuthSDK to be present.
 Also you have to provide you own implementation of `CryptoProvider` and `SecureDataStore`.
+
+### What is pinned?
+
+In SSL pinning there are [two options](https://www.owasp.org/index.php/Certificate_and_Public_Key_Pinning#What_Should_Be_Pinned.3F) of what to pin:
+
+1. **Pin the certificate** (DER encoding)
+2. **Pin the public key**
+
+**WultraSSLpinning** tooling ([this Android version](https://github.com/wultra/ssl-pinning-android),
+[iOS version](https://github.com/wultra/ssl-pinning-ios) and
+[Dynamic SSL Pinning Tool](https://github.com/wultra/ssl-pinning-tool)) use *option 1: they pin the certificate*.
+
+In Java (Android) world this means that the library computes the fingerprint
+from:
+
+```java
+Certificate certificate = ...;
+byte[] bytesToComputeFringerprintFrom = certificate.getEncoded();
+```
+
+Note: Many blog posts and tools for certificate pinning on Android instead mention/use option 2 - public key pinning.
+An example is [CertificatePinner](https://square.github.io/okhttp/3.x/okhttp/okhttp3/CertificatePinner.html)
+from popular [OkHttp](http://square.github.io/okhttp/) library.
+
+In case of public key pinning the fingerprint is computed from:
+
+```java
+Certificate certificate = ...;
+byte[] bytesToComputeFringerprintFrom = certificate.getPublicKey().getEncoded();
+```
+
+This means that `CertificatePinner` cannot be readily used with **WultraSSLPinning** library.
 
 
 **PowerAuthSDK** already provides these functions.
@@ -462,14 +482,14 @@ fun validateCertWithPublicKeyPinning(certificate: X509Certificate): ValidationRe
 If you need `SSLSocketFactory`, reimplement `X509TrustManager`
 using the above `validateCertWithPublicKeyPinning()` method.
 
-### How can use OkHttp to pin only some domains?
+### How can use `OkHttp` to pin only some domains?
 
 If your app connects to both pinned and not pinned domains, then
 create two instances of OkHttp client.
 
-Use one instance to communicate with pinned domains. Setup it up according to [Integration with OkHttp](#integration-with-okhttp).
+Use one instance to communicate with the pinned domains. Set it up according to [Integration with OkHttp](#integration-with-okhttp).
 
-Use the second instance to communicate with not pinned domains.
+Use the second instance to communicate with the domains that are not pinned.
 Use normal setup for this one, don't use `SSLSocketFactory` and `TrustManager` provided by this library.
 
 ---
