@@ -8,16 +8,16 @@
     - [Gradle](#gradle)
 - [Usage](#usage)
     - [Configuration](#configuration)
-        - [Predefined fingerprint](#predefined-fingerprint)
-    - [Update fingerprints](#updating-fingerprints)
-    - [Fingerprint validation](#fingerprint-validation)
-        - [Global validation observers](#global-validation-observers)
+        - [Predefined Fingerprint](#predefined-fingerprint)
+    - [Update Fingerprints](#updating-fingerprints)
+    - [Fingerprint Validation](#fingerprint-validation)
+        - [Global Validation Observers](#global-validation-observers)
     - [Integration](#integration)
-        - [PowerAuth integration](#powerauth-integration)
-        - [PowerAuth integration from Java](#powerauth-integration-from-java)
+        - [PowerAuth Integration](#powerauth-integration)
+        - [PowerAuth Integration from Java](#powerauth-integration-from-java)
         - [Integration with HttpsUrlConnection](#integration-with-httpsurlconnection)
         - [Integration with OkHttp](#integration-with-okhttp)
-- [Switching server certificate](#switching-server-certificate)
+- [Switching Server Certificate](#switching-server-certificate)
 - [FAQ](#faq)
 - [License](#license)
 - [Contact](#contact)
@@ -105,7 +105,7 @@ Default value is 2 weeks before the next expiration.
 - `executorService` - defines `java.util.concurrent.ExecutorService` for running updates.
 If not defined updates run on a dedicated thread (not pooled).
 
-### Predefined fingerprint
+### Predefined Fingerprint
 
 The `CertStoreConfiguration` may contain an optional data with predefined certificate fingerprint. 
 This technique can speed up the first application's startup when the database of fingerprints is empty. 
@@ -129,7 +129,7 @@ val configuration = CertStoreConfiguration.Builder(
 val certStore = CertStore.powerAuthCertStore(configuration = configuration, appContext)
 ```
 
-## Updating fingerprints
+## Updating Fingerprints
 
 To update the list of fingerprints from the remote server, use the following code:
 
@@ -208,7 +208,7 @@ The app typically has to call the update during the application's startup,
 before the first secure HTTPS request is initiated to a server that's supposed
 to be validated with the pinning.
 
-## Fingerprint validation
+## Fingerprint Validation
 
 The `CertStore` provides several methods for certificate fingerprint validation. 
 You can choose the one which suits best your scenario:
@@ -267,7 +267,7 @@ if (validationResult != ValidationResult.TRUSTED) {
 }
 ```
 
-### Global validation observers
+### Global Validation Observers
 
 In order to be notified about all validation failures there is `ValidationObserver`
 interface and methods on `CertStore` for adding/removing global validation observers.
@@ -280,7 +280,7 @@ The app can then react with force updating the fingerprints.
 
 ## Integration
 
-### PowerAuth integration
+### PowerAuth Integration
 
 The **WultraSSLPinning** library contains classes for integration with the PowerAuth SDK.
 The most important one is the `PowerAuthSslPinningValidationStrategy` class, 
@@ -340,7 +340,7 @@ Calling this in Java would be way too cumbersome, but will work:
 PowerAuthIntegrationKt.powerAuthCertStore(CertStore.Companion, configuration, context, null);`
 ```
 
-### Integration with `HttpsUrlConnection`
+### Integration With `HttpsUrlConnection`
 
 For integration with HttpsUrlConnection use `SSLSocketFactory` provided by `SSLPinningIntegration.createSSLPinningSocketFactory(...)` methods.
 
@@ -355,7 +355,7 @@ connection.sslSocketFactory = SSLPinningIntegration.createSSLPinningSocketFactor
 connection.connect()
 ```
 
-### Integration with `OkHttp`
+### Integration With `OkHttp`
 
  To integrate with OkHttp, use following code:
  
@@ -371,7 +371,7 @@ val okhttpClient = OkHttpClient.Builder()
 In the code above, use `SSLSocketFactory` provided by `SSLPinningIntegration.createSSLPinningSocketFactory(...)`
 and an instance of `SSLPinningX509TrustManager`.
 
-## Switching server certificate
+## Switching Server Certificate
 
 Certificate pinning is great for your app's security but at the same time, it requires
 care when deploying it to your customers.
