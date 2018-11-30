@@ -491,8 +491,6 @@ Use one instance to communicate with the pinned domains. Set it up according to 
 Use the second instance to communicate with the domains that are not pinned.
 Use normal setup for this one, don't use `SSLSocketFactory` and `TrustManager` provided by this library.
 
----
-
 ## License
 
 All sources are licensed using Apache 2.0 license. You can use them with no restriction. 
