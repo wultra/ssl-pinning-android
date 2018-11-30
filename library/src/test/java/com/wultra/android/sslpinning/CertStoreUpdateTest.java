@@ -18,6 +18,7 @@ package com.wultra.android.sslpinning;
 
 import android.support.annotation.NonNull;
 
+import com.wultra.android.sslpinning.integration.DefaultUpdateObserver;
 import com.wultra.android.sslpinning.interfaces.ECPublicKey;
 import com.wultra.android.sslpinning.interfaces.SignedData;
 import com.wultra.android.sslpinning.service.RemoteDataProvider;
@@ -35,6 +36,7 @@ import java.util.concurrent.TimeUnit;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
@@ -149,14 +151,26 @@ public class CertStoreUpdateTest extends CommonJavaTest {
         TestUtils.assignHandler(store, handler);
 
 
-        store.update(UpdateMode.FORCED, new UpdateObserver() {
+        store.update(UpdateMode.FORCED, new DefaultUpdateObserver() {
             @Override
             public void onUpdateStarted(@NotNull UpdateType type) {
                 assertEquals(UpdateType.DIRECT, type);
+                super.onUpdateStarted(type);
             }
 
             @Override
-            public void onUpdateFinished(@NotNull UpdateResult result) {
+            public void onUpdateFinished(@NotNull UpdateType type, @NotNull UpdateResult result) {
+                assertEquals(UpdateType.DIRECT, type);
+                super.onUpdateFinished(type, result);
+            }
+
+            @Override
+            public void handleFailedUpdate(@NotNull UpdateType type, @NotNull UpdateResult result) {
+                fail();
+            }
+
+            @Override
+            public void continueExecution() {
 
             }
         });

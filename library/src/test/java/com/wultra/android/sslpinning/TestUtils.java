@@ -83,7 +83,7 @@ public class TestUtils {
             }
 
             @Override
-            public void onUpdateFinished(@NotNull UpdateResult result) {
+            public void onUpdateFinished(@NotNull UpdateType type, @NotNull UpdateResult result) {
                 updateWrapper.setUpdateResult(result);
                 latch.countDown();
             }

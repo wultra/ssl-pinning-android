@@ -178,7 +178,7 @@ The method is asynchronous.
 
 `UpdateObserver` has two callbacks:
 - `onUpdateStarted(UpdateType)` tells you what type of update has been started
-- `onUpdateFinished(UpdateResult)` tells you the result fo the update
+- `onUpdateFinished(UpdateType, UpdateResult)` tells you the result and type of the update
 
 Both callbacks are notified on the main thread.
 
@@ -193,6 +193,10 @@ of failing network requests due to server certificates evaluated as untrusted.
 - `UpdateType.NO_UPDATE` - No update will be performed. The library
 has data and they are not going to expire soon. There's low risk
 of failing network requests due to server certificates evaluated as untrusted.
+
+To simplify integration, the library offers `DefaultUpdateObserver`
+that offers abstract method `continueExecution()` that will be called
+when it's recommended to continue execution based on the evaluated `UpdateType`.
 
 Note that in any update type there's still risk of failing network requests
 due to server certificates evaluated as untrusted. This is due to the fact
