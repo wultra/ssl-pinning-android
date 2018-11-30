@@ -10,7 +10,6 @@
     - [Configuration](#configuration)
         - [Predefined fingerprint](#predefined-fingerprint)
     - [Update fingerprints](#updating-fingerprints)
-        - [Checking if update is necessary](#checking-if-update-is-necessary)
     - [Fingerprint validation](#fingerprint-validation)
         - [Global validation observers](#global-validation-observers)
     - [Integration](#integration)
@@ -76,7 +75,7 @@ Also make sure you have `jcenter()` repository among the project repositories.
 
 The next chapters of this document will explain how to configure and use `CertStore` for the SSL pinning purposes.
 
-## Configuration
+### Configuration
 
 An example for `CertStore` configuration in Kotlin:
 
