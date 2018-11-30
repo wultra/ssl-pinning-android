@@ -97,7 +97,7 @@ This means that `CertificatePinner` cannot be readily used with **WultraSSLPinni
 To use **WultraSSLPinning** in you Android app add this dependency:
 
 ```gradle
-implementation 'com.wultra.android.sslpinning:wultra-ssl-pinning:0.8.1'
+implementation 'com.wultra.android.sslpinning:wultra-ssl-pinning:0.9.0'
 ```
 
 Also make sure you have `jcenter()` repository among the project repositories.
