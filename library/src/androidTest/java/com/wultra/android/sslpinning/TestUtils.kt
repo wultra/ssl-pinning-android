@@ -97,7 +97,7 @@ fun updateAndCheck(store: CertStore, updateMode: UpdateMode, expectedUpdateResul
             initLatch.countDown();
         }
 
-        override fun onUpdateFinished(result: UpdateResult) {
+        override fun onUpdateFinished(type: UpdateType, result: UpdateResult) {
             updateResultWrapper.updateResult = result
             latch.countDown()
         }

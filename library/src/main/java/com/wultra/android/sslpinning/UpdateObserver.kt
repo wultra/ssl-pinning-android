@@ -33,7 +33,7 @@ interface UpdateObserver {
     /**
      * Called when an update has been started and [UpdateType] has been evaluated.
      *
-     * @param type Type of updated that was selected based on the input parameters and stored data.
+     * @param type Type of update that was selected based on the input parameters and stored data.
      */
     @MainThread
     fun onUpdateStarted(type: UpdateType)
@@ -43,8 +43,9 @@ interface UpdateObserver {
      *
      * In case of [UpdateType.NO_UPDATE], it's called immediately after [onUpdateStarted].
      *
+     * @param type Type of update
      * @param result Result of the update.
      */
     @MainThread
-    fun onUpdateFinished(result: UpdateResult)
+    fun onUpdateFinished(type: UpdateType, result: UpdateResult)
 }

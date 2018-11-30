@@ -205,10 +205,10 @@ class CertStore internal constructor(private val configuration: CertStoreConfigu
 
         if (!updateType.isPerformingUpdate) {
             mainThreadHandler.post {
-                updateObserver.onUpdateFinished(UpdateResult.OK)
+                updateObserver.onUpdateFinished(updateType, UpdateResult.OK)
             }
         } else {
-            doUpdateAsync(now, updateObserver)
+            doUpdateAsync(now, updateType, updateObserver)
         }
     }
 
@@ -246,11 +246,11 @@ class CertStore internal constructor(private val configuration: CertStoreConfigu
         return processReceivedData(bytes, currentDate)
     }
 
-    private fun doUpdateAsync(currentDate: Date, updateObserver: UpdateObserver) {
+    private fun doUpdateAsync(currentDate: Date, updateType: UpdateType, updateObserver: UpdateObserver) {
         val updateRunnable = Runnable {
             val result = doUpdate(currentDate)
             mainThreadHandler.post {
-                updateObserver.onUpdateFinished(result)
+                updateObserver.onUpdateFinished(updateType, result)
             }
         }
 
