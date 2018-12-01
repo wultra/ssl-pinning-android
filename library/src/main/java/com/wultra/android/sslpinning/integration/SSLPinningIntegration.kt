@@ -43,25 +43,7 @@ class SSLPinningIntegration {
          */
         @JvmStatic
         fun createSSLPinningSocketFactory(certStore: CertStore): SSLSocketFactory {
-            // obtain default trust managers
-            val originalTrustManagerFactory = TrustManagerFactory.getInstance("X509")
-            val keyStore: KeyStore? = null
-            originalTrustManagerFactory.init(keyStore)
-            val originalTrustManagers = originalTrustManagerFactory.trustManagers
-
-            val trustManager = SSLPinningX509TrustManager(certStore)
-
-            // use all trust managers after the provided (or our [SSLPinningX509TrustManager])
-            val trustSslPinningCerts = arrayOf(trustManager, *originalTrustManagers)
-            try {
-                val sc = SSLContext.getInstance("TLS")
-                sc.init(null, trustSslPinningCerts, null)
-                return sc.socketFactory
-            } catch (e: NoSuchAlgorithmException) {
-                throw RuntimeException(e)
-            } catch (e: KeyManagementException) {
-                throw RuntimeException(e)
-            }
+            return createSSLPinningSocketFactory(SSLPinningX509TrustManager(certStore))
         }
 
         /**
