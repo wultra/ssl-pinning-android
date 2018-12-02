@@ -375,13 +375,13 @@ and an instance of `SSLPinningX509TrustManager`.
 
 Certificate pinning is great for your app's security but at the same time, it requires
 care when deploying it to your customers.
-Be careful with the update parameters in `CertStoreConfiguration` serving for default
-the updates, namely with setting the frequencies of update.
+Be careful with the update parameters in `CertStoreConfiguration` serving for the default
+updates, namely with setting the frequencies of update.
 
 Sudden change of a certificate on a pinned domain is best resolved by utilizing
 a [global validation observer](#global-validation-observers). The observer
 is notified about validation failures. The app can then
-force update the fingerprints to resolve the failing TLS handshakes.
+force updating the fingerprints to resolve the failing TLS handshakes.
 
 Note that failed validation itself doesn't affect the stored fingerprints,
 update is necessary to make a change.
@@ -481,7 +481,7 @@ fun validateCertWithPublicKeyPinning(certificate: X509Certificate): ValidationRe
 If you need `SSLSocketFactory`, reimplement `X509TrustManager`
 using the above `validateCertWithPublicKeyPinning()` method.
 
-### How can use `OkHttp` to pin only some domains?
+### How can I use `OkHttp` to pin only some domains?
 
 If your app connects to both pinned and not pinned domains, then
 create two instances of OkHttp client.
