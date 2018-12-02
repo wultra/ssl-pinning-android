@@ -73,7 +73,7 @@ public class CertStoreUpdateTestJava {
         // empty
         URL url = new URL("https://gist.githubusercontent.com/TomasKypta/ae4fa795a8c1ffa1ed0144c49b95e63c/raw/761483b6c1fa3039f0b9d7b05c5d43532fc1556a/ssl-pinning-signatures_empty.json");
         CertStoreConfiguration config = new CertStoreConfiguration.Builder(url, getPublicKeyBytes()).build();
-        CertStore store = new CertStore(config, new PowerAuthCryptoProvider(), new PowerAuthSecureDataStore(appContext), getRemoteDataProvider(jsonDataFingerprintsEmpty);
+        CertStore store = new CertStore(config, new PowerAuthCryptoProvider(), new PowerAuthSecureDataStore(appContext), getRemoteDataProvider(jsonDataFingerprintsEmpty));
 
         updateAndCheck(store, UpdateMode.FORCED, UpdateResult.STORE_IS_EMPTY);
     }
