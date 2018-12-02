@@ -45,7 +45,7 @@ fun getRemoteDataProvider(json: String = jsonData): RemoteDataProvider {
     }
 }
 
-val jsonData = """
+const val jsonData = """
 {
   "fingerprints": [
     {
@@ -58,12 +58,12 @@ val jsonData = """
 }
 """
 
-val jsonDataFingerprintsEmpty = "{\"fingerprints\":[]}"
-val jsonDataAllEmpty = "{}"
+const val jsonDataFingerprintsEmpty = "{\"fingerprints\":[]}"
+const val jsonDataAllEmpty = "{}"
 
 
 val url = URL("https://gist.githubusercontent.com/hvge/7c5a3f9ac50332a52aa974d90ea2408c/raw/c5b021db0fcd40b1262ab513bf375e4641834925/ssl-pinning-signatures.json")
-val publicKey = "BC3kV9OIDnMuVoCdDR9nEA/JidJLTTDLuSA2TSZsGgODSshfbZg31MS90WC/HdbU/A5WL5GmyDkE/iks6INv+XE="
+const val publicKey = "BC3kV9OIDnMuVoCdDR9nEA/JidJLTTDLuSA2TSZsGgODSshfbZg31MS90WC/HdbU/A5WL5GmyDkE/iks6INv+XE="
 fun getPublicKeyBytes(): ByteArray {
     return Base64.decode(publicKey, android.util.Base64.NO_WRAP)
 }
@@ -71,7 +71,7 @@ fun getPublicKeyBytes(): ByteArray {
 val GSON = GsonBuilder()
         .registerTypeAdapter(ByteArray::class.java, ByteArrayTypeAdapter())
         .registerTypeAdapter(Date::class.java, DateTypeAdapter())
-        .create()
+        .create()!!
 
 fun getCertificateFromUrl(urlString: String): X509Certificate {
     val url = URL(urlString)
@@ -94,7 +94,7 @@ fun updateAndCheck(store: CertStore, updateMode: UpdateMode, expectedUpdateResul
     val updateStarted = store.update(updateMode, object : UpdateObserver {
         override fun onUpdateStarted(type: UpdateType) {
             updateResultWrapper.updateType = type
-            initLatch.countDown();
+            initLatch.countDown()
         }
 
         override fun onUpdateFinished(type: UpdateType, result: UpdateResult) {

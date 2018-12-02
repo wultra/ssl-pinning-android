@@ -27,8 +27,6 @@ import org.junit.Test;
 
 import java.net.URL;
 
-import static com.wultra.android.sslpinning.TestUtilsKt.getJsonDataAllEmpty;
-import static com.wultra.android.sslpinning.TestUtilsKt.getJsonDataFingerprintsEmpty;
 import static com.wultra.android.sslpinning.TestUtilsKt.getPublicKeyBytes;
 import static com.wultra.android.sslpinning.TestUtilsKt.getRemoteDataProvider;
 import static com.wultra.android.sslpinning.TestUtilsKt.updateAndCheck;
@@ -61,7 +59,7 @@ public class CertStoreUpdateTestJava {
         // empty
         URL url = new URL("https://gist.githubusercontent.com/TomasKypta/ae4fa795a8c1ffa1ed0144c49b95e63c/raw/761483b6c1fa3039f0b9d7b05c5d43532fc1556a/ssl-pinning-signatures_empty.json");
         CertStoreConfiguration config = new CertStoreConfiguration.Builder(url, getPublicKeyBytes()).build();
-        CertStore store = new CertStore(config, new PowerAuthCryptoProvider(), new PowerAuthSecureDataStore(appContext), getRemoteDataProvider(getJsonDataAllEmpty()));
+        CertStore store = new CertStore(config, new PowerAuthCryptoProvider(), new PowerAuthSecureDataStore(appContext), getRemoteDataProvider(TestUtilsKt.jsonDataAllEmpty));
 
         updateAndCheck(store, UpdateMode.FORCED, UpdateResult.INVALID_DATA);
     }
@@ -73,7 +71,7 @@ public class CertStoreUpdateTestJava {
         // empty
         URL url = new URL("https://gist.githubusercontent.com/TomasKypta/ae4fa795a8c1ffa1ed0144c49b95e63c/raw/761483b6c1fa3039f0b9d7b05c5d43532fc1556a/ssl-pinning-signatures_empty.json");
         CertStoreConfiguration config = new CertStoreConfiguration.Builder(url, getPublicKeyBytes()).build();
-        CertStore store = new CertStore(config, new PowerAuthCryptoProvider(), new PowerAuthSecureDataStore(appContext), getRemoteDataProvider(getJsonDataFingerprintsEmpty()));
+        CertStore store = new CertStore(config, new PowerAuthCryptoProvider(), new PowerAuthSecureDataStore(appContext), getRemoteDataProvider(TestUtilsKt.jsonDataFingerprintsEmpty));
 
         updateAndCheck(store, UpdateMode.FORCED, UpdateResult.STORE_IS_EMPTY);
     }

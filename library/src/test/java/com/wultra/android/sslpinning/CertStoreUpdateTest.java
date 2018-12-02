@@ -52,9 +52,7 @@ public class CertStoreUpdateTest extends CommonJavaTest {
     @Test
     public void testCorrectUpdate() throws Exception {
         when(cryptoProvider.ecdsaValidateSignatures(any(SignedData.class), any(ECPublicKey.class)))
-                .thenAnswer(invocation -> {
-                    return true;
-                });
+                .thenAnswer(invocation -> true);
 
         String pinningJsonUrl = "https://gist.githubusercontent.com/hvge/7c5a3f9ac50332a52aa974d90ea2408c/raw/c5b021db0fcd40b1262ab513bf375e4641834925/ssl-pinning-signatures.json";
         UpdateResult updateResult = performForcedUpdate(pinningJsonUrl);
@@ -64,9 +62,7 @@ public class CertStoreUpdateTest extends CommonJavaTest {
     @Test
     public void testInvalidSignatureUpdate() throws Exception {
         when(cryptoProvider.ecdsaValidateSignatures(any(SignedData.class), any(ECPublicKey.class)))
-                .thenAnswer(invocation -> {
-                    return false;
-                });
+                .thenAnswer(invocation -> false);
 
         String pinningJsonUrl = "https://gist.githubusercontent.com/hvge/7c5a3f9ac50332a52aa974d90ea2408c/raw/c5b021db0fcd40b1262ab513bf375e4641834925/ssl-pinning-signatures.json";
         UpdateResult updateResult = performForcedUpdate(pinningJsonUrl);
@@ -76,9 +72,7 @@ public class CertStoreUpdateTest extends CommonJavaTest {
     @Test
     public void testExpiredUpdate() throws Exception {
         when(cryptoProvider.ecdsaValidateSignatures(any(SignedData.class), any(ECPublicKey.class)))
-                .thenAnswer(invocation -> {
-                    return false;
-                });
+                .thenAnswer(invocation -> false);
 
         String pinningJsonUrl = "https://gist.githubusercontent.com/TomasKypta/5a6d99fe441a8c0d201b673d88e223a6/raw/0d12746cad1247ebf9a5b1706afabf8486a7a62e/ssl-pinning-signatures_expired.json";
         UpdateResult updateResult = performForcedUpdate(pinningJsonUrl);
