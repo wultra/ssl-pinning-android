@@ -90,10 +90,11 @@ fun getCertificateFromUrl(urlString: String): X509Certificate {
 }
 
 @Throws(Exception::class)
-fun updateAndCheck(store: CertStore, updateMode: UpdateMode, expectedUpdateResult: UpdateResult) {
+@JvmOverloads
+fun updateAndCheck(store: CertStore, updateMode: UpdateMode, expectedUpdateResult: UpdateResult, expectedUpdateType: UpdateType? = null) {
     val initLatch = CountDownLatch(1)
     val latch = CountDownLatch(1)
-    val updateResultWrapper = UpdateWrapper()
+    val updateResultWrapper = UpdateWrapperInstr()
     val updateStarted = store.update(updateMode, object : UpdateObserver {
         override fun onUpdateStarted(type: UpdateType) {
             updateResultWrapper.updateType = type
@@ -110,6 +111,9 @@ fun updateAndCheck(store: CertStore, updateMode: UpdateMode, expectedUpdateResul
         assertTrue(latch.await(30, TimeUnit.SECONDS))
     }
     assertEquals(expectedUpdateResult, updateResultWrapper.updateResult)
+    expectedUpdateType?.let {
+        assertEquals(it, updateResultWrapper.updateType)
+    }
 }
 
 fun clearStorage() {

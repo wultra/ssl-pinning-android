@@ -224,12 +224,14 @@ class CertStore internal constructor(private val configuration: CertStoreConfigu
         val now = Date()
         val cachedData = getCachedData()
 
-        cachedData?.let {
-            if (it.numberOfValidCertificates(now) == 0) {
+        if (cachedData == null) {
+            return UpdateType.DIRECT
+        } else {
+            if (cachedData.numberOfValidCertificates(now) == 0) {
                 return UpdateType.DIRECT
             }
 
-            if (it.nextUpdate.before(now)) {
+            if (cachedData.nextUpdate.before(now)) {
                 return UpdateType.SILENT
             }
         }

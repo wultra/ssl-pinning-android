@@ -21,5 +21,5 @@ package com.wultra.android.sslpinning
  *
  * @author Tomas Kypta, tomas.kypta@wultra.com
  */
-data class UpdateWrapper(var updateResult: UpdateResult? = null,
-                         var updateType: UpdateType? = null)
+data class UpdateWrapperInstr(var updateResult: UpdateResult? = null,
+                              var updateType: UpdateType? = null)

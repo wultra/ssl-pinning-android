@@ -45,7 +45,17 @@ class CertStoreUpdateTest : CommonTest() {
         val config = CertStoreConfiguration.Builder(url, getPublicKeyBytes()).build()
         val store = CertStore.powerAuthCertStore(config, appContext)
 
-        updateAndCheck(store, UpdateMode.FORCED, UpdateResult.OK)
+        updateAndCheck(store, UpdateMode.FORCED, UpdateResult.OK, UpdateType.DIRECT)
+    }
+
+    @Test
+    fun testRemoteUpdateSignatureGithubDefault() {
+        val config = CertStoreConfiguration.Builder(url, getPublicKeyBytes()).build()
+        val store = CertStore.powerAuthCertStore(config, appContext)
+
+        updateAndCheck(store, UpdateMode.DEFAULT, UpdateResult.OK, UpdateType.DIRECT)
+
+        updateAndCheck(store, UpdateMode.DEFAULT, UpdateResult.OK, UpdateType.NO_UPDATE)
     }
 
     @Test
