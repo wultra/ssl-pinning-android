@@ -149,6 +149,7 @@ class CertStore internal constructor(private val configuration: CertStoreConfigu
         return try {
             GSON.fromJson(String(encodedData), CachedData::class.java)
         } catch (t: Throwable) {
+            WultraDebug.error("Failed to parse stored fingprint data: $t")
             return null
         }
     }
@@ -270,6 +271,7 @@ class CertStore internal constructor(private val configuration: CertStoreConfigu
         val response = try {
             GSON.fromJson(String(data), GetFingerprintResponse::class.java)
         } catch (t: Throwable) {
+            WultraDebug.error("Failed to parse received fingprint data: $t")
             null
         } ?: return UpdateResult.INVALID_DATA
 

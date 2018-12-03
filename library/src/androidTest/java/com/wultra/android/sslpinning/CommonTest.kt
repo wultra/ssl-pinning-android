@@ -14,25 +14,22 @@
  * and limitations under the License.
  */
 
-package com.wultra.android.sslpinning.util
+package com.wultra.android.sslpinning
 
-import com.google.gson.*
-import java.lang.reflect.Type
-import java.util.*
+import android.support.test.InstrumentationRegistry
+import org.junit.Before
 
 /**
- * Type adapter for parsing [Date] from update json.
+ * Common instrumentation test setup.
  *
  * @author Tomas Kypta, tomas.kypta@wultra.com
  */
-class DateTypeAdapter : JsonDeserializer<Date>, JsonSerializer<Date> {
+abstract class CommonTest {
 
-    override fun deserialize(json: JsonElement, typeOfT: Type, context: JsonDeserializationContext?): Date {
-        return Date(json.asLong * 1000)
-    }
+    val appContext = InstrumentationRegistry.getTargetContext()
 
-    override fun serialize(src: Date, typeOfSrc: Type, context: JsonSerializationContext?): JsonElement {
-        val seconds = src.time / 1000
-        return JsonPrimitive(seconds)
+    @Before
+    fun setUp() {
+        clearStorage()
     }
 }

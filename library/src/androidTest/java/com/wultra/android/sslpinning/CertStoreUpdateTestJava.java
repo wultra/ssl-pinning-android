@@ -17,7 +17,6 @@
 package com.wultra.android.sslpinning;
 
 import android.content.Context;
-import android.support.test.InstrumentationRegistry;
 
 import com.wultra.android.sslpinning.integration.powerauth.PowerAuthCertStore;
 import com.wultra.android.sslpinning.integration.powerauth.PowerAuthCryptoProvider;
@@ -27,10 +26,10 @@ import org.junit.Test;
 
 import java.net.URL;
 
-import static com.wultra.android.sslpinning.TestUtilsKt.jsonDataAllEmpty;
-import static com.wultra.android.sslpinning.TestUtilsKt.jsonDataFingerprintsEmpty;
 import static com.wultra.android.sslpinning.TestUtilsKt.getPublicKeyBytes;
 import static com.wultra.android.sslpinning.TestUtilsKt.getRemoteDataProvider;
+import static com.wultra.android.sslpinning.TestUtilsKt.jsonDataAllEmpty;
+import static com.wultra.android.sslpinning.TestUtilsKt.jsonDataFingerprintsEmpty;
 import static com.wultra.android.sslpinning.TestUtilsKt.updateAndCheck;
 
 /**
@@ -39,13 +38,11 @@ import static com.wultra.android.sslpinning.TestUtilsKt.updateAndCheck;
  *
  * @author Tomas Kypta, tomas.kypta@wultra.com
  */
-public class CertStoreUpdateTestJava {
-
+public class CertStoreUpdateTestJava extends CommonTest {
 
     @Test
     public void testLocalUpdateSignatureGithub_InvalidUrlUpdate() throws Exception {
-        Context appContext = InstrumentationRegistry.getTargetContext();
-
+        Context appContext = getAppContext();
         // empty
         URL url = new URL("https://gist.githubusercontent.com/TomasKypta/ae4fa795a8c1ffa1ed0144c49b95e63c/raw/761483b6c1fa3039f0b9d7b05c5d43532fc1556a/ssl-pinning-signatures_invalid_url.json");
         CertStoreConfiguration config = new CertStoreConfiguration.Builder(url, getPublicKeyBytes()).build();
@@ -56,7 +53,7 @@ public class CertStoreUpdateTestJava {
 
     @Test
     public void testLocalUpdateSignatureGithub_EmptyUpdate() throws Exception {
-        Context appContext = InstrumentationRegistry.getTargetContext();
+        Context appContext = getAppContext();
 
         // empty
         URL url = new URL("https://gist.githubusercontent.com/TomasKypta/ae4fa795a8c1ffa1ed0144c49b95e63c/raw/761483b6c1fa3039f0b9d7b05c5d43532fc1556a/ssl-pinning-signatures_empty.json");
@@ -68,7 +65,7 @@ public class CertStoreUpdateTestJava {
 
     @Test
     public void testLocalUpdateSignatureGithub_EmptyFingerprintUpdate() throws Exception {
-        Context appContext = InstrumentationRegistry.getTargetContext();
+        Context appContext = getAppContext();
 
         // empty
         URL url = new URL("https://gist.githubusercontent.com/TomasKypta/ae4fa795a8c1ffa1ed0144c49b95e63c/raw/761483b6c1fa3039f0b9d7b05c5d43532fc1556a/ssl-pinning-signatures_empty.json");
@@ -80,7 +77,7 @@ public class CertStoreUpdateTestJava {
 
     @Test
     public void testRemoteUpdateSignatureGithub_EmptyUpdate() throws Exception {
-        Context appContext = InstrumentationRegistry.getTargetContext();
+        Context appContext = getAppContext();
 
         // empty
         URL url = new URL("https://gist.githubusercontent.com/TomasKypta/ae4fa795a8c1ffa1ed0144c49b95e63c/raw/761483b6c1fa3039f0b9d7b05c5d43532fc1556a/ssl-pinning-signatures_empty.json");

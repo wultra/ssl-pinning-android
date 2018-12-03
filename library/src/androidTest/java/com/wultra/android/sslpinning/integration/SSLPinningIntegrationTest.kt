@@ -16,7 +16,6 @@
 
 package com.wultra.android.sslpinning.integration
 
-import android.support.test.InstrumentationRegistry
 import android.support.test.runner.AndroidJUnit4
 import com.wultra.android.sslpinning.*
 import com.wultra.android.sslpinning.integration.powerauth.powerAuthCertStore
@@ -36,12 +35,10 @@ import javax.net.ssl.SSLHandshakeException
  * @author Tomas Kypta, tomas.kypta@wultra.com
  */
 @RunWith(AndroidJUnit4::class)
-class SSLPinningIntegrationTest {
+class SSLPinningIntegrationTest : CommonTest() {
 
     @Test
     fun testValidationwithHttpsUrlConnection_ValidCert() {
-        val appContext = InstrumentationRegistry.getTargetContext()
-
         val config = CertStoreConfiguration.Builder(url, getPublicKeyBytes())
                 .build()
         val store = CertStore.powerAuthCertStore(config, appContext)
@@ -64,8 +61,6 @@ class SSLPinningIntegrationTest {
 
     @Test(expected = SSLHandshakeException::class)
     fun testValidationwithHttpsUrlConnection_InvalidCert() {
-        val appContext = InstrumentationRegistry.getTargetContext()
-
         val config = CertStoreConfiguration.Builder(url, getPublicKeyBytes())
                 .build()
         val store = CertStore.powerAuthCertStore(config, appContext)
@@ -88,8 +83,6 @@ class SSLPinningIntegrationTest {
 
     @Test
     fun testValidationwithOkHttp_ValidCert() {
-        val appContext = InstrumentationRegistry.getTargetContext()
-
         val config = CertStoreConfiguration.Builder(url, getPublicKeyBytes())
                 .build()
         val store = CertStore.powerAuthCertStore(config, appContext)
@@ -117,8 +110,6 @@ class SSLPinningIntegrationTest {
 
     @Test(expected = SSLHandshakeException::class)
     fun testValidationwithOkHttp_InvalidCert() {
-        val appContext = InstrumentationRegistry.getTargetContext()
-
         val config = CertStoreConfiguration.Builder(url, getPublicKeyBytes())
                 .build()
         val store = CertStore.powerAuthCertStore(config, appContext)

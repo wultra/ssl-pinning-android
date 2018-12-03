@@ -16,10 +16,9 @@
 
 package com.wultra.android.sslpinning
 
-import android.support.test.InstrumentationRegistry
 import android.support.test.runner.AndroidJUnit4
-import com.wultra.android.sslpinning.model.GetFingerprintResponse
 import com.wultra.android.sslpinning.integration.powerauth.powerAuthCertStore
+import com.wultra.android.sslpinning.model.GetFingerprintResponse
 import org.junit.Assert
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -30,12 +29,10 @@ import org.junit.runner.RunWith
  * @author Tomas Kypta, tomas.kypta@wultra.com
  */
 @RunWith(AndroidJUnit4::class)
-class CertStoreValidateTest {
+class CertStoreValidateTest : CommonTest() {
 
     @Test
     fun validateWithFallback() {
-        val appContext = InstrumentationRegistry.getTargetContext()
-
         val fallbackFingerprints = GSON.fromJson(jsonData, GetFingerprintResponse::class.java)
         val config = CertStoreConfiguration.Builder(url, getPublicKeyBytes())
                 .fallbackCertificate(fallbackFingerprints.fingerprints[0])
@@ -49,8 +46,6 @@ class CertStoreValidateTest {
 
     @Test
     fun validateAfterUpdate() {
-        val appContext = InstrumentationRegistry.getTargetContext()
-
         val config = CertStoreConfiguration.Builder(url, getPublicKeyBytes())
                 .build()
         val store = CertStore.powerAuthCertStore(config, appContext)
