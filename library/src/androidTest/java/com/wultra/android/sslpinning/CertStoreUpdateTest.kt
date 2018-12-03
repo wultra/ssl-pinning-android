@@ -16,7 +16,6 @@
 
 package com.wultra.android.sslpinning
 
-import android.support.test.InstrumentationRegistry
 import android.support.test.runner.AndroidJUnit4
 import android.util.Base64
 import com.wultra.android.sslpinning.integration.powerauth.PowerAuthCryptoProvider
@@ -31,12 +30,10 @@ import org.junit.runner.RunWith
  * @author Tomas Kypta, tomas.kypta@wultra.com
  */
 @RunWith(AndroidJUnit4::class)
-class CertStoreUpdateTest {
+class CertStoreUpdateTest : CommonTest() {
 
     @Test
     fun testLocalUpdateSignatureGithub() {
-        val appContext = InstrumentationRegistry.getTargetContext()
-
         val config = CertStoreConfiguration.Builder(url, getPublicKeyBytes()).build()
         val store = CertStore(config, PowerAuthCryptoProvider(), PowerAuthSecureDataStore(appContext), remoteDataProvider)
 
@@ -45,8 +42,6 @@ class CertStoreUpdateTest {
 
     @Test
     fun testRemoteUpdateSignatureGithub() {
-        val appContext = InstrumentationRegistry.getTargetContext()
-
         val config = CertStoreConfiguration.Builder(url, getPublicKeyBytes()).build()
         val store = CertStore.powerAuthCertStore(config, appContext)
 
@@ -55,8 +50,6 @@ class CertStoreUpdateTest {
 
     @Test
     fun testRemoteUpdateSignatureGithub_InvalidSignature() {
-        val appContext = InstrumentationRegistry.getTargetContext()
-
         // intentionally different signature
         val publicKey = "BEG6g28LNWRcmdFzexSNTKPBYZnDtKrCyiExFKbktttfKAF7wG4Cx1Nycr5PwCoICG1dRseLyuDxUilAmppPxAo="
         val publicKeyBytes = Base64.decode(publicKey, android.util.Base64.NO_WRAP)
