@@ -24,7 +24,7 @@ import com.wultra.android.sslpinning.UpdateType
  * Utility [UpdateObserver] that simplifies integration of CertStore udpates.
  *
  * It continues execution that's supposed to happen after successful
- * [CertStore] update.
+ * [com.wultra.android.sslpinning.CertStore] update.
  * @author Tomas Kypta, tomas.kypta@wultra.com
  *
  * @since 0.9.0
@@ -57,7 +57,7 @@ abstract class DefaultUpdateObserver : UpdateObserver {
      * That means after finished [UpdateType.DIRECT] or after started
      * [UpdateType.SILENT], [UpdateType.NO_UPDATE].
      */
-    abstract fun continueExecution();
+    abstract fun continueExecution()
 
     /**
      * Common handling of failed update (not [UpdateResult.OK]).

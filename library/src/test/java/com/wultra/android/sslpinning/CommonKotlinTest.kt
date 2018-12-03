@@ -80,31 +80,32 @@ open class CommonKotlinTest {
     fun setUp() {
         PowerMockito.mockStatic(Base64::class.java)
         Mockito.`when`<String>(Base64.encodeToString(any<ByteArray>(), ArgumentMatchers.anyInt()))
-                .thenAnswer({ invocation -> String(java.util.Base64.getEncoder().encode(invocation.getArgument(0) as ByteArray)) }
-                )
+                .thenAnswer { invocation -> String(java.util.Base64.getEncoder().encode(invocation.getArgument(0) as ByteArray)) }
+
         Mockito.`when`<ByteArray>(Base64.encode(any<ByteArray>(), ArgumentMatchers.anyInt()))
-                .thenAnswer({ invocation -> java.util.Base64.getEncoder().encode(invocation.getArgument(0) as ByteArray) }
-                )
+                .thenAnswer { invocation -> java.util.Base64.getEncoder().encode(invocation.getArgument(0) as ByteArray) }
+
         Mockito.`when`<ByteArray>(Base64.decode(ArgumentMatchers.anyString(), ArgumentMatchers.anyInt()))
-                .thenAnswer({ invocation -> java.util.Base64.getDecoder().decode(invocation.getArgument(0) as String) }
-                )
+                .thenAnswer { invocation -> java.util.Base64.getDecoder().decode(invocation.getArgument(0) as String) }
 
         PowerMockito.mockStatic(Log::class.java)
         Mockito.`when`<Int>(Log.e(ArgumentMatchers.anyString(), ArgumentMatchers.anyString()))
-                .then({ invocation ->
+                .then { invocation ->
                     println(invocation.getArgument(1) as String)
                     0
-                })
-        Mockito.`when`<ByteArray>(cryptoProvider.hashSha256(any<ByteArray>()))
-                .thenAnswer({ invocation ->
+                }
+
+        Mockito.`when`<ByteArray>(cryptoProvider.hashSha256(any()))
+                .thenAnswer { invocation ->
                     val digest = MessageDigest.getInstance("SHA-256")
                     digest.digest(invocation.getArgument(0))
-                })
-        Mockito.`when`<ECPublicKey>(cryptoProvider.importECPublicKey(any<ByteArray>()))
-                .thenAnswer({ invocation -> PA2ECPublicKey(invocation.getArgument(0)) }
-                )
-        Mockito.`when`<Boolean>(cryptoProvider.ecdsaValidateSignatures(any<SignedData>(), any<ECPublicKey>()))
-                .thenAnswer({ invocation ->
+                }
+
+        Mockito.`when`<ECPublicKey>(cryptoProvider.importECPublicKey(any()))
+                .thenAnswer { invocation -> PA2ECPublicKey(invocation.getArgument(0)) }
+
+        Mockito.`when`<Boolean>(cryptoProvider.ecdsaValidateSignatures(any(), any()))
+                .thenAnswer { invocation ->
                     val utils = SignatureUtils()
                     val signedData: SignedData = invocation.getArgument(0)
                     val pubKey: PA2ECPublicKey = invocation.getArgument(1)
@@ -112,17 +113,17 @@ open class CommonKotlinTest {
                     utils.validateECDSASignature(signedData.data,
                             signedData.signature,
                             keyConvertor.convertBytesToPublicKey(pubKey.data))
-                })
+                }
 
         PowerMockito.mockStatic(Looper::class.java)
         Mockito.`when`<Looper>(Looper.getMainLooper())
                 .thenReturn(null)
 
         Mockito.`when`<Boolean>(handler.post(any()))
-                .then({ invocation ->
+                .then { invocation ->
                     val runnable = invocation.getArgument<Runnable>(0)
                     runnable.run()
                     return@then true
-                })
+                }
     }
 }

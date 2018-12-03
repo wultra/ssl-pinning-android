@@ -146,12 +146,11 @@ class CertStore internal constructor(private val configuration: CertStoreConfigu
 
     internal fun loadCachedData(): CachedData? {
         val encodedData = secureDataStore.load(key = instanceIdentifier) ?: return null
-        val cachedData = try {
+        return try {
             GSON.fromJson(String(encodedData), CachedData::class.java)
         } catch (t: Throwable) {
             return null
         }
-        return cachedData
     }
 
     internal fun saveDataToCache(data: CachedData) {
@@ -254,9 +253,7 @@ class CertStore internal constructor(private val configuration: CertStoreConfigu
             }
         }
 
-        configuration.executorService?.let {
-            it.submit(updateRunnable)
-        } ?: run {
+        configuration.executorService?.submit(updateRunnable) ?: run {
             // run on a dedicated thread as a fallback
             val thread = Thread(updateRunnable)
             thread.name = "SilentCertStoreUpdate"
@@ -286,7 +283,7 @@ class CertStore internal constructor(private val configuration: CertStoreConfigu
 
         var result = UpdateResult.OK
         updateCachedData { cachedData ->
-            var newCertificates = (cachedData?.certificates ?: arrayOf())
+            val newCertificates = (cachedData?.certificates ?: arrayOf())
                     .filter { !it.isExpired(currentDate) }
                     .toMutableList()
 
