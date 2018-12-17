@@ -45,7 +45,7 @@ task unitTestCoverageReport(type: JacocoReport,
 }
 
 /**
- * Create unified coverage report for unit tests and instrumentated tests ('src/test' and 'src/androidTest' source sets).
+ * Create unified coverage report for unit tests and instrumented tests ('src/test' and 'src/androidTest' source sets).
  */
 task unifiedCoverageReport(type: JacocoReport,
         group: 'verification',

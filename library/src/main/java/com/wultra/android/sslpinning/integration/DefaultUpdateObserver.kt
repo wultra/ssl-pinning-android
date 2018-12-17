@@ -22,7 +22,7 @@ import com.wultra.android.sslpinning.UpdateResult
 import com.wultra.android.sslpinning.UpdateType
 
 /**
- * Utility [UpdateObserver] that simplifies integration of CertStore udpates.
+ * Utility [UpdateObserver] that simplifies integration of CertStore updates.
  *
  * It continues execution that's supposed to happen after successful
  * [com.wultra.android.sslpinning.CertStore] update.
