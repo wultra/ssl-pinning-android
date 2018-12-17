@@ -33,6 +33,8 @@ interface UpdateObserver {
     /**
      * Called when an update has been started and [UpdateType] has been evaluated.
      *
+     * The method is called on the main thread.
+     *
      * @param type Type of update that was selected based on the input parameters and stored data.
      */
     @MainThread
@@ -41,6 +43,7 @@ interface UpdateObserver {
     /**
      * Called when an update finishes.
      *
+     * The method is called on the main thread.
      * In case of [UpdateType.NO_UPDATE], it's called immediately after [onUpdateStarted].
      *
      * @param type Type of update

@@ -16,6 +16,7 @@
 
 package com.wultra.android.sslpinning.integration
 
+import android.support.annotation.MainThread
 import com.wultra.android.sslpinning.UpdateObserver
 import com.wultra.android.sslpinning.UpdateResult
 import com.wultra.android.sslpinning.UpdateType
@@ -56,14 +57,20 @@ abstract class DefaultUpdateObserver : UpdateObserver {
      * The method is invoked when it's safe to continue with the execution.
      * That means after finished [UpdateType.DIRECT] or after started
      * [UpdateType.SILENT], [UpdateType.NO_UPDATE].
+     *
+     * The method is called on the main thread.
      */
+    @MainThread
     abstract fun continueExecution()
 
     /**
      * Common handling of failed update (not [UpdateResult.OK]).
      *
+     * The method is called on the main thread.
+     *
      * @param type Type of update
      * @param result Result of the update.
      */
+    @MainThread
     open fun handleFailedUpdate(type: UpdateType, result: UpdateResult) {}
 }
