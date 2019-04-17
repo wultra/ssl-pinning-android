@@ -1,7 +1,8 @@
 # Dynamic SSL pinning for Android
-
+<!-- begin remove -->
 `WultraSSLPinning` is an Android library implementing dynamic SSL pinning, written in Kotlin.
-
+<!-- end -->
+<!-- begin TOC -->
 - [Introduction](#introduction)
 - [Installation](#installation)
     - [Requirements](#requirements)
@@ -22,6 +23,7 @@
 - [License](#license)
 - [Contact](#contact)
     - [Security Disclosure](#security-disclosure)
+<!-- end -->
 
 ## Introduction
 
@@ -417,7 +419,7 @@ In SSL pinning there are [two options](https://www.owasp.org/index.php/Certifica
 1. **Pin the certificate** (DER encoding)
 2. **Pin the public key**
 
-**WultraSSLpinning** tooling ([this Android version](https://github.com/wultra/ssl-pinning-android),
+**WultraSSLpinning** tooling (e.g. this Android library,
 [iOS version](https://github.com/wultra/ssl-pinning-ios) and
 [Dynamic SSL Pinning Tool](https://github.com/wultra/ssl-pinning-tool)) use *option 1: they pin the certificate*.
 
