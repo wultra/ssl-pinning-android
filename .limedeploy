@@ -1,0 +1,10 @@
+# Common params
+DEPLOY_LIB_NAME='WultraSslPinning'
+DEPLOY_MODE="gradle"
+
+# Gradle
+DEPLOY_GRADLE_PATH="."
+DEPLOY_GRADLE_PARAMS="clean build install bintrayUpload"
+
+# Versioning files
+DEPLOY_VERSIONING_FILES=( "Deploy/gradle.properties,library/gradle.properties" )
