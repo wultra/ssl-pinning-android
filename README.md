@@ -65,8 +65,10 @@ Before you start using the library, you should also check our other related proj
 To use **WultraSSLPinning** in you Android app add this dependency:
 
 ```gradle
-implementation 'com.wultra.android.sslpinning:wultra-ssl-pinning:0.9.2'
+implementation 'com.wultra.android.sslpinning:wultra-ssl-pinning:1.0.0'
 ```
+
+Note that this documentation is using version `1.0.0` as an example. You can find the latest version at [github's release](https://github.com/wultra/ssl-pinning-android/releases#docucheck-keep-link) page. The Android Studio IDE can also find and offer updates for your application’s dependencies.
 
 Also make sure you have `jcenter()` repository among the project repositories.
 
