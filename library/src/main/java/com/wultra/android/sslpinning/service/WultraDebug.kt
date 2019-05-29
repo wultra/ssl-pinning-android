@@ -23,7 +23,7 @@ import android.util.Log
  *
  * @author Tomas Kypta, tomas.kypta@wultra.com
  */
-internal class WultraDebug {
+class WultraDebug {
 
     /**
      * List of logging levels for [WultraDebug].
