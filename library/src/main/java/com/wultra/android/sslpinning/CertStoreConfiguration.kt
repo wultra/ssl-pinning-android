@@ -64,12 +64,12 @@ class CertStoreConfiguration(
         val identifier: String?,
 
         /**
-         * Defines a fallback certificate fingerprint.
+         * Defines a fallback certificate fingerprints.
          *
          * You can configure a fallback certificate which will be used as the last stand during
          * the fingerprint validation.
          */
-        val fallbackCertificate: GetFingerprintResponse.Entry?,
+        val fallbackCertificates: GetFingerprintResponse?,
 
         /**
          * Defines how often (in milliseconds) will [CertStore] periodically check the certificates
@@ -96,7 +96,7 @@ class CertStoreConfiguration(
             publicKey = builder.publicKey,
             expectedCommonNames = builder.expectedCommonNames,
             identifier = builder.identifier,
-            fallbackCertificate = builder.fallbackCertificate,
+            fallbackCertificates = builder.fallbackCertificates ?: builder.fallbackCertificate?.let { GetFingerprintResponse(arrayOf(it)) },
             periodicUpdateIntervalMillis = builder.periodicUpdateIntervalMillis,
             expirationUpdateThresholdMillis = builder.expirationUpdateThresholdMillis,
             executorService = builder.executorService)
@@ -110,7 +110,7 @@ class CertStoreConfiguration(
         }
 
         // validate fallback certificate data
-        fallbackCertificate?.let { fallback ->
+        fallbackCertificates?.fingerprints?.forEach { fallback ->
             try {
                 expectedCommonNames?.let { expectedCNs ->
                     if (!expectedCNs.contains(fallback.name)) {
@@ -122,7 +122,7 @@ class CertStoreConfiguration(
                     }
                 }
             } catch (t: Throwable) {
-                WultraDebug.error("CertStoreConfiguration: 'fallbackCertificate' contains invalid JSON.")
+                WultraDebug.error("CertStoreConfiguration: 'fallbackCertificates' contains invalid JSON.")
             }
 
         }
@@ -143,6 +143,7 @@ class CertStoreConfiguration(
      * @param serviceUrl URL of remote update server.
      * @param publicKey Public key for validating data received from the server.
      */
+    @Suppress("DeprecatedCallableAddReplaceWith")
     class Builder(
             val serviceUrl: URL,
             val publicKey: ByteArray
@@ -153,7 +154,12 @@ class CertStoreConfiguration(
         var identifier: String? = null
             private set
 
+        // TODO: Remove in version 2.0
+        @Deprecated("Use [fallbackCertificates] instead.")
         var fallbackCertificate: GetFingerprintResponse.Entry? = null
+            private set
+
+        var fallbackCertificates: GetFingerprintResponse? = null
             private set
 
         var periodicUpdateIntervalMillis: Long = TimeUnit.DAYS.toMillis(7)
@@ -186,8 +192,17 @@ class CertStoreConfiguration(
          * Fallback certificate fingerprint.
          * Useful for situations when no fingerprints has been loaded from the server yet.
          */
+        @Deprecated("Use fallbackCertificates instead. This option is ignored when fallbackCertificates method is used.")
         fun fallbackCertificate(fallbackCertificate: GetFingerprintResponse.Entry?) = apply {
             this.fallbackCertificate = fallbackCertificate
+        }
+
+        /**
+         * Fallback certificate fingerprints.
+         * Useful for situations when no fingerprints has been loaded from the server yet.
+         */
+        fun fallbackCertificates(fallbackCertificates: GetFingerprintResponse?) = apply {
+            this.fallbackCertificates = fallbackCertificates
         }
 
         /**

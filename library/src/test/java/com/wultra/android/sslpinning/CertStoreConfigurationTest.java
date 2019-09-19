@@ -24,6 +24,7 @@ import org.powermock.modules.junit4.PowerMockRunner;
 
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
 import java.util.concurrent.TimeUnit;
@@ -52,7 +53,7 @@ public class CertStoreConfigurationTest extends CommonJavaTest {
     @Test
     public void testConfiguration() throws Exception {
         CertStoreConfiguration config = configuration(new Date());
-        assertNull(config.getFallbackCertificate());
+        assertNull(config.getFallbackCertificates());
         CertStore store = new CertStore(config, cryptoProvider, secureDataStore);
         TestUtils.assignHandler(store, handler);
 
@@ -65,7 +66,7 @@ public class CertStoreConfigurationTest extends CommonJavaTest {
     @Test
     public void testConfigurationWithFallbackCertificate() throws Exception {
         CertStoreConfiguration config = configurationWithFallback(null, null);
-        assertNotNull(config.getFallbackCertificate());
+        assertNotNull(config.getFallbackCertificates());
         CertStore store = new CertStore(config, cryptoProvider, secureDataStore);
         TestUtils.assignHandler(store, handler);
 
@@ -79,7 +80,7 @@ public class CertStoreConfigurationTest extends CommonJavaTest {
     public void testConfigurationWithFallbackCertificateExpired() throws Exception {
         Date expired = new Date(new Date().getTime() - TimeUnit.SECONDS.toMillis(1));
         CertStoreConfiguration config = configurationWithFallback(expired, null);
-        assertNotNull(config.getFallbackCertificate());
+        assertNotNull(config.getFallbackCertificates());
         CertStore store = new CertStore(config, cryptoProvider, secureDataStore);
         TestUtils.assignHandler(store, handler);
 
@@ -144,8 +145,8 @@ public class CertStoreConfigurationTest extends CommonJavaTest {
         byte[] signature = new byte[64];
         Arrays.fill(signature, (byte)0xfe);
 
-        GetFingerprintResponse.Entry fallbackData = new GetFingerprintResponse.Entry(
-                "api.fallback.org", fingerprint, expiration, signature);
+        GetFingerprintResponse.Entry[] fallbackList = new GetFingerprintResponse.Entry[] { new GetFingerprintResponse.Entry("api.fallback.org", fingerprint, expiration, signature) };
+        GetFingerprintResponse fallbackData = new GetFingerprintResponse(fallbackList);
 
         return TestUtils.getCertStoreConfiguration(expiration, expectedCommonNames, serviceUrl, publicKeyBytes, fallbackData);
     }

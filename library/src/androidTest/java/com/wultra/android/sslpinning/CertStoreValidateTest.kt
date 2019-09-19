@@ -35,7 +35,7 @@ class CertStoreValidateTest : CommonTest() {
     fun validateWithFallback() {
         val fallbackFingerprints = GSON.fromJson(jsonData, GetFingerprintResponse::class.java)
         val config = CertStoreConfiguration.Builder(url, getPublicKeyBytes())
-                .fallbackCertificate(fallbackFingerprints.fingerprints[0])
+                .fallbackCertificates(fallbackFingerprints)
                 .build()
         val store = CertStore.powerAuthCertStore(config, appContext)
 
