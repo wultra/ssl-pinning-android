@@ -386,6 +386,7 @@ class CertStore internal constructor(private val configuration: CertStoreConfigu
             }
             if (info.commonName == commonName) {
                 if (info.fingerprint.contentEquals(fingerprint)) {
+                    notifyValidationObservers(commonName, ValidationObserver::onValidationTrusted)
                     return ValidationResult.TRUSTED
                 }
                 matchAttempts += 1
