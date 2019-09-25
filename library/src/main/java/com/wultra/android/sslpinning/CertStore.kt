@@ -54,7 +54,7 @@ class CertStore internal constructor(private val configuration: CertStoreConfigu
     @Volatile
     private var cacheIsLoaded = false
     private var cachedData: CachedData? = null
-    private var fallbackCertificates: Array<CertificateInfo>? = null
+    private var fallbackCertificates = Array<CertificateInfo>()
 
     private val validationObservers: MutableSet<ValidationObserver> = mutableSetOf()
     private val mainThreadHandler = Handler(Looper.getMainLooper())
@@ -106,11 +106,7 @@ class CertStore internal constructor(private val configuration: CertStoreConfigu
     @Synchronized
     internal fun getCertificates(): Array<CertificateInfo> {
         restoreCache()
-        var result = cachedData?.certificates ?: arrayOf()
-        fallbackCertificates?.let {
-            result = arrayOf(*result, *it)
-        }
-        return result
+        return cachedData?.let { it.certificates + fallbackCertificates } ?: fallbackCertificates
     }
 
     /**

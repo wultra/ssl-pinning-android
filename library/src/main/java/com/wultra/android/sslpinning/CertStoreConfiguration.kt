@@ -192,7 +192,7 @@ class CertStoreConfiguration(
          * Fallback certificate fingerprint.
          * Useful for situations when no fingerprints has been loaded from the server yet.
          */
-        @Deprecated("Use fallbackCertificates instead. This option is ignored when fallbackCertificates method is used.")
+        @Deprecated("Use fallbackCertificates instead. This method will be removed in the future.")
         fun fallbackCertificate(fallbackCertificate: GetFingerprintResponse.Entry?) = apply {
             this.fallbackCertificate = fallbackCertificate
         }
