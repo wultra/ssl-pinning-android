@@ -54,7 +54,7 @@ class CertStore internal constructor(private val configuration: CertStoreConfigu
     @Volatile
     private var cacheIsLoaded = false
     private var cachedData: CachedData? = null
-    private var fallbackCertificates = Array<CertificateInfo>()
+    private var fallbackCertificates = emptyArray<CertificateInfo>()
 
     private val validationObservers: MutableSet<ValidationObserver> = mutableSetOf()
     private val mainThreadHandler = Handler(Looper.getMainLooper())
@@ -155,8 +155,8 @@ class CertStore internal constructor(private val configuration: CertStoreConfigu
         secureDataStore.save(data = encodedData, key = instanceIdentifier)
     }
 
-    internal fun loadFallbackCertificates(): Array<CertificateInfo>? {
-        val fallbackEntries = configuration.fallbackCertificates?.fingerprints ?: return null
+    internal fun loadFallbackCertificates(): Array<CertificateInfo> {
+        val fallbackEntries = configuration.fallbackCertificates?.fingerprints ?: return emptyArray()
         return fallbackEntries.map { CertificateInfo(it) }.toTypedArray()
     }
 
