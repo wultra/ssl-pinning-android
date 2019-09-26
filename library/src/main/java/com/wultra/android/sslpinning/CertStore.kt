@@ -54,7 +54,7 @@ class CertStore internal constructor(private val configuration: CertStoreConfigu
     @Volatile
     private var cacheIsLoaded = false
     private var cachedData: CachedData? = null
-    private var fallbackCertificate: CertificateInfo? = null
+    private var fallbackCertificates = emptyArray<CertificateInfo>()
 
     private val validationObservers: MutableSet<ValidationObserver> = mutableSetOf()
     private val mainThreadHandler = Handler(Looper.getMainLooper())
@@ -106,11 +106,7 @@ class CertStore internal constructor(private val configuration: CertStoreConfigu
     @Synchronized
     internal fun getCertificates(): Array<CertificateInfo> {
         restoreCache()
-        var result = cachedData?.certificates ?: arrayOf()
-        fallbackCertificate?.let {
-            result = arrayOf(*result, it)
-        }
-        return result
+        return cachedData?.let { it.certificates + fallbackCertificates } ?: fallbackCertificates
     }
 
     /**
@@ -137,7 +133,7 @@ class CertStore internal constructor(private val configuration: CertStoreConfigu
     private fun restoreCache() {
         if (!cacheIsLoaded) {
             cachedData = loadCachedData()
-            fallbackCertificate = loadFallbackCertificate()
+            fallbackCertificates = loadFallbackCertificates()
             cacheIsLoaded = true
         }
     }
@@ -159,9 +155,9 @@ class CertStore internal constructor(private val configuration: CertStoreConfigu
         secureDataStore.save(data = encodedData, key = instanceIdentifier)
     }
 
-    internal fun loadFallbackCertificate(): CertificateInfo? {
-        val fallbackEntry = configuration.fallbackCertificate ?: return null
-        return CertificateInfo(fallbackEntry)
+    internal fun loadFallbackCertificates(): Array<CertificateInfo> {
+        val fallbackEntries = configuration.fallbackCertificates?.fingerprints ?: return emptyArray()
+        return fallbackEntries.map { CertificateInfo(it) }.toTypedArray()
     }
 
     /*** UPDATE ***/
@@ -386,6 +382,7 @@ class CertStore internal constructor(private val configuration: CertStoreConfigu
             }
             if (info.commonName == commonName) {
                 if (info.fingerprint.contentEquals(fingerprint)) {
+                    notifyValidationObservers(commonName, ValidationObserver::onValidationTrusted)
                     return ValidationResult.TRUSTED
                 }
                 matchAttempts += 1

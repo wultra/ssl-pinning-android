@@ -56,12 +56,12 @@ public class TestUtils {
         }
     }
 
-    public static CertStoreConfiguration getCertStoreConfiguration(Date expiration, String[] expectedCommonNames, URL serviceUrl, byte[] publicKey, GetFingerprintResponse.Entry fallback) {
+    public static CertStoreConfiguration getCertStoreConfiguration(Date expiration, String[] expectedCommonNames, URL serviceUrl, byte[] publicKey, GetFingerprintResponse fallback) {
         CertStoreConfiguration.Builder builder = new CertStoreConfiguration.Builder(
                 serviceUrl, publicKey)
                 .identifier(null)
                 .expectedCommonNames(expectedCommonNames)
-                .fallbackCertificate(fallback);
+                .fallbackCertificates(fallback);
         return builder.build();
     }
 

@@ -58,6 +58,7 @@ class ValidationObserverTest : CommonKotlinTest() {
         assertEquals(ValidationResult.EMPTY, result)
         verify(observer, times(0)).onValidationUntrusted(anyString())
         verify(observer, times(1)).onValidationEmpty(anyString())
+        verify(observer, times(0)).onValidationTrusted(anyString())
         store.removeValidationObserver(observer)
 
         TestUtils.updateAndCheck(store, UpdateMode.FORCED, UpdateResult.OK)
@@ -68,6 +69,7 @@ class ValidationObserverTest : CommonKotlinTest() {
         assertEquals(ValidationResult.TRUSTED, result2)
         verify(observer, times(0)).onValidationUntrusted(anyString())
         verify(observer, times(0)).onValidationEmpty(anyString())
+        verify(observer, times(1)).onValidationTrusted(anyString())
         store.removeAllValidationObservers()
 
         observer = mock(ValidationObserver::class.java)
@@ -76,6 +78,7 @@ class ValidationObserverTest : CommonKotlinTest() {
         assertEquals(ValidationResult.UNTRUSTED, result3)
         verify(observer, times(1)).onValidationUntrusted(anyString())
         verify(observer, times(0)).onValidationEmpty(anyString())
+        verify(observer, times(0)).onValidationTrusted(anyString())
         store.removeAllValidationObservers()
     }
 }

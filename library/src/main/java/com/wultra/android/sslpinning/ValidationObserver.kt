@@ -31,6 +31,14 @@ import android.support.annotation.MainThread
 interface ValidationObserver {
 
     /**
+     * Called when a validation for a common name is deemed [ValidationResult.TRUSTED].
+     *
+     * @param commonName The common name that was validated with result [ValidationResult.TRUSTED].
+     */
+    @MainThread
+    fun onValidationTrusted(commonName: String)
+
+    /**
      * Called when a validation for a common name is deemed [ValidationResult.UNTRUSTED].
      *
      * @param commonName The common name that was validated with result [ValidationResult.UNTRUSTED].

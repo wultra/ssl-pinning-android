@@ -90,7 +90,7 @@ val configuration = CertStoreConfiguration.Builder(
                             publicKey = publicKey)
                         .identifier(identifier)
                         .expectedCommonNames(expectedCommonNames)
-                        .fallbackCertificate(fallbackCertificate)
+                        .fallbackCertificates(fallbackCertificates)
                         .build()
 val certStore = CertStore.powerAuthCertStore(configuration = configuration, appContext)
 ```
@@ -101,7 +101,7 @@ The configuration has the following properties:
 - `publicKey` - byte array containing the public key counterpart to the private key, used for fingerprint signing.
 - `expectedCommonNames` - an optional array of strings, defining which domains you expect in certificate validation.
 - `identifier` - optional string identifier for scenarios, where multiple `CertStore` instances are used in the application.
-- `fallbackCertificateData` - optional hardcoded data for a fallback fingerprint. See the next chapter of this document for details.
+- `fallbackCertificates` - optional hardcoded data for a fallback fingerprints. See the next chapter of this document for details.
 - `periodicUpdateIntervalMillis` - defines interval for default updates. The default value is 1 week.
 - `expirationUpdateTreshold` - defines time window before the next certificate will expire. 
 In this time window `CertStore` will try to update the list of fingerprints more often than usual. 
@@ -109,26 +109,27 @@ Default value is 2 weeks before the next expiration.
 - `executorService` - defines `java.util.concurrent.ExecutorService` for running updates.
 If not defined updates run on a dedicated thread (not pooled).
 
-### Predefined Fingerprint
+### Predefined Fingerprints
 
-The `CertStoreConfiguration` may contain an optional data with predefined certificate fingerprint. 
+The `CertStoreConfiguration` may contain an optional data with predefined certificate fingerprints. 
 This technique can speed up the first application's startup when the database of fingerprints is empty. 
-You still need to [update](#updating-fingerprints) your application, once the fallback fingerprint expires.
+You still need to [update](#updating-fingerprints) your application, once the fallback fingerprints expire.
 
-To configure the property, you need to provide `GetFingerprintResponse.Entry` with a fallback certificate fingerprint. 
+To configure the property, you need to provide `GetFingerprintResponse` with a fallback certificate fingerprints. 
 The data should contain the same data as are usually received from the server, 
 except that `signature` property is not validated (but must be provided). For example:
 
 ```kotlin
-val fallbackData = GetFingerprintResponse.Entry(
+val fallbackEntry = GetFingerprintResponse.Entry(
                        name = "github.com",
                        fingerprint = fingerprintBytes,
-                       expires new Date(1591185600000),
+                       expires = Date(1591185600000),
                        ByteArray(0))
+val fallbackCertificates = GetFingerprintResponse(arrayOf(fallbackEntry))
 val configuration = CertStoreConfiguration.Builder(
                             serviceUrl = URL("https://..."),
                             publicKey= publicKey)
-                    .fallbackCertificateData(fallbackData)
+                    .fallbackCertificates(fallbackCertificates)
                     .build()
 val certStore = CertStore.powerAuthCertStore(configuration = configuration, appContext)
 ```
@@ -298,7 +299,7 @@ For example, this is how the configuration sequence may look like if you want to
 val certStoreConfiguration = CertStoreConfiguration.Builder(
                             serviceUrl = URL("https://..."),
                             publicKey= publicKey)
-                    .fallbackCertificateData(fallbackData)
+                    .fallbackCertificates(fallbackCertificates)
                     .build()
                     
 val powerAuthCertStore = CertStore.powerAuthCertStore(certStoreConfiguration, appContext)

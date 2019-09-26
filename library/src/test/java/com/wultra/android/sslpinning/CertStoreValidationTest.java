@@ -50,11 +50,12 @@ public class CertStoreValidationTest extends CommonJavaTest {
         String fingerprintBase64 = "MRFQDEpmASza4zPsP8ocnd5FyVREDn7kE3Fr/zZjwHQ=";
         byte[] fingerprintBytes = Base64.getDecoder().decode(fingerprintBase64);
 
-        GetFingerprintResponse.Entry fallback = new GetFingerprintResponse.Entry(
+        GetFingerprintResponse.Entry fallbackEntry = new GetFingerprintResponse.Entry(
                 "github.com",
                 fingerprintBytes,
                 new Date(System.currentTimeMillis() + TimeUnit.DAYS.toMillis(1)),
                 signatureBytes);
+        GetFingerprintResponse fallback = new GetFingerprintResponse(new GetFingerprintResponse.Entry[] {fallbackEntry});
 
         CertStoreConfiguration config = TestUtils.getCertStoreConfiguration(
                 new Date(),
