@@ -9,7 +9,7 @@
     - [Gradle](#gradle)
 - [Usage](#usage)
     - [Configuration](#configuration)
-        - [Predefined Fingerprint](#predefined-fingerprint)
+        - [Predefined Fingerprints](#predefined-fingerprints)
     - [Update Fingerprints](#updating-fingerprints)
     - [Fingerprint Validation](#fingerprint-validation)
         - [Global Validation Observers](#global-validation-observers)
