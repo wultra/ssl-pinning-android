@@ -75,7 +75,7 @@ class SSLPinningIntegration {
             // use all trust managers after the provided (or our [SSLPinningX509TrustManager])
             val trustSslPinningCerts = arrayOf(sslPinningTrustManager, *originalTrustManagers)
             try {
-                if (Build.VERSION.SDK_INT < Build.VERSION_CODES.LOLLIPOP_MR1) {
+                if (Build.VERSION.SDK_INT < Build.VERSION_CODES.LOLLIPOP) {
                     try {
                         val sc = SSLContext.getInstance(Tls12SocketFactory.TLS12NAME)
                         sc.init(null, trustSslPinningCerts, null)

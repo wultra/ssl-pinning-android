@@ -498,8 +498,8 @@ Use normal setup for this one, don't use `SSLSocketFactory` and `TrustManager` p
 
 ## TLS 1.2 Support for older Android versions
    
-This library supports TLS 1.2 for older Android version (API < 22), but in some cases, 
-your app will need to call `ProviderInstaller.installIfNeeded`, to install system support.
+This library supports TLS 1.2 for older Android version (API < 21), but in some cases, 
+your app will need to call `ProviderInstaller.installIfNeeded` (part of the Play Services), to install system support.
 
 ## License
 
