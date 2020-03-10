@@ -16,11 +16,17 @@
 
 package com.wultra.android.sslpinning.integration
 
+import android.os.Build
+import android.util.Log
 import com.wultra.android.sslpinning.CertStore
+import java.lang.Exception
+import java.net.InetAddress
+import java.net.Socket
 import java.security.KeyManagementException
 import java.security.KeyStore
 import java.security.NoSuchAlgorithmException
 import javax.net.ssl.SSLContext
+import javax.net.ssl.SSLSocket
 import javax.net.ssl.SSLSocketFactory
 import javax.net.ssl.TrustManagerFactory
 
@@ -51,6 +57,9 @@ class SSLPinningIntegration {
          * The factory first tests SSL Pinning then if that is ok fallbacks on standard
          * certificate validation.
          *
+         * Note: On devices prior to Android API 21, you'll probably need to use ProviderInstaller.installIfNeeded method
+         * to ensure, that the device is capable of TLS 1.2 handling.
+         *
          * @param sslPinningTrustManager Trust manager capable of handling WultraSSLPinning
          * that makes basis for the [SSLSocketFactory].
          * @return SSLSocketFactory capable of handling WultraSSLPinning.
@@ -66,6 +75,16 @@ class SSLPinningIntegration {
             // use all trust managers after the provided (or our [SSLPinningX509TrustManager])
             val trustSslPinningCerts = arrayOf(sslPinningTrustManager, *originalTrustManagers)
             try {
+                if (Build.VERSION.SDK_INT < Build.VERSION_CODES.LOLLIPOP) {
+                    try {
+                        val sc = SSLContext.getInstance(Tls12SocketFactory.TLS12NAME)
+                        sc.init(null, trustSslPinningCerts, null)
+                        return Tls12SocketFactory(sc.socketFactory)
+                    } catch (e: Exception) {
+                        Log.e("TLS12Factory", e.message)
+                    }
+                }
+
                 val sc = SSLContext.getInstance("TLS")
                 sc.init(null, trustSslPinningCerts, null)
                 return sc.socketFactory
@@ -75,5 +94,32 @@ class SSLPinningIntegration {
                 throw RuntimeException(e)
             }
         }
+    }
+}
+
+private class Tls12SocketFactory(private val base: SSLSocketFactory) : SSLSocketFactory() {
+
+    companion object {
+        const val TLS12NAME = "TLSv1.2"
+    }
+
+    override fun getDefaultCipherSuites(): Array<String> = base.defaultCipherSuites
+
+    override fun getSupportedCipherSuites(): Array<String> = base.supportedCipherSuites
+
+    override fun createSocket(p0: Socket?, p1: String?, p2: Int, p3: Boolean) = base.createSocket(p0, p1, p2, p3).patch()
+
+    override fun createSocket(p0: String?, p1: Int) = base.createSocket(p0, p1).patch()
+
+    override fun createSocket(p0: String?, p1: Int, p2: InetAddress?, p3: Int) = base.createSocket(p0, p1, p2, p3).patch()
+
+    override fun createSocket(p0: InetAddress?, p1: Int) = base.createSocket(p0, p1).patch()
+
+    override fun createSocket(p0: InetAddress?, p1: Int, p2: InetAddress?, p3: Int) = base.createSocket(p0, p1, p2, p3).patch()
+
+    private fun Socket.patch(): Socket {
+        return (this as? SSLSocket)?.apply {
+            enabledProtocols += TLS12NAME
+        } ?: this
     }
 }

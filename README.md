@@ -496,6 +496,11 @@ Use one instance to communicate with the pinned domains. Set it up according to 
 Use the second instance to communicate with the domains that are not pinned.
 Use normal setup for this one, don't use `SSLSocketFactory` and `TrustManager` provided by this library.
 
+## TLS 1.2 Support for older Android versions
+   
+This library supports TLS 1.2 for older Android version (API < 21), but in some cases, 
+your app will need to call `ProviderInstaller.installIfNeeded` (part of the Play Services), to install system support.
+
 ## License
 
 All sources are licensed using Apache 2.0 license. You can use them with no restriction. 
