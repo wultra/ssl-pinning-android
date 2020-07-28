@@ -54,7 +54,7 @@ public class CertStoreUpdateTest extends CommonJavaTest {
         when(cryptoProvider.ecdsaValidateSignatures(any(SignedData.class), any(ECPublicKey.class)))
                 .thenAnswer(invocation -> true);
 
-        String pinningJsonUrl = "https://gist.githubusercontent.com/hvge/7c5a3f9ac50332a52aa974d90ea2408c/raw/c5b021db0fcd40b1262ab513bf375e4641834925/ssl-pinning-signatures.json";
+        String pinningJsonUrl = "https://gist.githubusercontent.com/hvge/7c5a3f9ac50332a52aa974d90ea2408c/raw/34866234bbaa3350dc0ddc5680a65a6f4e7c549e/ssl-pinning-signatures.json";
         UpdateResult updateResult = performForcedUpdate(pinningJsonUrl);
         assertEquals(UpdateResult.OK, updateResult);
     }
@@ -64,7 +64,7 @@ public class CertStoreUpdateTest extends CommonJavaTest {
         when(cryptoProvider.ecdsaValidateSignatures(any(SignedData.class), any(ECPublicKey.class)))
                 .thenAnswer(invocation -> false);
 
-        String pinningJsonUrl = "https://gist.githubusercontent.com/hvge/7c5a3f9ac50332a52aa974d90ea2408c/raw/c5b021db0fcd40b1262ab513bf375e4641834925/ssl-pinning-signatures.json";
+        String pinningJsonUrl = "https://gist.githubusercontent.com/hvge/7c5a3f9ac50332a52aa974d90ea2408c/raw/34866234bbaa3350dc0ddc5680a65a6f4e7c549e/ssl-pinning-signatures.json";
         UpdateResult updateResult = performForcedUpdate(pinningJsonUrl);
         assertEquals(UpdateResult.INVALID_SIGNATURE, updateResult);
     }
@@ -87,7 +87,7 @@ public class CertStoreUpdateTest extends CommonJavaTest {
         CertStoreConfiguration config = TestUtils.getCertStoreConfiguration(
                 new Date(),
                 new String[]{"github.com"},
-                new URL("https://gist.githubusercontent.com/hvge/7c5a3f9ac50332a52aa974d90ea2408c/raw/c5b021db0fcd40b1262ab513bf375e4641834925/ssl-pinning-signatures.json"),
+                new URL("https://gist.githubusercontent.com/hvge/7c5a3f9ac50332a52aa974d90ea2408c/raw/34866234bbaa3350dc0ddc5680a65a6f4e7c549e/ssl-pinning-signatures.json"),
                 publicKeyBytes,
                 null);
         RemoteDataProvider remoteDataProvider = mock(RemoteDataProvider.class);
@@ -96,9 +96,9 @@ public class CertStoreUpdateTest extends CommonJavaTest {
                         "  \"fingerprints\": [\n" +
                         "    {\n" +
                         "      \"name\" : \"github.com\",\n" +
-                        "      \"fingerprint\" : \"MRFQDEpmASza4zPsP8ocnd5FyVREDn7kE3Fr/zZjwHQ=\",\n" +
-                        "      \"expires\" : 1591185600,\n" +
-                        "      \"signature\" : \"MEUCIQD8nGyux9GM8u3XCrRiuJj/N2eEuB0oiHzTEpGyy2gE9gIgYIRfyed6ykDzZbK1ougq1SoRW8UBe5q3VmWihHuL2JY=\"\n" +
+                        "      \"fingerprint\" : \"trmmrz6GbL4OajB+fdoXOzcrLTrD8GrxX5dxh3OEgAg=\",\n" +
+                        "      \"expires\" : 1652184000,\n" +
+                        "      \"signature\" : \"MEUCIQCs1y/nyrKh4+2DIuX/PufUYiaVUdt2FBZQg6rBeZ/r4QIgNlT4owBwJ1ThrDsE0SwGipTNI74vP1vNyLNEwuXY4lE=\"\n" +
                         "    }\n" +
                         "  ]\n" +
                         "}";
@@ -126,9 +126,9 @@ public class CertStoreUpdateTest extends CommonJavaTest {
                         "  \"fingerprints\": [\n" +
                         "    {\n" +
                         "      \"name\" : \"github.com\",\n" +
-                        "      \"fingerprint\" : \"MRFQDEpmASza4zPsP8ocnd5FyVREDn7kE3Fr/zZjwHQ=\",\n" +
-                        "      \"expires\" : 1591185600,\n" +
-                        "      \"signature\" : \"MEUCIQD8nGyux9GM8u3XCrRiuJj/N2eEuB0oiHzTEpGyy2gE9gIgYIRfyed6ykDzZbK1ougq1SoRW8UBe5q3VmWihHuL2JY=\"\n" +
+                        "      \"fingerprint\" : \"trmmrz6GbL4OajB+fdoXOzcrLTrD8GrxX5dxh3OEgAg=\",\n" +
+                        "      \"expires\" : 1652184000,\n" +
+                        "      \"signature\" : \"MEUCIQCs1y/nyrKh4+2DIuX/PufUYiaVUdt2FBZQg6rBeZ/r4QIgNlT4owBwJ1ThrDsE0SwGipTNI74vP1vNyLNEwuXY4lE=\"\n" +
                         "    }\n" +
                         "  ]\n" +
                         "}";

@@ -45,9 +45,9 @@ public class CertStoreValidationTest extends CommonJavaTest {
         String publicKey = "BEG6g28LNWRcmdFzexSNTKPBYZnDtKrCyiExFKbktttfKAF7wG4Cx1Nycr5PwCoICG1dRseLyuDxUilAmppPxAo=";
         byte[] publicKeyBytes = java.util.Base64.getDecoder().decode(publicKey);
 
-        String signatureBase64 = "MEUCIQD8nGyux9GM8u3XCrRiuJj/N2eEuB0oiHzTEpGyy2gE9gIgYIRfyed6ykDzZbK1ougq1SoRW8UBe5q3VmWihHuL2JY=";
+        String signatureBase64 = "MEUCIQCs1y/nyrKh4+2DIuX/PufUYiaVUdt2FBZQg6rBeZ/r4QIgNlT4owBwJ1ThrDsE0SwGipTNI74vP1vNyLNEwuXY4lE=";
         byte[] signatureBytes = Base64.getDecoder().decode(signatureBase64);
-        String fingerprintBase64 = "MRFQDEpmASza4zPsP8ocnd5FyVREDn7kE3Fr/zZjwHQ=";
+        String fingerprintBase64 = "trmmrz6GbL4OajB+fdoXOzcrLTrD8GrxX5dxh3OEgAg=";
         byte[] fingerprintBytes = Base64.getDecoder().decode(fingerprintBase64);
 
         GetFingerprintResponse.Entry fallbackEntry = new GetFingerprintResponse.Entry(
@@ -79,7 +79,7 @@ public class CertStoreValidationTest extends CommonJavaTest {
         CertStoreConfiguration config = TestUtils.getCertStoreConfiguration(
                 new Date(),
                 new String[]{"github.com"},
-                new URL("https://gist.githubusercontent.com/hvge/7c5a3f9ac50332a52aa974d90ea2408c/raw/c5b021db0fcd40b1262ab513bf375e4641834925/ssl-pinning-signatures.json"),
+                new URL("https://gist.githubusercontent.com/hvge/7c5a3f9ac50332a52aa974d90ea2408c/raw/34866234bbaa3350dc0ddc5680a65a6f4e7c549e/ssl-pinning-signatures.json"),
                 publicKeyBytes,
                 null);
         CertStore store = new CertStore(config, cryptoProvider, secureDataStore);
