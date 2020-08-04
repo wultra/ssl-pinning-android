@@ -98,7 +98,7 @@ task androidJavadocs(type: Javadoc) {
     // adds libraries to classpath
     android.libraryVariants.all { variant ->
         if (variant.name == 'release') {
-            owner.classpath += variant.getJavaCompiler().classpath
+            owner.classpath += variant.getJavaCompileProvider().get().classpath
         }
     }
     options.addStringOption('encoding', 'UTF-8')
