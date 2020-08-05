@@ -18,7 +18,9 @@ package com.wultra.android.sslpinning.integration.powerauth
 
 import android.content.Context
 import com.wultra.android.sslpinning.interfaces.SecureDataStore
-import io.getlime.security.powerauth.keychain.PA2Keychain
+import io.getlime.security.powerauth.keychain.Keychain
+import io.getlime.security.powerauth.keychain.KeychainFactory
+import io.getlime.security.powerauth.keychain.KeychainProtection
 
 /**
  * The [PowerAuthSecureDataStore] implements [SecureDataStore] interface with using
@@ -27,31 +29,33 @@ import io.getlime.security.powerauth.keychain.PA2Keychain
  *
  * @property contains Application context
  * @param keychainIdentifier Identifier for the data store. Used to distinguish multiple instances.
+ * @param minimumKeychainProtection The minimum level of PowerAuth Keychain content protection.
  *
  * @author Tomas Kypta, tomas.kypta@wultra.com
  */
 class PowerAuthSecureDataStore @JvmOverloads constructor(private val context: Context,
-                                                         keychainIdentifier: String = defaultKeychainIdentifier) : SecureDataStore {
+                                                         keychainIdentifier: String = defaultKeychainIdentifier,
+                                                         minimumKeychainProtection: Int = KeychainProtection.NONE) : SecureDataStore {
 
     companion object {
         @JvmStatic
         val defaultKeychainIdentifier = "com.wultra.WultraCertStore"
     }
 
-    private val keychain: PA2Keychain = PA2Keychain(keychainIdentifier)
+    private val keychain: Keychain = KeychainFactory.getKeychain(context, keychainIdentifier, minimumKeychainProtection)
 
 
     override fun save(data: ByteArray, key: String): Boolean {
-        keychain.putDataForKey(context, data, key)
+        keychain.putData(data, key)
         return true
     }
 
     override fun load(key: String): ByteArray? {
-        return keychain.dataForKey(context, key)
+        return keychain.getData(key)
     }
 
     override fun remove(key: String) {
-        keychain.removeDataForKey(context, key)
+        keychain.remove(key)
     }
 }
 
