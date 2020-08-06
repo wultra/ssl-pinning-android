@@ -32,16 +32,18 @@ task unitTestCoverageReport(type: JacocoReport,
         html.enabled = true
     }
 
-    def fileFilter = ['**/R.class', '**/R$*.class', '**/BuildConfig.*', '**/Manifest*.*', '**/*Test*.*', 'android/**/*.*']
-    def debugKotlinTree = fileTree(dir: "$project.buildDir/tmp/kotlin-classes/debug", excludes: fileFilter)
-    def debugJavaTree = fileTree(dir: "$project.buildDir/intermediates/javac/debug", excludes: fileFilter)
-    def mainSrc = "${project.projectDir}/src/main/java"
+    doFirst {
+        def mainSrc = "${project.projectDir}/src/main/java"
+        def fileFilter = ['**/R.class', '**/R$*.class', '**/BuildConfig.*', '**/Manifest*.*', '**/*Test*.*', 'android/**/*.*']
+        def debugKotlinTree = fileTree(dir: "$project.buildDir/tmp/kotlin-classes/debug", excludes: fileFilter)
+        def debugJavaTree = fileTree(dir: "$project.buildDir/intermediates/javac/debug", excludes: fileFilter)
 
-    sourceDirectories = files([mainSrc])
-    classDirectories = files([debugKotlinTree, debugJavaTree])
-    executionData = fileTree(dir: "$buildDir", includes: [
-            "jacoco/testDebugUnitTest.exec"
-    ])
+        sourceDirectories = files([mainSrc])
+        classDirectories = files([debugKotlinTree, debugJavaTree])
+        executionData = fileTree(dir: "$buildDir", includes: [
+                "jacoco/testDebugUnitTest.exec"
+        ])
+    }
 }
 
 /**
@@ -57,16 +59,18 @@ task unifiedCoverageReport(type: JacocoReport,
         html.enabled = true
     }
 
-    def fileFilter = ['**/R.class', '**/R$*.class', '**/BuildConfig.*', '**/Manifest*.*', '**/*Test*.*', 'android/**/*.*']
-    def debugKotlinTree = fileTree(dir: "$project.buildDir/tmp/kotlin-classes/debug", excludes: fileFilter)
-    def debugJavaTree = fileTree(dir: "$project.buildDir/intermediates/javac/debug", excludes: fileFilter)
-    def mainSrc = "${project.projectDir}/src/main/java"
+    doFirst {
+        def fileFilter = ['**/R.class', '**/R$*.class', '**/BuildConfig.*', '**/Manifest*.*', '**/*Test*.*', 'android/**/*.*']
+        def debugKotlinTree = fileTree(dir: "$project.buildDir/tmp/kotlin-classes/debug", excludes: fileFilter)
+        def debugJavaTree = fileTree(dir: "$project.buildDir/intermediates/javac/debug", excludes: fileFilter)
+        def mainSrc = "${project.projectDir}/src/main/java"
 
-    sourceDirectories = files([mainSrc])
-    classDirectories = files([debugKotlinTree, debugJavaTree])
-    executionData = fileTree(dir: "$buildDir", includes: [
-            "jacoco/testDebugUnitTest.exec",
-            "intermediates/jacoco_coverage_dir/debugAndroidTest/connectedDebugAndroidTest/code-coverage/*coverage.ec"
-    ])
+        sourceDirectories = files([mainSrc])
+        classDirectories = files([debugKotlinTree, debugJavaTree])
+        executionData = fileTree(dir: "$buildDir", includes: [
+                "jacoco/testDebugUnitTest.exec",
+                "intermediates/jacoco_coverage_dir/debugAndroidTest/connectedDebugAndroidTest/code-coverage/*coverage.ec"
+        ])
+    }
 }
 

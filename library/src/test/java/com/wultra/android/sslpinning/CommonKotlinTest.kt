@@ -17,6 +17,7 @@
 package com.wultra.android.sslpinning
 
 import android.content.Context
+import android.content.SharedPreferences
 import android.os.Handler
 import android.os.Looper
 import android.util.Base64
@@ -33,8 +34,11 @@ import org.bouncycastle.jce.provider.BouncyCastleProvider
 import org.junit.Before
 import org.junit.BeforeClass
 import org.mockito.ArgumentMatchers
+import org.mockito.ArgumentMatchers.anyString
 import org.mockito.Mock
 import org.mockito.Mockito
+import org.mockito.Mockito.`when`
+import org.mockito.Mockito.anyInt
 import org.powermock.api.mockito.PowerMockito
 import org.powermock.core.classloader.annotations.PowerMockIgnore
 import org.powermock.core.classloader.annotations.PrepareForTest
@@ -63,6 +67,9 @@ open class CommonKotlinTest {
 
     @Mock
     lateinit var context: Context
+
+    @Mock
+    lateinit var sharedPrefs: SharedPreferences
 
     companion object {
 
@@ -125,5 +132,8 @@ open class CommonKotlinTest {
                     runnable.run()
                     return@then true
                 }
+
+        `when`(context.applicationContext).thenReturn(context)
+        `when`(context.getSharedPreferences(anyString(), anyInt())).thenReturn(sharedPrefs)
     }
 }

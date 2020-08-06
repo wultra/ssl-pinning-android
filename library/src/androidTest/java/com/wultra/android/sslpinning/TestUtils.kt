@@ -53,9 +53,9 @@ const val jsonData = """
   "fingerprints": [
     {
       "name" : "github.com",
-      "fingerprint" : "MRFQDEpmASza4zPsP8ocnd5FyVREDn7kE3Fr/zZjwHQ=",
-      "expires" : 1591185600,
-      "signature" : "MEUCIQD8nGyux9GM8u3XCrRiuJj/N2eEuB0oiHzTEpGyy2gE9gIgYIRfyed6ykDzZbK1ougq1SoRW8UBe5q3VmWihHuL2JY="
+      "fingerprint" : "trmmrz6GbL4OajB+fdoXOzcrLTrD8GrxX5dxh3OEgAg=",
+      "expires" : 1652184000,
+      "signature" : "MEUCIQCs1y/nyrKh4+2DIuX/PufUYiaVUdt2FBZQg6rBeZ/r4QIgNlT4owBwJ1ThrDsE0SwGipTNI74vP1vNyLNEwuXY4lE="
     }
   ]
 }
@@ -65,7 +65,7 @@ const val jsonDataFingerprintsEmpty = "{\"fingerprints\":[]}"
 const val jsonDataAllEmpty = "{}"
 
 
-val url = URL("https://gist.githubusercontent.com/hvge/7c5a3f9ac50332a52aa974d90ea2408c/raw/c5b021db0fcd40b1262ab513bf375e4641834925/ssl-pinning-signatures.json")
+val url = URL("https://gist.githubusercontent.com/hvge/7c5a3f9ac50332a52aa974d90ea2408c/raw/34866234bbaa3350dc0ddc5680a65a6f4e7c549e/ssl-pinning-signatures.json")
 const val publicKey = "BC3kV9OIDnMuVoCdDR9nEA/JidJLTTDLuSA2TSZsGgODSshfbZg31MS90WC/HdbU/A5WL5GmyDkE/iks6INv+XE="
 fun getPublicKeyBytes(): ByteArray {
     return Base64.decode(publicKey, android.util.Base64.NO_WRAP)

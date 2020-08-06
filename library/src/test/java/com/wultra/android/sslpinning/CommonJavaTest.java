@@ -17,6 +17,7 @@
 package com.wultra.android.sslpinning;
 
 import android.content.Context;
+import android.content.SharedPreferences;
 import android.os.Handler;
 import android.os.Looper;
 import android.util.Log;
@@ -69,6 +70,9 @@ public abstract class CommonJavaTest {
 
     @Mock
     protected Context context;
+
+    @Mock
+    protected SharedPreferences sharedPrefs;
 
     @Mock
     protected CryptoProvider cryptoProvider;
@@ -138,5 +142,10 @@ public abstract class CommonJavaTest {
                     t.start();
                     return true;
                 });
+
+        when(context.getApplicationContext())
+                .thenReturn(context);
+        when(context.getSharedPreferences(anyString(), anyInt()))
+                .thenReturn(sharedPrefs);
     }
 }

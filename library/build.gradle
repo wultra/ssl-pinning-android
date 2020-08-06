@@ -46,9 +46,10 @@ android {
     }
 
     dokka {
-        moduleName = 'ssl-pinning-android'
-        outputFormat = 'html'
+        moduleName = project.ARTIFACT_ID
+        outputFormat = 'javadoc'
         outputDirectory = "$buildDir/javadoc"
+        reportUndocumented = true
     }
 }
 
@@ -63,9 +64,9 @@ dependencies {
 
     testImplementation "io.getlime.security.powerauth:powerauth-android-sdk:${powerAuthSdkVersion}"
     testImplementation 'junit:junit:4.12'
-    testImplementation 'org.mockito:mockito-core:2.8.47'
-    testImplementation "org.powermock:powermock-module-junit4:1.7.4"
-    testImplementation "org.powermock:powermock-api-mockito2:1.7.4"
+    testImplementation "org.mockito:mockito-core:${mockitoVersion}"
+    testImplementation "org.powermock:powermock-module-junit4:${powermockVersion}"
+    testImplementation "org.powermock:powermock-api-mockito2:${powermockVersion}"
     testImplementation 'org.bouncycastle:bcprov-jdk15on:1.60'
     testImplementation "io.getlime.security:powerauth-java-crypto:0.19.0"
 
