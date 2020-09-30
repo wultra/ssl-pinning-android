@@ -35,17 +35,21 @@ data class GetFingerprintResponse(val fingerprints: Array<Entry>) {
      * @property name Common name
      * @property fingerprint Fingerprint data
      * @property expires Expiration date
-     * @property signature ECDSA signature
+     * @property signature ECDSA signature, optional for servers that supports challenge in request
+     *                     and provides signature for the whole response.
      */
     data class Entry(val name: String,
                      val fingerprint: ByteArray,
                      val expires: Date,
-                     val signature: ByteArray) {
+                     val signature: ByteArray?) {
 
         /**
          * Get normalized data which can be used for the signature validation.
          */
         internal fun dataForSignature(): SignedData? {
+            if (signature == null) {
+                return null
+            }
             val expirationTimestampInSeconds = TimeUnit.MILLISECONDS.toSeconds(expires.time)
             val fingerprintPart = String(Base64.encode(fingerprint, Base64.NO_WRAP))
             val signedString = "${name}&${fingerprintPart}&${expirationTimestampInSeconds}"

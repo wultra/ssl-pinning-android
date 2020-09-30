@@ -30,9 +30,20 @@ interface RemoteDataProvider {
      * Gets data containing fingerprints from the remote server.
      *
      * Always invoke on a worker thread.
-     *
-     * @return Bytes as received from the remote server. Typically containing data in JSON format.
+     * @param request Request object
+     * @return Response object.
      */
     @WorkerThread
-    fun getFingerprints(): ByteArray
+    fun getFingerprints(request: RemoteDataRequest): RemoteDataResponse
 }
+
+/**
+ * Class contains information required for constructing HTTP request to acquire data
+ * from the remote server.
+ */
+data class RemoteDataRequest(val requestHeaders: Map<String, String>)
+
+/**
+ * Class contains response received from the server.
+ */
+data class RemoteDataResponse(val result: ByteArray, val responseHeaders: Map<String, String>)
