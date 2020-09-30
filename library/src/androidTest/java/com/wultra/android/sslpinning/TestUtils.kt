@@ -22,6 +22,8 @@ import android.util.Base64
 import com.google.gson.GsonBuilder
 import com.wultra.android.sslpinning.integration.powerauth.PowerAuthSecureDataStore
 import com.wultra.android.sslpinning.service.RemoteDataProvider
+import com.wultra.android.sslpinning.service.RemoteDataRequest
+import com.wultra.android.sslpinning.service.RemoteDataResponse
 import com.wultra.android.sslpinning.util.ByteArrayTypeAdapter
 import com.wultra.android.sslpinning.util.DateTypeAdapter
 import org.junit.Assert.assertEquals
@@ -42,8 +44,8 @@ import javax.net.ssl.HttpsURLConnection
 val remoteDataProvider = getRemoteDataProvider()
 fun getRemoteDataProvider(json: String = jsonData): RemoteDataProvider {
     return object : RemoteDataProvider {
-        override fun getFingerprints(): kotlin.ByteArray {
-            return json.toByteArray(Charsets.UTF_8)
+        override fun getFingerprints(request: RemoteDataRequest): RemoteDataResponse {
+            return RemoteDataResponse(json.toByteArray(Charsets.UTF_8), emptyMap())
         }
     }
 }

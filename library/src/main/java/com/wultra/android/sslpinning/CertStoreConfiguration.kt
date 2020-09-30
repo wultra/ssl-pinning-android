@@ -47,6 +47,12 @@ class CertStoreConfiguration(
         val publicKey: ByteArray,
 
         /**
+         * Indicates that server providing certificate fingerprints requires a random challenge
+         * and provides response signed with ECDSA signature.
+         */
+        val useChallenge: Boolean,
+
+        /**
          * Optional property defining the set of common names which are expected in certificate
          * validation.
          * By setting this property you instruct the store to treat all certificates issued for other
@@ -94,6 +100,7 @@ class CertStoreConfiguration(
 
     private constructor(builder: Builder) : this(serviceUrl = builder.serviceUrl,
             publicKey = builder.publicKey,
+            useChallenge = builder.useChallenge,
             expectedCommonNames = builder.expectedCommonNames,
             identifier = builder.identifier,
             fallbackCertificates = builder.fallbackCertificates ?: builder.fallbackCertificate?.let { GetFingerprintResponse(arrayOf(it)) },
@@ -148,6 +155,9 @@ class CertStoreConfiguration(
             val serviceUrl: URL,
             val publicKey: ByteArray
     ) {
+        var useChallenge: Boolean = false
+            private set
+
         var expectedCommonNames: Array<String>? = null
             private set
 
@@ -170,6 +180,15 @@ class CertStoreConfiguration(
 
         var executorService: ExecutorService? = null
             private set
+
+        /**
+         * Set use challenge flag.
+         *
+         * Required for dynamic servers
+         */
+        fun useChallenge(useChallenge: Boolean) = apply {
+            this.useChallenge = useChallenge
+        }
 
         /**
          * Set expected common names.
