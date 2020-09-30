@@ -52,7 +52,7 @@ where the list of certificate fingerprints is securely downloaded from the remot
 Before you start using the library, you should also check our other related projects:
 
 - [Mobile Utility Server](https://github.com/wultra/mobile-utility-server) - the server component that provides dynamic JSON data consumed by this library.
-- [SSL Pinning Tool](https://github.com/wultra/ssl-pinning-tool) - the command line tool written in Java, for generating static JSON data consumed by this library.
+- [Dynamic SSL Pinning Tool](https://github.com/wultra/ssl-pinning-tool) - the command line tool written in Java, for generating static JSON data consumed by this library.
 - [iOS version](https://github.com/wultra/ssl-pinning-ios) of the library
 
 ## Installation
