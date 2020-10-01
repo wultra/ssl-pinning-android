@@ -270,7 +270,6 @@ class CertStore internal constructor(private val configuration: CertStoreConfigu
             thread.priority = Process.THREAD_PRIORITY_BACKGROUND
             thread.uncaughtExceptionHandler =
                     Thread.UncaughtExceptionHandler { t, e ->
-                        e.printStackTrace()
                         WultraDebug.error("Silent update failed, $t crashed with $e.")
                     }
             thread.start()
