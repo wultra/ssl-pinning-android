@@ -284,6 +284,8 @@ class CertStore internal constructor(private val configuration: CertStoreConfigu
         // Validate signature in header
         if (configuration.useChallenge) {
             if (challenge == null) {
+                // This is an internal library error. In case that "useChallenge" is true,
+                // then the challenge must be provided.
                 throw IllegalArgumentException("Missing challenge")
             }
             val signatureHeader = responseHeaders[RESPONSE_SIGNATURE_HEADER]
