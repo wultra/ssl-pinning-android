@@ -49,6 +49,14 @@ interface CryptoProvider {
      * @return 32 bytes hash, calculated as `SHA256(data)`
      */
     fun hashSha256(data: ByteArray): ByteArray
+
+    /**
+     * Generate random data.
+     *
+     * @param length Number of random bytes to be generated
+     * @return Random bytes
+     */
+    fun getRandomData(length: Int): ByteArray
 }
 
 /**

@@ -22,6 +22,8 @@ import com.wultra.android.sslpinning.integration.DefaultUpdateObserver;
 import com.wultra.android.sslpinning.interfaces.ECPublicKey;
 import com.wultra.android.sslpinning.interfaces.SignedData;
 import com.wultra.android.sslpinning.service.RemoteDataProvider;
+import com.wultra.android.sslpinning.service.RemoteDataRequest;
+import com.wultra.android.sslpinning.service.RemoteDataResponse;
 
 import org.jetbrains.annotations.NotNull;
 import org.junit.Test;
@@ -34,6 +36,7 @@ import java.util.Date;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
+import static java.util.Collections.emptyMap;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
@@ -102,7 +105,7 @@ public class CertStoreUpdateTest extends CommonJavaTest {
                         "    }\n" +
                         "  ]\n" +
                         "}";
-        when(remoteDataProvider.getFingerprints()).thenReturn(jsonData.getBytes());
+        when(remoteDataProvider.getFingerprints(new RemoteDataRequest(emptyMap()))).thenReturn(new RemoteDataResponse(jsonData.getBytes(), emptyMap()));
 
         CertStore store = new CertStore(config, cryptoProvider, secureDataStore, remoteDataProvider);
         TestUtils.assignHandler(store, handler);
@@ -134,11 +137,11 @@ public class CertStoreUpdateTest extends CommonJavaTest {
                         "}";
 
         CountDownLatch latch = new CountDownLatch(1);
-        when(remoteDataProvider.getFingerprints()).thenAnswer(
+        when(remoteDataProvider.getFingerprints(new RemoteDataRequest(emptyMap()))).thenAnswer(
                 invocation -> {
                     byte[] bytes = jsonData.getBytes();
                     latch.countDown();
-                    return bytes;
+                    return new RemoteDataResponse(bytes, emptyMap());
                 });
 
         CertStore store = new CertStore(config, cryptoProvider, secureDataStore, remoteDataProvider);

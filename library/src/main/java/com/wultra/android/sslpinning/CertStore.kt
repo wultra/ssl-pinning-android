@@ -20,21 +20,22 @@ import android.os.Handler
 import android.os.Looper
 import android.os.Process
 import android.support.annotation.WorkerThread
+import android.util.Base64
 import com.google.gson.Gson
 import com.google.gson.GsonBuilder
 import com.wultra.android.sslpinning.interfaces.CryptoProvider
 import com.wultra.android.sslpinning.interfaces.SecureDataStore
+import com.wultra.android.sslpinning.interfaces.SignedData
 import com.wultra.android.sslpinning.model.CachedData
 import com.wultra.android.sslpinning.model.CertificateInfo
 import com.wultra.android.sslpinning.model.GetFingerprintResponse
-import com.wultra.android.sslpinning.service.RemoteDataProvider
-import com.wultra.android.sslpinning.service.RestApi
+import com.wultra.android.sslpinning.service.*
 import com.wultra.android.sslpinning.service.UpdateScheduler
-import com.wultra.android.sslpinning.service.WultraDebug
 import com.wultra.android.sslpinning.util.ByteArrayTypeAdapter
 import com.wultra.android.sslpinning.util.CertUtils
 import com.wultra.android.sslpinning.util.DateTypeAdapter
 import java.lang.IllegalArgumentException
+import java.nio.charset.Charset
 import java.security.cert.X509Certificate
 import java.util.*
 
@@ -64,6 +65,8 @@ class CertStore internal constructor(private val configuration: CertStoreConfigu
                 .registerTypeAdapter(ByteArray::class.java, ByteArrayTypeAdapter())
                 .registerTypeAdapter(Date::class.java, DateTypeAdapter())
                 .create()
+        internal const val REQUEST_CHALLENGE_HEADER = "X-Cert-Pinning-Challenge"
+        internal const val RESPONSE_SIGNATURE_HEADER = "X-Cert-Pinning-Signature"
     }
 
     init {
@@ -236,12 +239,20 @@ class CertStore internal constructor(private val configuration: CertStoreConfigu
 
     @WorkerThread
     private fun doUpdate(currentDate: Date): UpdateResult {
-        val bytes = try {
-            remoteDataProvider.getFingerprints()
+        val challenge: String?
+        val response = try {
+            val request = if (configuration.useChallenge) {
+                challenge = Base64.encodeToString(cryptoProvider.getRandomData(16), Base64.NO_WRAP)
+                RemoteDataRequest(mapOf(REQUEST_CHALLENGE_HEADER to challenge))
+            } else {
+                challenge = null
+                RemoteDataRequest(emptyMap())
+            }
+            remoteDataProvider.getFingerprints(request)
         } catch (e: Exception) {
             return UpdateResult.NETWORK_ERROR
         }
-        return processReceivedData(bytes, currentDate)
+        return processReceivedData(response.result, challenge, response.responseHeaders, currentDate)
     }
 
     private fun doUpdateAsync(currentDate: Date, updateType: UpdateType, updateObserver: UpdateObserver) {
@@ -265,7 +276,38 @@ class CertStore internal constructor(private val configuration: CertStoreConfigu
         }
     }
 
-    private fun processReceivedData(data: ByteArray, currentDate: Date): UpdateResult {
+    private fun processReceivedData(data: ByteArray, challenge: String?, responseHeaders: Map<String, String>, currentDate: Date): UpdateResult {
+
+        val publicKey = cryptoProvider.importECPublicKey(publicKey = configuration.publicKey)
+                ?: throw IllegalArgumentException("Illegal configuration public key")
+
+        // Validate signature in header
+        if (configuration.useChallenge) {
+            if (challenge == null) {
+                // This is an internal library error. In case that "useChallenge" is true,
+                // then the challenge must be provided.
+                throw IllegalArgumentException("Missing challenge")
+            }
+            val signatureHeader = responseHeaders[RESPONSE_SIGNATURE_HEADER]
+            if (signatureHeader == null) {
+                WultraDebug.error("Missing signature header.")
+                return UpdateResult.INVALID_SIGNATURE
+            }
+            val signature = try {
+                Base64.decode(signatureHeader, Base64.NO_WRAP)
+            } catch (t: Throwable) {
+                WultraDebug.error("Failed to decode signature from header: $t")
+                return UpdateResult.INVALID_SIGNATURE
+            }
+            var signedBytes = challenge.toByteArray(Charsets.UTF_8)
+            signedBytes += '&'.toByte()
+            signedBytes += data
+            if (!cryptoProvider.ecdsaValidateSignatures(SignedData(signedBytes, signature), publicKey)) {
+                WultraDebug.error("Invalid signature in $RESPONSE_SIGNATURE_HEADER header")
+                return UpdateResult.INVALID_SIGNATURE
+            }
+        }
+
         val response = try {
             GSON.fromJson(String(data), GetFingerprintResponse::class.java)
         } catch (t: Throwable) {
@@ -277,9 +319,6 @@ class CertStore internal constructor(private val configuration: CertStoreConfigu
             // this can be caused by invalid data in json
             return UpdateResult.INVALID_DATA
         }
-
-        val publicKey = cryptoProvider.importECPublicKey(publicKey = configuration.publicKey)
-                ?: throw IllegalArgumentException("Illegal configuration public key")
 
         var result = UpdateResult.OK
         updateCachedData { cachedData ->
@@ -299,20 +338,23 @@ class CertStore internal constructor(private val configuration: CertStoreConfigu
                     continue
                 }
 
-                val signedData = entry.dataForSignature()
-                if (signedData == null) {
-                    // Failed to construct bytes for signature validation. I think this may
-                    // never happen, unless "entry.name" contains some invalid UTF8 chars.
-                    WultraDebug.error("CertStore: Failed to prepare data for signature validation. CN = '${entry.name}'")
-                    result = UpdateResult.INVALID_DATA
-                    break
-                }
+                if (!configuration.useChallenge) {
+                    // Validate partial signature
+                    val signedData = entry.dataForSignature()
+                    if (signedData == null) {
+                        // Failed to construct bytes for signature validation. I think this may
+                        // never happen, unless "entry.name" contains some invalid UTF8 chars.
+                        WultraDebug.error("CertStore: Failed to prepare data for signature validation. CN = '${entry.name}'")
+                        result = UpdateResult.INVALID_DATA
+                        break
+                    }
 
-                if (!cryptoProvider.ecdsaValidateSignatures(signedData, publicKey)) {
-                    // detected invalid signature
-                    WultraDebug.error("CertStore: Invalid signature detected. CN = '${entry.name}'")
-                    result = UpdateResult.INVALID_SIGNATURE
-                    break
+                    if (!cryptoProvider.ecdsaValidateSignatures(signedData, publicKey)) {
+                        // detected invalid signature
+                        WultraDebug.error("CertStore: Invalid signature detected. CN = '${entry.name}'")
+                        result = UpdateResult.INVALID_SIGNATURE
+                        break
+                    }
                 }
 
                 configuration.expectedCommonNames?.let { expectedCN ->

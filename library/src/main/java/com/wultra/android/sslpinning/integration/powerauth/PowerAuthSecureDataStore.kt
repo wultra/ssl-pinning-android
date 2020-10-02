@@ -24,7 +24,7 @@ import io.getlime.security.powerauth.keychain.KeychainProtection
 
 /**
  * The [PowerAuthSecureDataStore] implements [SecureDataStore] interface with using
- * [PA2Keychain] as underlying data storage.
+ * [Keychain] as underlying data storage.
  * To initialize the data store, you have to provide keychain identifier.
  *
  * @property contains Application context

@@ -49,17 +49,30 @@ class RestApi(private val baseUrl: URL) : RemoteDataProvider {
      * @return Bytes as received from the remote server. Typically containing data in JSON format.
      */
     @WorkerThread
-    override fun getFingerprints(): ByteArray {
+    override fun getFingerprints(request: RemoteDataRequest): RemoteDataResponse {
         val connection = baseUrl.openConnection() as HttpURLConnection
         connection.requestMethod = "GET"
         connection.addRequestProperty("Accept", CONTENT_TYPE)
+        request.requestHeaders.forEach { header ->
+            connection.addRequestProperty(header.key, header.value)
+        }
         try {
             connection.connect()
             val responseCode = connection.responseCode
             val responseOk = responseCode / 100 == 2
             if (responseOk) {
                 connection.inputStream
-                return connection.inputStream.use { it.readBytes() }
+                val data = connection.inputStream.use { it.readBytes() }
+                val headers = mutableMapOf<String, String>()
+                connection.headerFields.keys.forEach { headerName ->
+                    if (headerName != null) {
+                        val headerValue = connection.getHeaderField(headerName)
+                        if (headerValue != null) {
+                            headers[headerName] = headerValue
+                        }
+                    }
+                }
+                return RemoteDataResponse(data, headers)
             } else {
                 throw NetworkException()
             }
