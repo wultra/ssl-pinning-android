@@ -49,7 +49,7 @@ fun CertStore.Companion.powerAuthCertStore(configuration: CertStoreConfiguration
 /**
  * Compatibility API mainly for usage from Java.
  *
- * Allows calling [CertStore#powerAuthCertStore()] with [PowerAuthCertStore#createInstance()].
+ * Allows calling `CertStore.powerAuthCertStore()` with `PowerAuthCertStore.createInstance()`.
  */
 class PowerAuthCertStore {
     companion object {
