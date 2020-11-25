@@ -61,11 +61,22 @@ class CertStore internal constructor(private val configuration: CertStoreConfigu
     private val mainThreadHandler = Handler(Looper.getMainLooper())
 
     companion object {
+        /**
+         * Internal instance of GSON.
+         */
         internal val GSON: Gson = GsonBuilder()
                 .registerTypeAdapter(ByteArray::class.java, ByteArrayTypeAdapter())
                 .registerTypeAdapter(Date::class.java, DateTypeAdapter())
                 .create()
+
+        /**
+         * Name of HTTP request header in case that challenge is used.
+         */
         internal const val REQUEST_CHALLENGE_HEADER = "X-Cert-Pinning-Challenge"
+        /**
+         * Name of HTTP response header in case that challenge is used. The header name is
+         * lowercase to properly match various name forms (lowercase, capitalized, etc...)
+         */
         internal const val RESPONSE_SIGNATURE_HEADER = "x-cert-pinning-signature"
     }
 
