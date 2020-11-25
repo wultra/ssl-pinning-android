@@ -44,6 +44,7 @@ interface RemoteDataProvider {
 data class RemoteDataRequest(val requestHeaders: Map<String, String>)
 
 /**
- * Class contains response received from the server.
+ * Class contains response received from the server. Note that response headers contains lowercase
+ * header names.
  */
 data class RemoteDataResponse(val result: ByteArray, val responseHeaders: Map<String, String>)

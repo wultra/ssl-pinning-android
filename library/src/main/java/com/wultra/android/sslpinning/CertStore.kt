@@ -66,7 +66,7 @@ class CertStore internal constructor(private val configuration: CertStoreConfigu
                 .registerTypeAdapter(Date::class.java, DateTypeAdapter())
                 .create()
         internal const val REQUEST_CHALLENGE_HEADER = "X-Cert-Pinning-Challenge"
-        internal const val RESPONSE_SIGNATURE_HEADER = "X-Cert-Pinning-Signature"
+        internal const val RESPONSE_SIGNATURE_HEADER = "x-cert-pinning-signature"
     }
 
     init {

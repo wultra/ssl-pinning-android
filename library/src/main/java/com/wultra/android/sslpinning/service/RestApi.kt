@@ -20,6 +20,7 @@ import android.support.annotation.WorkerThread
 import java.lang.Exception
 import java.net.HttpURLConnection
 import java.net.URL
+import java.util.*
 
 /**
  * Handling of network communication with the server.
@@ -68,7 +69,7 @@ class RestApi(private val baseUrl: URL) : RemoteDataProvider {
                     if (headerName != null) {
                         val headerValue = connection.getHeaderField(headerName)
                         if (headerValue != null) {
-                            headers[headerName] = headerValue
+                            headers[headerName.toLowerCase(Locale.getDefault())] = headerValue
                         }
                     }
                 }
