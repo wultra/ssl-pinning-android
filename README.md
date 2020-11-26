@@ -108,11 +108,9 @@ The configuration has the following properties:
 - `identifier` - optional string identifier for scenarios, where multiple `CertStore` instances are used in the application.
 - `fallbackCertificates` - optional hardcoded data for a fallback fingerprints. See the next chapter of this document for details.
 - `periodicUpdateIntervalMillis` - defines interval for default updates. The default value is 1 week.
-- `expirationUpdateTreshold` - defines time window before the next certificate will expire. 
-In this time window `CertStore` will try to update the list of fingerprints more often than usual. 
-Default value is 2 weeks before the next expiration.
-- `executorService` - defines `java.util.concurrent.ExecutorService` for running updates.
-If not defined updates run on a dedicated thread (not pooled).
+- `expirationUpdateTreshold` - defines time window before the next certificate will expire. In this time window `CertStore` will try to update the list of fingerprints more often than usual. Default value is 2 weeks before the next expiration.
+- `executorService` - defines `java.util.concurrent.ExecutorService` for running updates. If not defined updates run on a dedicated thread (not pooled).
+- `sslValidationStrategy` - defines the validation strategy for HTTPS connections initiated from the library itself. If not set, then the standard certificate chain validation provided by the operating system is used. Be aware that altering this option may put your application at risk. You should not ship your application to production with SSL validation turned off. See [FAQ](#download-fingerprints-from-test-server) for more details.
 
 ### Predefined Fingerprints
 
@@ -501,10 +499,47 @@ Use one instance to communicate with the pinned domains. Set it up according to 
 Use the second instance to communicate with the domains that are not pinned.
 Use normal setup for this one, don't use `SSLSocketFactory` and `TrustManager` provided by this library.
 
-## TLS 1.2 Support for older Android versions
+### TLS 1.2 Support for older Android versions
    
 This library supports TLS 1.2 for older Android version (API < 21), but in some cases, 
 your app will need to call `ProviderInstaller.installIfNeeded` (part of the Play Services), to install system support.
+
+### Download fingerprints from test server
+
+If your app connects to development server with self-signed certificate, then you can set `SslValidationStrategy.noValidation()` to `sslValidationStrategy` configuration to turn-off the certificate chain validation.
+
+Be aware, that using this option will lead to use an unsafe implementation of `HostnameVerifier` and `X509TrustManager` SSL client validation. This is useful for debug/testing purposes only, e.g. when untrusted self-signed SSL certificate is used on server side.
+
+It's strictly recommended to use this option only in debug flavours of your application. Deploying to production may cause "Security alert" in Google Developer Console. Please see [this](https://support.google.com/faqs/answer/7188426) and [this](https://support.google.com/faqs/answer/6346016) Google Help Center articles for more details. Beginning 1 March 2017, Google Play will block publishing of any new apps or updates that use such unsafe implementation of `HostnameVerifier`.
+
+How to solve this problem for debug/production flavours in gradle build script:
+
+1. Define boolean type `buildConfigField` in flavour configuration.
+   ```
+   productFlavors {
+     production {
+       buildConfigField 'boolean', 'TRUST_ALL_SSL_HOSTS', 'false'
+     }
+     debug {
+       buildConfigField 'boolean', 'TRUST_ALL_SSL_HOSTS', 'true'
+     }
+   }
+   ```
+
+2. In code use this conditional initialization for [CertStoreConfiguration.Builder]:
+   ```kotlin
+   val publicKey = Base64.decode("BMne....kdh2ak=", Base64.NO_WRAP)
+   val builder = CertStoreConfiguration.Builder(
+                    serviceUrl = URL("https://localhost/..."),
+                    publicKey = publicKey)
+   if (BuildConfig.TRUST_ALL_SSL_HOSTS) {
+       builder.sslValidationStrategy(SslValidationStrategy.noValidation())
+   }
+   val configuration = builder.build()
+   ```
+
+3. Set `minifyEnabled` to `true` for release buildType to enable code shrinking with ProGuard.
+
 
 ## License
 

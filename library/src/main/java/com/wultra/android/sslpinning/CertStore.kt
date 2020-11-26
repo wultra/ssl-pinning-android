@@ -85,7 +85,7 @@ class CertStore internal constructor(private val configuration: CertStoreConfigu
         if (remoteDataProvider != null) {
             this.remoteDataProvider = remoteDataProvider
         } else {
-            this.remoteDataProvider = RestApi(baseUrl = configuration.serviceUrl)
+            this.remoteDataProvider = RestApi(baseUrl = configuration.serviceUrl, sslValidationStrategy = configuration.sslValidationStrategy)
         }
     }
 
