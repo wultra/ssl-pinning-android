@@ -17,9 +17,12 @@
 package com.wultra.android.sslpinning.service
 
 import android.support.annotation.WorkerThread
+import com.wultra.android.sslpinning.SslValidationStrategy
 import java.lang.Exception
 import java.net.HttpURLConnection
 import java.net.URL
+import java.util.*
+import javax.net.ssl.HttpsURLConnection
 
 /**
  * Handling of network communication with the server.
@@ -28,7 +31,9 @@ import java.net.URL
  * @property baseUrl URL of the remote server.
  * @author Tomas Kypta, tomas.kypta@wultra.com
  */
-class RestApi(private val baseUrl: URL) : RemoteDataProvider {
+class RestApi(
+        private val baseUrl: URL,
+        private val sslValidationStrategy: SslValidationStrategy?) : RemoteDataProvider {
 
     companion object {
         const val CONTENT_TYPE = "application/json"
@@ -56,6 +61,19 @@ class RestApi(private val baseUrl: URL) : RemoteDataProvider {
         request.requestHeaders.forEach { header ->
             connection.addRequestProperty(header.key, header.value)
         }
+        if (sslValidationStrategy != null) {
+            val secureConnection = connection as? HttpsURLConnection
+            if (secureConnection != null) {
+                val socketFactory = sslValidationStrategy.sslSocketFactory()
+                val hosntameVerifier = sslValidationStrategy.hostnameVerifier()
+                if (socketFactory != null) {
+                    secureConnection.sslSocketFactory = socketFactory
+                }
+                if (hosntameVerifier != null) {
+                    secureConnection.hostnameVerifier = hosntameVerifier
+                }
+            }
+        }
         try {
             connection.connect()
             val responseCode = connection.responseCode
@@ -68,7 +86,7 @@ class RestApi(private val baseUrl: URL) : RemoteDataProvider {
                     if (headerName != null) {
                         val headerValue = connection.getHeaderField(headerName)
                         if (headerValue != null) {
-                            headers[headerName] = headerValue
+                            headers[headerName.toLowerCase(Locale.getDefault())] = headerValue
                         }
                     }
                 }

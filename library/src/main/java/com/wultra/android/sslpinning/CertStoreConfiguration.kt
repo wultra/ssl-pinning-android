@@ -96,7 +96,13 @@ class CertStoreConfiguration(
          * Executor service on which silent updates will run.
          * If not set, the silent updates will run on a separate thread.
          */
-        val executorService: ExecutorService? = null) {
+        val executorService: ExecutorService? = null,
+
+        /**
+         * SSL validation strategy applied to HTTPS requests initiated from this library.
+         * If not set, then the default system-provided certificate chain validation will be used.
+         */
+        val sslValidationStrategy: SslValidationStrategy? = null) {
 
     private constructor(builder: Builder) : this(serviceUrl = builder.serviceUrl,
             publicKey = builder.publicKey,
@@ -106,7 +112,8 @@ class CertStoreConfiguration(
             fallbackCertificates = builder.fallbackCertificates ?: builder.fallbackCertificate?.let { GetFingerprintResponse(arrayOf(it)) },
             periodicUpdateIntervalMillis = builder.periodicUpdateIntervalMillis,
             expirationUpdateThresholdMillis = builder.expirationUpdateThresholdMillis,
-            executorService = builder.executorService)
+            executorService = builder.executorService,
+            sslValidationStrategy = builder.sslValidationStrategy)
 
     /**
      * Validate that the configuration doesn't contain any errors.
@@ -115,7 +122,9 @@ class CertStoreConfiguration(
         if (serviceUrl.protocol == "http") {
             WultraDebug.warning("CertStoreConfiguration: 'serviceUrl' should point to 'https' server.")
         }
-
+        if (sslValidationStrategy != null) {
+            WultraDebug.warning("CertStoreConfiguration: 'sslValidationStrategy' should not be used in production.")
+        }
         // validate fallback certificate data
         fallbackCertificates?.fingerprints?.forEach { fallback ->
             try {
@@ -181,6 +190,9 @@ class CertStoreConfiguration(
         var executorService: ExecutorService? = null
             private set
 
+        var sslValidationStrategy: SslValidationStrategy? = null
+            private set
+
         /**
          * Set use challenge flag.
          *
@@ -243,6 +255,14 @@ class CertStoreConfiguration(
          */
         fun executorService(executorService: ExecutorService?) = apply {
             this.executorService = executorService
+        }
+
+        /**
+         * Changes validation strategy how HTTPS requests initiated from this library should be handled.
+         * Please read a note about [SslValidationStrategy.noValidation] before you change this option.
+         */
+        fun sslValidationStrategy(sslValidationStrategy: SslValidationStrategy) = apply {
+            this.sslValidationStrategy = sslValidationStrategy
         }
 
         /**
