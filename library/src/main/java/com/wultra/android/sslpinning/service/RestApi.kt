@@ -18,9 +18,11 @@ package com.wultra.android.sslpinning.service
 
 import android.support.annotation.WorkerThread
 import com.wultra.android.sslpinning.SslValidationStrategy
+import java.io.IOException
 import java.lang.Exception
 import java.net.HttpURLConnection
 import java.net.URL
+import java.nio.charset.Charset
 import java.util.*
 import javax.net.ssl.HttpsURLConnection
 
@@ -46,7 +48,7 @@ class RestApi(
     /**
      * Exception denoting that the server request failed.
      */
-    class NetworkException : Exception()
+    class NetworkException(val response: RemoteDataResponse) : Exception()
 
     /**
      * Perform REST request to get fingerprints from the remote server.
@@ -74,32 +76,86 @@ class RestApi(
                 }
             }
         }
+        logRequest(connection)
         try {
             connection.connect()
             val responseCode = connection.responseCode
             val responseOk = responseCode / 100 == 2
-            if (responseOk) {
-                connection.inputStream
-                val data = connection.inputStream.use { it.readBytes() }
-                val headers = mutableMapOf<String, String>()
-                connection.headerFields.keys.forEach { headerName ->
-                    if (headerName != null) {
-                        val headerValue = connection.getHeaderField(headerName)
-                        if (headerValue != null) {
-                            headers[headerName.toLowerCase(Locale.getDefault())] = headerValue
-                        }
+            val inputStream = if (responseOk) connection.inputStream else connection.errorStream
+            val data = inputStream.use { it.readBytes() }
+            val headers = mutableMapOf<String, String>()
+            connection.headerFields.keys.forEach { headerName ->
+                if (headerName != null) {
+                    val headerValue = connection.getHeaderField(headerName)
+                    if (headerValue != null) {
+                        headers[headerName.toLowerCase(Locale.getDefault())] = headerValue
                     }
                 }
-                return RemoteDataResponse(data, headers)
-            } else {
-                throw NetworkException()
             }
+            val responseData = RemoteDataResponse(responseCode, headers, data)
+            if (!responseOk) {
+                throw NetworkException(responseData)
+            }
+            logResponse(connection, data, null)
+            return responseData
+        } catch (e: NetworkException) {
+            logResponse(connection, e.response.data, null)
+            WultraDebug.warning("RestAPI: HTTP request failed with response code ${e.response.responseCode}")
+            throw e
         } catch (t: Throwable) {
-            WultraDebug.warning("RestAPI: HTTP request failed with error: ${t}")
+            logResponse(connection, null, t)
+            WultraDebug.warning("RestAPI: HTTP request failed with error: $t")
             throw t
         } finally {
             connection.disconnect()
         }
     }
 
+    /**
+     * Dump request data into debug log.
+     *
+     * @param connection Connection object.
+     */
+    private fun logRequest(connection: HttpURLConnection) {
+        if (WultraDebug.loggingLevel == WultraDebug.WultraLoggingLevel.DEBUG) {
+            val url = connection.url
+            val method = connection.requestMethod
+            var message = "HTTP ${method} request: -> ${url}"
+            if (connection.requestProperties != null) {
+                message += "\n- Headers: ${connection.requestProperties}"
+            }
+            WultraDebug.info(message)
+        }
+    }
+
+    /**
+     * Dump response data into debug log.
+     *
+     * @param connection Connection object.
+     * @param data Data received from the server.
+     * @param error Error produced during the connection.
+     */
+    private fun logResponse(connection: HttpURLConnection, data: ByteArray?, error: Throwable?) {
+        if (WultraDebug.loggingLevel == WultraDebug.WultraLoggingLevel.DEBUG) {
+            val url = connection.url
+            val method = connection.requestMethod
+            val responseCode = try {
+                connection.responseCode
+            } catch (e: IOException) {
+                0
+            }
+            var message = "HTTP ${method} response: ${responseCode} <- ${url}"
+            if (connection.headerFields != null) {
+                message += "\n- Headers: ${connection.headerFields}"
+            }
+            if (data != null) {
+                val dataString = data.toString(Charsets.UTF_8)
+                message += "\n- Data: ${dataString}"
+            }
+            if (error != null) {
+                message += "\n- Error: ${error}"
+            }
+            WultraDebug.info(message)
+        }
+    }
 }

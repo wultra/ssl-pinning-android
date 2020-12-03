@@ -35,7 +35,6 @@ import com.wultra.android.sslpinning.util.ByteArrayTypeAdapter
 import com.wultra.android.sslpinning.util.CertUtils
 import com.wultra.android.sslpinning.util.DateTypeAdapter
 import java.lang.IllegalArgumentException
-import java.nio.charset.Charset
 import java.security.cert.X509Certificate
 import java.util.*
 
@@ -263,7 +262,7 @@ class CertStore internal constructor(private val configuration: CertStoreConfigu
         } catch (e: Exception) {
             return UpdateResult.NETWORK_ERROR
         }
-        return processReceivedData(response.result, challenge, response.responseHeaders, currentDate)
+        return processReceivedData(response.data, challenge, response.responseHeaders, currentDate)
     }
 
     private fun doUpdateAsync(currentDate: Date, updateType: UpdateType, updateObserver: UpdateObserver) {
