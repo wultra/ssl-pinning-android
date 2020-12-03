@@ -45,7 +45,7 @@ val remoteDataProvider = getRemoteDataProvider()
 fun getRemoteDataProvider(json: String = jsonData): RemoteDataProvider {
     return object : RemoteDataProvider {
         override fun getFingerprints(request: RemoteDataRequest): RemoteDataResponse {
-            return RemoteDataResponse(json.toByteArray(Charsets.UTF_8), emptyMap())
+            return RemoteDataResponse(200, emptyMap(), json.toByteArray(Charsets.UTF_8))
         }
     }
 }

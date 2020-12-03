@@ -17,6 +17,7 @@
 package com.wultra.android.sslpinning
 
 import android.support.test.InstrumentationRegistry
+import com.wultra.android.sslpinning.service.WultraDebug
 import org.junit.Before
 
 /**
@@ -30,6 +31,7 @@ abstract class CommonTest {
 
     @Before
     fun setUp() {
+        WultraDebug.loggingLevel = WultraDebug.WultraLoggingLevel.DEBUG
         clearStorage()
     }
 }

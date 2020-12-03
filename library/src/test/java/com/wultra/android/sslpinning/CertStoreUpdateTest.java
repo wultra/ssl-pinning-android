@@ -105,7 +105,7 @@ public class CertStoreUpdateTest extends CommonJavaTest {
                         "    }\n" +
                         "  ]\n" +
                         "}";
-        when(remoteDataProvider.getFingerprints(new RemoteDataRequest(emptyMap()))).thenReturn(new RemoteDataResponse(jsonData.getBytes(), emptyMap()));
+        when(remoteDataProvider.getFingerprints(new RemoteDataRequest(emptyMap()))).thenReturn(new RemoteDataResponse(200, emptyMap(), jsonData.getBytes()));
 
         CertStore store = new CertStore(config, cryptoProvider, secureDataStore, remoteDataProvider);
         TestUtils.assignHandler(store, handler);
@@ -141,7 +141,7 @@ public class CertStoreUpdateTest extends CommonJavaTest {
                 invocation -> {
                     byte[] bytes = jsonData.getBytes();
                     latch.countDown();
-                    return new RemoteDataResponse(bytes, emptyMap());
+                    return new RemoteDataResponse(200, emptyMap(), bytes);
                 });
 
         CertStore store = new CertStore(config, cryptoProvider, secureDataStore, remoteDataProvider);
