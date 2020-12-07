@@ -401,7 +401,7 @@ update is necessary to make a change.
 Yes, you can change how much information is printed to the debug console:
 
 ```kotlin
-WultraDebug.loggingLevel = WultraLoggingLevel.RELEASE
+WultraDebug.loggingLevel = WultraDebug.WultraLoggingLevel.DEBUG
 ```
 
 ### Is there a dependency on PowerAuthSDK?
