@@ -47,4 +47,37 @@ data class RemoteDataRequest(val requestHeaders: Map<String, String>)
  * Class contains response received from the server. Note that response headers contains lowercase
  * header names.
  */
-data class RemoteDataResponse(val result: ByteArray, val responseHeaders: Map<String, String>)
+data class RemoteDataResponse(
+        /**
+         * HTTP response code.
+         */
+        val responseCode: Int,
+        /**
+         * Response headers.
+         */
+        val responseHeaders: Map<String, String>,
+        /**
+         * Received data.
+         */
+        val data: ByteArray
+) {
+    override fun equals(other: Any?): Boolean {
+        if (this === other) return true
+        if (javaClass != other?.javaClass) return false
+
+        other as RemoteDataResponse
+
+        if (responseCode != other.responseCode) return false
+        if (responseHeaders != other.responseHeaders) return false
+        if (!data.contentEquals(other.data)) return false
+
+        return true
+    }
+
+    override fun hashCode(): Int {
+        var result = responseCode
+        result = 31 * result + responseHeaders.hashCode()
+        result = 31 * result + data.contentHashCode()
+        return result
+    }
+}

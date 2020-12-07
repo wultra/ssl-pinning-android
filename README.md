@@ -66,10 +66,10 @@ Before you start using the library, you should also check our other related proj
 To use **WultraSSLPinning** in you Android app add this dependency:
 
 ```gradle
-implementation 'com.wultra.android.sslpinning:wultra-ssl-pinning:1.0.0'
+implementation 'com.wultra.android.sslpinning:wultra-ssl-pinning:1.x.y'
 ```
 
-Note that this documentation is using version `1.0.0` as an example. You can find the latest version at [github's release](https://github.com/wultra/ssl-pinning-android/releases#docucheck-keep-link) page. The Android Studio IDE can also find and offer updates for your application’s dependencies.
+Note that this documentation is using version `1.x.y` as an example. You can find the latest version at [github's release](https://github.com/wultra/ssl-pinning-android/releases#docucheck-keep-link) page. The Android Studio IDE can also find and offer updates for your application’s dependencies.
 
 Also make sure you have `jcenter()` repository among the project repositories.
 
@@ -408,15 +408,11 @@ WultraDebug.loggingLevel = WultraLoggingLevel.RELEASE
 
 There's an optional dependency on [PowerAuthSDK](https://github.com/wultra/powerauth-mobile-sdk). 
 
-However, the library requires several cryptographic primitives (see `CryptoProvider`)
-that are provided by **PowerAuthSDK**. 
-Also most of our clients are already using PowerAuthSDK in their applications. 
-Therefore it's a non-brainer to use **PowerAuthSDK** for the cryptography in **WultraSSLPinning**.
+However, the library requires several cryptographic primitives (see `CryptoProvider`) that are provided by **PowerAuthSDK**. Also most of our clients are already using PowerAuthSDK in their applications. Therefore it's a non-brainer to use **PowerAuthSDK** for the cryptography in **WultraSSLPinning**.
 
-If needed the library can be used without PowerAuthSDK. 
-In this case you can't use any class from `com.wultra.android.sslpinning.integration.powerauth` package
-since they expect PowerAuthSDK to be present.
-Also you have to provide you own implementation of `CryptoProvider` and `SecureDataStore`.
+> Be aware that library version 1.1.x+ requires at least PowerAuth mobile SDK 1.4.2 and newer. This requirement is due to improvements in the secure data storage we have implemented in that version of the SDK.
+
+If needed the library can be used without PowerAuthSDK. In this case you can't use any class from `com.wultra.android.sslpinning.integration.powerauth` package since they expect PowerAuthSDK to be present. Also you have to provide you own implementation of `CryptoProvider` and `SecureDataStore`.
 
 ### What is pinned?
 
