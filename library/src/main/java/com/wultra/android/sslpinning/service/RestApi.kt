@@ -88,7 +88,7 @@ class RestApi(
                 if (headerName != null) {
                     val headerValue = connection.getHeaderField(headerName)
                     if (headerValue != null) {
-                        headers[headerName.toLowerCase(Locale.getDefault())] = headerValue
+                        headers[headerName.lowercase(Locale.getDefault())] = headerValue
                     }
                 }
             }

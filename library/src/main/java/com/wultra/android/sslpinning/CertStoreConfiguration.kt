@@ -31,6 +31,7 @@ import java.util.concurrent.TimeUnit
  *
  * @author Tomas Kypta, tomas.kypta@wultra.com
  */
+@Suppress("DEPRECATION")
 class CertStoreConfiguration(
 
         /**
@@ -159,7 +160,7 @@ class CertStoreConfiguration(
      * @param serviceUrl URL of remote update server.
      * @param publicKey Public key for validating data received from the server.
      */
-    @Suppress("DeprecatedCallableAddReplaceWith")
+    @Suppress("DeprecatedCallableAddReplaceWith", "unused")
     class Builder(
             val serviceUrl: URL,
             val publicKey: ByteArray
