@@ -19,7 +19,7 @@ package com.wultra.android.sslpinning.integration.powerauth
 import com.wultra.android.sslpinning.CertStore
 import com.wultra.android.sslpinning.integration.SSLPinningIntegration
 import com.wultra.android.sslpinning.integration.SSLPinningX509TrustManager
-import io.getlime.security.powerauth.networking.ssl.PA2ClientValidationStrategy
+import io.getlime.security.powerauth.networking.ssl.HttpClientValidationStrategy
 import javax.net.ssl.HostnameVerifier
 import javax.net.ssl.SSLSocketFactory
 import javax.net.ssl.X509TrustManager
@@ -33,7 +33,7 @@ import javax.net.ssl.X509TrustManager
  *
  * @property certStore Instance of [CertStore] based on PowerAuthSDK.
  */
-class PowerAuthSslPinningValidationStrategy(private val certStore: CertStore) : PA2ClientValidationStrategy {
+class PowerAuthSslPinningValidationStrategy(private val certStore: CertStore) : HttpClientValidationStrategy {
 
     /**
      * Trust manager for validating server certificates with WultraSSLPinning.

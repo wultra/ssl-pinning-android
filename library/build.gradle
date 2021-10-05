@@ -56,14 +56,14 @@ android {
 dependencies {
     implementation fileTree(dir: 'libs', include: ['*.jar'])
 
-    compileOnly "io.getlime.security.powerauth:powerauth-android-sdk:${powerAuthSdkVersion}"
+    compileOnly "com.wultra.android.powerauth:powerauth-sdk:${powerAuthSdkVersion}"
 
     implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk7:$kotlin_version"
     implementation "com.android.support:support-annotations:${supportVersion}"
     implementation "com.google.code.gson:gson:${gsonVersion}"
 
-    testImplementation "io.getlime.security.powerauth:powerauth-android-sdk:${powerAuthSdkVersion}"
-    testImplementation 'junit:junit:4.12'
+    testImplementation "com.wultra.android.powerauth:powerauth-sdk:${powerAuthSdkVersion}"
+    testImplementation 'junit:junit:4.13.2'
     testImplementation "org.mockito:mockito-core:${mockitoVersion}"
     testImplementation "org.powermock:powermock-module-junit4:${powermockVersion}"
     testImplementation "org.powermock:powermock-api-mockito2:${powermockVersion}"
@@ -72,7 +72,7 @@ dependencies {
 
     androidTestImplementation 'com.android.support.test:runner:1.0.2'
     androidTestImplementation 'com.android.support.test.espresso:espresso-core:3.0.2'
-    androidTestImplementation "io.getlime.security.powerauth:powerauth-android-sdk:${powerAuthSdkVersion}"
+    androidTestImplementation "com.wultra.android.powerauth:powerauth-sdk:${powerAuthSdkVersion}"
     androidTestImplementation 'com.squareup.okhttp3:okhttp:3.12.0'
 }
 
