@@ -47,7 +47,6 @@ ext {
     targetSdkVersion = 28
     minSdkVersion = 19
 
-    supportVersion = "28.0.0"
     powerAuthSdkVersion = "1.6.1"
     gsonVersion = "2.8.6"
 

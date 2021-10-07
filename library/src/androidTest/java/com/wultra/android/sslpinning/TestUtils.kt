@@ -17,8 +17,8 @@
 package com.wultra.android.sslpinning
 
 import android.content.Context
-import android.support.test.InstrumentationRegistry
 import android.util.Base64
+import androidx.test.platform.app.InstrumentationRegistry
 import com.google.gson.GsonBuilder
 import com.wultra.android.sslpinning.integration.powerauth.PowerAuthSecureDataStore
 import com.wultra.android.sslpinning.service.RemoteDataProvider
@@ -119,7 +119,7 @@ fun updateAndCheck(store: CertStore, updateMode: UpdateMode, expectedUpdateResul
 }
 
 fun clearStorage() {
-    val appContext = InstrumentationRegistry.getTargetContext()
+    val appContext = InstrumentationRegistry.getInstrumentation().targetContext
     appContext.getSharedPreferences(PowerAuthSecureDataStore.defaultKeychainIdentifier, Context.MODE_PRIVATE)
             .edit()
             .clear()

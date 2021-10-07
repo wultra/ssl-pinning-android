@@ -16,7 +16,7 @@
 
 package com.wultra.android.sslpinning.integration
 
-import android.support.annotation.MainThread
+import androidx.annotation.MainThread
 import com.wultra.android.sslpinning.UpdateObserver
 import com.wultra.android.sslpinning.UpdateResult
 import com.wultra.android.sslpinning.UpdateType
