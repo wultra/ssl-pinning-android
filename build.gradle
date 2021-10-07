@@ -15,20 +15,18 @@
  */
 
 buildscript {
-    ext.kotlin_version = '1.5.31'
-    ext.dokkaVersion = '0.9.18'
-    ext.jacocoVersion = "0.8.5"
+    ext.kotlinVersion = '1.5.31'
+    ext.dokkaVersion = '1.5.30'
+    ext.jacocoVersion = "0.8.7"
     repositories {
         mavenCentral()
-        jcenter()
         google()
     }
     dependencies {
-        classpath 'com.android.tools.build:gradle:4.0.2'
-        classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlin_version"
-        classpath "org.jetbrains.dokka:dokka-android-gradle-plugin:$dokkaVersion"
+        classpath "com.android.tools.build:gradle:4.2.2"
+        classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlinVersion"
+        classpath "org.jetbrains.dokka:dokka-gradle-plugin:$dokkaVersion"
         // releasing
-        classpath "com.jfrog.bintray.gradle:gradle-bintray-plugin:1.8.5"
         classpath "org.jacoco:org.jacoco.core:${jacocoVersion}"
     }
 }
@@ -36,7 +34,6 @@ buildscript {
 allprojects {
     repositories {
         mavenCentral()
-        jcenter()
         google()
     }
 }
