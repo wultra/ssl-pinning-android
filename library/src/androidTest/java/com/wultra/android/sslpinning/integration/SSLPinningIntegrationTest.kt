@@ -16,7 +16,7 @@
 
 package com.wultra.android.sslpinning.integration
 
-import android.support.test.runner.AndroidJUnit4
+import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.wultra.android.sslpinning.*
 import com.wultra.android.sslpinning.integration.powerauth.powerAuthCertStore
 import okhttp3.OkHttpClient

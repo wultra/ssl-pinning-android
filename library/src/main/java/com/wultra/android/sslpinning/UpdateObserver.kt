@@ -16,7 +16,7 @@
 
 package com.wultra.android.sslpinning
 
-import android.support.annotation.MainThread
+import androidx.annotation.MainThread
 
 /**
  * Observer for receiving update results from asynchronous

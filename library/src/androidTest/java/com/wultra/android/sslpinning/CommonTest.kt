@@ -16,7 +16,7 @@
 
 package com.wultra.android.sslpinning
 
-import android.support.test.InstrumentationRegistry
+import androidx.test.platform.app.InstrumentationRegistry
 import com.wultra.android.sslpinning.service.WultraDebug
 import org.junit.Before
 
@@ -27,7 +27,7 @@ import org.junit.Before
  */
 abstract class CommonTest {
 
-    val appContext = InstrumentationRegistry.getTargetContext()
+    val appContext = InstrumentationRegistry.getInstrumentation().targetContext
 
     @Before
     fun setUp() {

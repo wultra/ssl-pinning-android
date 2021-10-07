@@ -19,8 +19,8 @@ package com.wultra.android.sslpinning
 import android.os.Handler
 import android.os.Looper
 import android.os.Process
-import android.support.annotation.WorkerThread
 import android.util.Base64
+import androidx.annotation.WorkerThread
 import com.google.gson.Gson
 import com.google.gson.GsonBuilder
 import com.wultra.android.sslpinning.interfaces.CryptoProvider

@@ -16,7 +16,7 @@
 
 package com.wultra.android.sslpinning;
 
-import android.support.annotation.NonNull;
+import androidx.annotation.NonNull;
 
 import com.wultra.android.sslpinning.integration.DefaultUpdateObserver;
 import com.wultra.android.sslpinning.interfaces.ECPublicKey;
