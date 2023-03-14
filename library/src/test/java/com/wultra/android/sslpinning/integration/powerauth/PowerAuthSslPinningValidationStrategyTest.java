@@ -36,7 +36,7 @@ import javax.net.ssl.HttpsURLConnection;
 import javax.net.ssl.SSLHandshakeException;
 import javax.net.ssl.SSLSocketFactory;
 
-import io.getlime.security.powerauth.networking.ssl.PA2ClientValidationStrategy;
+import io.getlime.security.powerauth.networking.ssl.HttpClientValidationStrategy;
 
 import static org.junit.Assert.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
@@ -67,7 +67,7 @@ public class PowerAuthSslPinningValidationStrategyTest extends CommonJavaTest {
         TestUtils.assignHandler(store, handler);
         TestUtils.updateAndCheck(store, UpdateMode.FORCED, UpdateResult.OK);
 
-        PA2ClientValidationStrategy strategy = new PowerAuthSslPinningValidationStrategy(store);
+        HttpClientValidationStrategy strategy = new PowerAuthSslPinningValidationStrategy(store);
 
         URL url = new URL("https://github.com");
         URLConnection urlConnection = url.openConnection();
@@ -106,7 +106,7 @@ public class PowerAuthSslPinningValidationStrategyTest extends CommonJavaTest {
         CertStore store = new CertStore(config, cryptoProvider, secureDataStore);
         TestUtils.assignHandler(store, handler);
 
-        PA2ClientValidationStrategy strategy = new PowerAuthSslPinningValidationStrategy(store);
+        HttpClientValidationStrategy strategy = new PowerAuthSslPinningValidationStrategy(store);
 
         URL url = new URL("https://github.com");
         URLConnection urlConnection = url.openConnection();
