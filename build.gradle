@@ -15,15 +15,15 @@
  */
 
 buildscript {
-    ext.kotlinVersion = '1.5.31'
-    ext.dokkaVersion = '1.5.30'
+    ext.kotlinVersion = '1.7.22'
+    ext.dokkaVersion = '1.7.20'
     ext.jacocoVersion = "0.8.7"
     repositories {
         mavenCentral()
         google()
     }
     dependencies {
-        classpath "com.android.tools.build:gradle:4.2.2"
+        classpath "com.android.tools.build:gradle:7.4.2"
         classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlinVersion"
         classpath "org.jetbrains.dokka:dokka-gradle-plugin:$dokkaVersion"
         // releasing
@@ -43,11 +43,11 @@ task clean(type: Delete) {
 }
 
 ext {
-    compileSdkVersion = 28
-    targetSdkVersion = 28
+    compileSdkVersion = 33
+    targetSdkVersion = 33
     minSdkVersion = 19
 
-    powerAuthSdkVersion = "1.6.1"
+    powerAuthSdkVersion = "1.7.8"
     gsonVersion = "2.8.6"
 
     mockitoVersion = "3.4.6"

@@ -57,7 +57,7 @@ dependencies {
 
     implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk7:$kotlinVersion"
     implementation "com.google.code.gson:gson:${gsonVersion}"
-    implementation 'androidx.annotation:annotation:1.2.0'
+    implementation "androidx.annotation:annotation:1.5.0"
 
     testImplementation "com.wultra.android.powerauth:powerauth-sdk:${powerAuthSdkVersion}"
     testImplementation 'junit:junit:4.13.2'
@@ -67,10 +67,9 @@ dependencies {
     testImplementation 'org.bouncycastle:bcprov-jdk15on:1.60'
     testImplementation "io.getlime.security:powerauth-java-crypto:0.19.0"
 
-    androidTestImplementation 'androidx.test.espresso:espresso-core:3.4.0'
-    androidTestImplementation 'androidx.test:runner:1.4.0'
-    androidTestImplementation 'androidx.test:rules:1.4.0'
-    androidTestImplementation 'androidx.test.ext:junit:1.1.3'
+    androidTestImplementation "androidx.test:runner:1.5.2"
+    androidTestImplementation "androidx.test:rules:1.5.0"
+    androidTestImplementation "androidx.test.ext:junit:1.1.5"
     androidTestImplementation "com.wultra.android.powerauth:powerauth-sdk:${powerAuthSdkVersion}"
     androidTestImplementation 'com.squareup.okhttp3:okhttp:3.12.12'
 }

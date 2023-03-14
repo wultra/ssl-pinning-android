@@ -20,6 +20,7 @@ import com.wultra.android.sslpinning.interfaces.CryptoProvider
 import com.wultra.android.sslpinning.interfaces.ECPublicKey
 import com.wultra.android.sslpinning.interfaces.SignedData
 import io.getlime.security.powerauth.core.CryptoUtils
+import io.getlime.security.powerauth.core.EcPublicKey
 import java.lang.IllegalArgumentException
 import java.security.SecureRandom
 
@@ -35,8 +36,8 @@ class PowerAuthCryptoProvider : CryptoProvider {
 
     override fun ecdsaValidateSignatures(signedData: SignedData, publicKey: ECPublicKey): Boolean {
         val ecKey = publicKey as? PA2ECPublicKey ?: throw IllegalArgumentException("Invalid ECPublicKey object.")
-
-        return CryptoUtils.ecdsaValidateSignature(signedData.data, signedData.signature, ecKey.data)
+        val ecPublicKey = EcPublicKey(ecKey.data)
+        return CryptoUtils.ecdsaValidateSignature(signedData.data, signedData.signature, ecPublicKey)
     }
 
     override fun importECPublicKey(publicKey: ByteArray): ECPublicKey? {
