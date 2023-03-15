@@ -68,7 +68,7 @@ public class PowerAuthIntegrationTest extends CommonJavaTest {
         Assert.assertNotNull(secureDataStore2);
     }
 
-    @Test(expected = IllegalArgumentException.class)
+    @Test(expected = NullPointerException.class)
     public void testPowerAuthSecureDataStoreApisCrash() {
         new PowerAuthSecureDataStore(context, null);
     }
