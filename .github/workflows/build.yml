@@ -11,7 +11,7 @@ on:
 jobs:
   buildJob:
     name: Build
-    runs-on: [self-hosted, macOS]
+    runs-on: macos-latest
     steps:
       - name: Checkout the repo
         uses: actions/checkout@v3
@@ -27,7 +27,7 @@ jobs:
 
   lintJob:
     name: Lint
-    runs-on: [self-hosted, macOS]
+    runs-on: macos-latest
     needs: [buildJob]
     steps:
       - name: Lint
@@ -42,7 +42,7 @@ jobs:
 
   unitTestJob:
     name: Unit Test
-    runs-on: [ self-hosted, macOS ]
+    runs-on: macos-latest
     needs: [buildJob]
     steps:
       - name: Unit Test
@@ -57,7 +57,7 @@ jobs:
 
   intrTestJob:
     name: Instrumentation Test
-    runs-on: [ self-hosted ]
+    runs-on: macos-latest
     needs: [buildJob]
     steps:
       - name: Run instrumentation tests on emulator
