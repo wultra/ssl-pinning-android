@@ -1,0 +1,106 @@
+name: Build and check
+
+on:
+  push:
+    branches:
+      - develop
+      - master
+      - release/*
+  pull_request:
+  schedule:
+      - cron: '11 6 3 * *'
+
+jobs:
+  buildJob:
+    name: Build
+    runs-on: macos-latest
+    steps:
+      - name: Checkout the repo
+        uses: actions/checkout@v3
+
+      - name: Set up JDK 11
+        uses: actions/setup-java@v3
+        with:
+          java-version: '11'
+          distribution: 'zulu'
+
+      - name: Assemble Library
+        run: ./gradlew library:assemble
+
+  lintJob:
+    name: Lint
+    runs-on: macos-latest
+    needs: [buildJob]
+    steps:
+      - name: Checkout the repo
+        uses: actions/checkout@v3
+
+      - name: Set up JDK 11
+        uses: actions/setup-java@v3
+        with:
+          java-version: '11'
+          distribution: 'zulu'
+
+      - name: Lint
+        run: ./gradlew library:lint
+
+      - name: Upload lint results artifact
+        if: always()
+        uses: actions/upload-artifact@v3
+        with:
+          name: lint-results-debug
+          path: library/build/reports/lint-results-debug.html
+          retention-days: 5
+
+  unitTestJob:
+    name: Unit Test
+    runs-on: macos-latest
+    needs: [buildJob]
+    steps:
+      - name: Checkout the repo
+        uses: actions/checkout@v3
+
+      - name: Set up JDK 11
+        uses: actions/setup-java@v3
+        with:
+          java-version: '11'
+          distribution: 'zulu'
+
+      - name: Unit Test
+        run: ./gradlew library:test
+
+      - name: Upload unit test results artifact
+        if: always()
+        uses: actions/upload-artifact@v3
+        with:
+          name: unit-test-results-debug
+          path: library/build/reports/tests/testDebugUnitTest/
+          retention-days: 5
+
+  intrTestJob:
+    name: Instrumentation Test
+    runs-on: macos-latest
+    needs: [buildJob]
+    steps:
+      - name: Checkout the repo
+        uses: actions/checkout@v3
+
+      - name: Set up JDK 11
+        uses: actions/setup-java@v3
+        with:
+          java-version: '11'
+          distribution: 'zulu'
+
+      - name: Run instrumentation tests on emulator
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 29
+          script: ./gradlew library:connectedAndroidTest
+
+      - name: Upload instrumentation test results artifact
+        if: always()
+        uses: actions/upload-artifact@v3
+        with:
+          name: instrumentation-test-results-debug
+          path: library/build/reports/androidTests/connected/
+          retention-days: 5

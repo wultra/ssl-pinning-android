@@ -35,7 +35,8 @@ class CertStoreChallengeTest: CommonTest() {
                 .useChallenge(true)
                 .build()
         val store = CertStore.powerAuthCertStore(config, appContext)
-        updateAndCheck(store, UpdateMode.FORCED, UpdateResult.OK)
+        // currently the data are expired, therefore STORE_IS_EMPTY result
+        updateAndCheck(store, UpdateMode.FORCED, UpdateResult.STORE_IS_EMPTY)
     }
 
     private fun getServiceUrl(relativePath: String): URL {

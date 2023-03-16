@@ -39,15 +39,27 @@ import static org.junit.Assert.assertEquals;
 public class CertStoreValidationTest extends CommonJavaTest {
 
     @Test
-    public void testValidationGithubFallback() throws Exception {
+    public void testValidationGithubFallbackValid() throws Exception {
+        // necessary to update the fingerprint from time to time
+        // Mar 2023 - "kqN/vV4hpTqVxxbhFE9EL1grlND6/Gc+tnF6TrUaiKc="
+        validateGithubWithFallbackOnly("kqN/vV4hpTqVxxbhFE9EL1grlND6/Gc+tnF6TrUaiKc=", ValidationResult.TRUSTED);
+    }
+
+    @Test
+    public void testValidationGithubFallbackInvalid() throws Exception {
+        // outdated fingerprint
+        validateGithubWithFallbackOnly("trmmrz6GbL4OajB+fdoXOzcrLTrD8GrxX5dxh3OEgAg=", ValidationResult.UNTRUSTED);
+    }
+
+    private void validateGithubWithFallbackOnly(String fingerprintBase64,
+                                                ValidationResult expectedResult) throws Exception {
         X509Certificate cert = TestUtils.getCertificateFromUrl("https://github.com");
 
-        String publicKey = "BEG6g28LNWRcmdFzexSNTKPBYZnDtKrCyiExFKbktttfKAF7wG4Cx1Nycr5PwCoICG1dRseLyuDxUilAmppPxAo=";
-        byte[] publicKeyBytes = java.util.Base64.getDecoder().decode(publicKey);
+        String publicKey = "BC3kV9OIDnMuVoCdDR9nEA/JidJLTTDLuSA2TSZsGgODSshfbZg31MS90WC/HdbU/A5WL5GmyDkE/iks6INv+XE=";
+        byte[] publicKeyBytes = Base64.getDecoder().decode(publicKey);
 
-        String signatureBase64 = "MEUCIQCs1y/nyrKh4+2DIuX/PufUYiaVUdt2FBZQg6rBeZ/r4QIgNlT4owBwJ1ThrDsE0SwGipTNI74vP1vNyLNEwuXY4lE=";
+        String signatureBase64 = "MEUCICB69UpMPOdtrsR6XcJqHEh2L2RO4oSJ3SZ7BYnTBJbGAiEAnZ7rEWdMVGwa59Wx5QbAorEFxXH89Iu0CnqWa96Eda0=";
         byte[] signatureBytes = Base64.getDecoder().decode(signatureBase64);
-        String fingerprintBase64 = "trmmrz6GbL4OajB+fdoXOzcrLTrD8GrxX5dxh3OEgAg=";
         byte[] fingerprintBytes = Base64.getDecoder().decode(fingerprintBase64);
 
         GetFingerprintResponse.Entry fallbackEntry = new GetFingerprintResponse.Entry(
@@ -66,27 +78,51 @@ public class CertStoreValidationTest extends CommonJavaTest {
         CertStore store = new CertStore(config, cryptoProvider, secureDataStore);
         TestUtils.assignHandler(store, handler);
         ValidationResult result = store.validateCertificate(cert);
-        assertEquals(ValidationResult.TRUSTED, result);
+        assertEquals(expectedResult, result);
     }
 
     @Test
-    public void testValidationGithubUpdatedJson() throws Exception {
+    public void testValidationGithubUpdateWithOutdatedData() throws Exception {
+        // json with outdated data, correct public key
+        validateGithubWithUpdateJsonOnly("BC3kV9OIDnMuVoCdDR9nEA/JidJLTTDLuSA2TSZsGgODSshfbZg31MS90WC/HdbU/A5WL5GmyDkE/iks6INv+XE=",
+                "https://gist.githubusercontent.com/hvge/7c5a3f9ac50332a52aa974d90ea2408c/raw/34866234bbaa3350dc0ddc5680a65a6f4e7c549e/ssl-pinning-signatures.json",
+                UpdateResult.STORE_IS_EMPTY, ValidationResult.EMPTY);
+    }
+    @Test
+    public void testValidationGithubUpdateWithInvalidSignature() throws Exception {
+        // json with current data, different public key
+        validateGithubWithUpdateJsonOnly("BC3kV9OIDnMuVoCdDR9nEA/JidJLTTDLuSA2TSZsGgODSshfbZg31MS90WC/HdbU/A5WL5GmyDkE/iks6INv+XE=",
+                "https://gist.githubusercontent.com/TomasKypta/40be50cc63d2f4c00abcbbf4554f0e32/raw/9cc9029d9e8248b0cd9a36b98382040114dd1d4a/ssl-pinning-signatures_Mar2023.json",
+                UpdateResult.INVALID_SIGNATURE, ValidationResult.EMPTY);
+    }
+
+    @Test
+    public void testValidationGithubUpdateWithValidData() throws Exception {
+        // json with current data, correct public key
+        validateGithubWithUpdateJsonOnly("BC3kV9OIDnMuVoCdDR9nEA/JidJLTTDLuSA2TSZsGgODSshfbZg31MS90WC/HdbU/A5WL5GmyDkE/iks6INv+XE=",
+                "https://gist.githubusercontent.com/hvge/7c5a3f9ac50332a52aa974d90ea2408c/raw/07eb5b4b67e63d37d224912bc5951c7b589b35e6/ssl-pinning-signatures.json",
+                UpdateResult.OK, ValidationResult.TRUSTED);
+    }
+
+    private void validateGithubWithUpdateJsonOnly(String publicKey,
+                                                  String signaturesJsonUrl,
+                                                  UpdateResult expectedUpdateResult,
+                                                  ValidationResult expectedValidationResult) throws Exception {
         X509Certificate cert = TestUtils.getCertificateFromUrl("https://github.com");
 
-        String publicKey = "BC3kV9OIDnMuVoCdDR9nEA/JidJLTTDLuSA2TSZsGgODSshfbZg31MS90WC/HdbU/A5WL5GmyDkE/iks6INv+XE=";
-        byte[] publicKeyBytes = java.util.Base64.getDecoder().decode(publicKey);
+        byte[] publicKeyBytes = Base64.getDecoder().decode(publicKey);
 
         CertStoreConfiguration config = TestUtils.getCertStoreConfiguration(
                 new Date(),
                 new String[]{"github.com"},
-                new URL("https://gist.githubusercontent.com/hvge/7c5a3f9ac50332a52aa974d90ea2408c/raw/34866234bbaa3350dc0ddc5680a65a6f4e7c549e/ssl-pinning-signatures.json"),
+                new URL(signaturesJsonUrl),
                 publicKeyBytes,
                 null);
         CertStore store = new CertStore(config, cryptoProvider, secureDataStore);
         TestUtils.assignHandler(store, handler);
-        TestUtils.updateAndCheck(store, UpdateMode.FORCED, UpdateResult.OK);
+        TestUtils.updateAndCheck(store, UpdateMode.FORCED, expectedUpdateResult);
 
         ValidationResult result = store.validateCertificate(cert);
-        assertEquals(ValidationResult.TRUSTED, result);
+        assertEquals(expectedValidationResult, result);
     }
 }

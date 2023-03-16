@@ -36,7 +36,7 @@ import javax.net.ssl.HttpsURLConnection;
 import javax.net.ssl.SSLHandshakeException;
 import javax.net.ssl.SSLSocketFactory;
 
-import io.getlime.security.powerauth.networking.ssl.PA2ClientValidationStrategy;
+import io.getlime.security.powerauth.networking.ssl.HttpClientValidationStrategy;
 
 import static org.junit.Assert.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
@@ -60,14 +60,14 @@ public class PowerAuthSslPinningValidationStrategyTest extends CommonJavaTest {
         CertStoreConfiguration config = TestUtils.getCertStoreConfiguration(
                 new Date(),
                 new String[]{"github.com"},
-                new URL("https://gist.githubusercontent.com/hvge/7c5a3f9ac50332a52aa974d90ea2408c/raw/34866234bbaa3350dc0ddc5680a65a6f4e7c549e/ssl-pinning-signatures.json"),
+                new URL("https://gist.githubusercontent.com/hvge/7c5a3f9ac50332a52aa974d90ea2408c/raw/07eb5b4b67e63d37d224912bc5951c7b589b35e6/ssl-pinning-signatures.json"),
                 publicKeyBytes,
                 null);
         CertStore store = new CertStore(config, cryptoProvider, secureDataStore);
         TestUtils.assignHandler(store, handler);
         TestUtils.updateAndCheck(store, UpdateMode.FORCED, UpdateResult.OK);
 
-        PA2ClientValidationStrategy strategy = new PowerAuthSslPinningValidationStrategy(store);
+        HttpClientValidationStrategy strategy = new PowerAuthSslPinningValidationStrategy(store);
 
         URL url = new URL("https://github.com");
         URLConnection urlConnection = url.openConnection();
@@ -106,7 +106,7 @@ public class PowerAuthSslPinningValidationStrategyTest extends CommonJavaTest {
         CertStore store = new CertStore(config, cryptoProvider, secureDataStore);
         TestUtils.assignHandler(store, handler);
 
-        PA2ClientValidationStrategy strategy = new PowerAuthSslPinningValidationStrategy(store);
+        HttpClientValidationStrategy strategy = new PowerAuthSslPinningValidationStrategy(store);
 
         URL url = new URL("https://github.com");
         URLConnection urlConnection = url.openConnection();

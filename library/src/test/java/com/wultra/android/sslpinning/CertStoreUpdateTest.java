@@ -57,8 +57,9 @@ public class CertStoreUpdateTest extends CommonJavaTest {
         when(cryptoProvider.ecdsaValidateSignatures(any(SignedData.class), any(ECPublicKey.class)))
                 .thenAnswer(invocation -> true);
 
-        String pinningJsonUrl = "https://gist.githubusercontent.com/hvge/7c5a3f9ac50332a52aa974d90ea2408c/raw/34866234bbaa3350dc0ddc5680a65a6f4e7c549e/ssl-pinning-signatures.json";
-        UpdateResult updateResult = performForcedUpdate(pinningJsonUrl);
+        String publicKey = "BC3kV9OIDnMuVoCdDR9nEA/JidJLTTDLuSA2TSZsGgODSshfbZg31MS90WC/HdbU/A5WL5GmyDkE/iks6INv+XE=";
+        String pinningJsonUrl = "https://gist.githubusercontent.com/hvge/7c5a3f9ac50332a52aa974d90ea2408c/raw/07eb5b4b67e63d37d224912bc5951c7b589b35e6/ssl-pinning-signatures.json";
+        UpdateResult updateResult = performForcedUpdate(publicKey, pinningJsonUrl);
         assertEquals(UpdateResult.OK, updateResult);
     }
 
@@ -67,8 +68,9 @@ public class CertStoreUpdateTest extends CommonJavaTest {
         when(cryptoProvider.ecdsaValidateSignatures(any(SignedData.class), any(ECPublicKey.class)))
                 .thenAnswer(invocation -> false);
 
-        String pinningJsonUrl = "https://gist.githubusercontent.com/hvge/7c5a3f9ac50332a52aa974d90ea2408c/raw/34866234bbaa3350dc0ddc5680a65a6f4e7c549e/ssl-pinning-signatures.json";
-        UpdateResult updateResult = performForcedUpdate(pinningJsonUrl);
+        String publicKey = "BC3kV9OIDnMuVoCdDR9nEA/JidJLTTDLuSA2TSZsGgODSshfbZg31MS90WC/HdbU/A5WL5GmyDkE/iks6INv+XE=";
+        String pinningJsonUrl = "https://gist.githubusercontent.com/TomasKypta/40be50cc63d2f4c00abcbbf4554f0e32/raw/9cc9029d9e8248b0cd9a36b98382040114dd1d4a/ssl-pinning-signatures_Mar2023.json";
+        UpdateResult updateResult = performForcedUpdate(publicKey, pinningJsonUrl);
         assertEquals(UpdateResult.INVALID_SIGNATURE, updateResult);
     }
 
@@ -77,8 +79,9 @@ public class CertStoreUpdateTest extends CommonJavaTest {
         when(cryptoProvider.ecdsaValidateSignatures(any(SignedData.class), any(ECPublicKey.class)))
                 .thenAnswer(invocation -> false);
 
+        String publicKey = "BC3kV9OIDnMuVoCdDR9nEA/JidJLTTDLuSA2TSZsGgODSshfbZg31MS90WC/HdbU/A5WL5GmyDkE/iks6INv+XE=";
         String pinningJsonUrl = "https://gist.githubusercontent.com/TomasKypta/5a6d99fe441a8c0d201b673d88e223a6/raw/0d12746cad1247ebf9a5b1706afabf8486a7a62e/ssl-pinning-signatures_expired.json";
-        UpdateResult updateResult = performForcedUpdate(pinningJsonUrl);
+        UpdateResult updateResult = performForcedUpdate(publicKey, pinningJsonUrl);
         assertEquals(UpdateResult.STORE_IS_EMPTY, updateResult);
     }
 
@@ -90,7 +93,7 @@ public class CertStoreUpdateTest extends CommonJavaTest {
         CertStoreConfiguration config = TestUtils.getCertStoreConfiguration(
                 new Date(),
                 new String[]{"github.com"},
-                new URL("https://gist.githubusercontent.com/hvge/7c5a3f9ac50332a52aa974d90ea2408c/raw/34866234bbaa3350dc0ddc5680a65a6f4e7c549e/ssl-pinning-signatures.json"),
+                new URL("https://gist.githubusercontent.com/"),
                 publicKeyBytes,
                 null);
         RemoteDataProvider remoteDataProvider = mock(RemoteDataProvider.class);
@@ -99,9 +102,9 @@ public class CertStoreUpdateTest extends CommonJavaTest {
                         "  \"fingerprints\": [\n" +
                         "    {\n" +
                         "      \"name\" : \"github.com\",\n" +
-                        "      \"fingerprint\" : \"trmmrz6GbL4OajB+fdoXOzcrLTrD8GrxX5dxh3OEgAg=\",\n" +
-                        "      \"expires\" : 1652184000,\n" +
-                        "      \"signature\" : \"MEUCIQCs1y/nyrKh4+2DIuX/PufUYiaVUdt2FBZQg6rBeZ/r4QIgNlT4owBwJ1ThrDsE0SwGipTNI74vP1vNyLNEwuXY4lE=\"\n" +
+                        "      \"fingerprint\" : \"kqN/vV4hpTqVxxbhFE9EL1grlND6/Gc+tnF6TrUaiKc=\",\n" +
+                        "      \"expires\" : 1710460799,\n" +
+                        "      \"signature\" : \"MEUCICB69UpMPOdtrsR6XcJqHEh2L2RO4oSJ3SZ7BYnTBJbGAiEAnZ7rEWdMVGwa59Wx5QbAorEFxXH89Iu0CnqWa96Eda0=\"\n" +
                         "    }\n" +
                         "  ]\n" +
                         "}";
@@ -175,8 +178,8 @@ public class CertStoreUpdateTest extends CommonJavaTest {
     }
 
     @NonNull
-    private UpdateResult performForcedUpdate(String pinningJsonUrl) throws Exception {
-        String publicKey = "BC3kV9OIDnMuVoCdDR9nEA/JidJLTTDLuSA2TSZsGgODSshfbZg31MS90WC/HdbU/A5WL5GmyDkE/iks6INv+XE=";
+    private UpdateResult performForcedUpdate(String publicKey,
+                                             String pinningJsonUrl) throws Exception {
         byte[] publicKeyBytes = Base64.getDecoder().decode(publicKey);
 
         CertStoreConfiguration config = TestUtils.getCertStoreConfiguration(

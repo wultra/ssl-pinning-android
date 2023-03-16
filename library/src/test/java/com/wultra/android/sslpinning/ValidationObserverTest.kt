@@ -46,7 +46,7 @@ class ValidationObserverTest : CommonKotlinTest() {
         val config = TestUtils.getCertStoreConfiguration(
                 Date(),
                 arrayOf("github.com"),
-                URL("https://gist.githubusercontent.com/hvge/7c5a3f9ac50332a52aa974d90ea2408c/raw/34866234bbaa3350dc0ddc5680a65a6f4e7c549e/ssl-pinning-signatures.json"),
+                URL("https://gist.githubusercontent.com/hvge/7c5a3f9ac50332a52aa974d90ea2408c/raw/07eb5b4b67e63d37d224912bc5951c7b589b35e6/ssl-pinning-signatures.json"),
                 publicKeyBytes,
                 null)
         val store = CertStore(config, cryptoProvider, secureDataStore)
