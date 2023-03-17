@@ -23,6 +23,7 @@ plugins {
 }
 
 android {
+    namespace "com.wultra.android.sslpinning"
     compileSdkVersion rootProject.ext.compileSdkVersion
 
     defaultConfig {
