@@ -40,10 +40,8 @@ import java.security.MessageDigest;
 import java.security.Security;
 import java.util.Base64;
 
-import io.getlime.security.powerauth.crypto.lib.config.PowerAuthConfiguration;
+import io.getlime.security.powerauth.crypto.lib.util.KeyConvertor;
 import io.getlime.security.powerauth.crypto.lib.util.SignatureUtils;
-import io.getlime.security.powerauth.provider.CryptoProviderUtil;
-import io.getlime.security.powerauth.provider.CryptoProviderUtilBouncyCastle;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
@@ -86,7 +84,6 @@ public abstract class CommonJavaTest {
     @BeforeClass
     public static void setUpClass() {
         Security.addProvider(new BouncyCastleProvider());
-        PowerAuthConfiguration.INSTANCE.setKeyConvertor(new CryptoProviderUtilBouncyCastle());
     }
 
     @Before
@@ -125,7 +122,7 @@ public abstract class CommonJavaTest {
                     SignatureUtils utils = new SignatureUtils();
                     SignedData signedData = invocation.getArgument(0);
                     PA2ECPublicKey pubKey = invocation.getArgument(1);
-                    final CryptoProviderUtil keyConvertor = PowerAuthConfiguration.INSTANCE.getKeyConvertor();
+                    final KeyConvertor keyConvertor = new KeyConvertor();
                     return utils.validateECDSASignature(signedData.getData(),
                             signedData.getSignature(),
                             keyConvertor.convertBytesToPublicKey(pubKey.getData()));

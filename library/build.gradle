@@ -64,14 +64,14 @@ dependencies {
     testImplementation "org.mockito:mockito-core:${mockitoVersion}"
     testImplementation "org.powermock:powermock-module-junit4:${powermockVersion}"
     testImplementation "org.powermock:powermock-api-mockito2:${powermockVersion}"
-    testImplementation 'org.bouncycastle:bcprov-jdk15on:1.60'
-    testImplementation "io.getlime.security:powerauth-java-crypto:0.19.0"
+    testImplementation 'org.bouncycastle:bcprov-jdk15on:1.70'
+    testImplementation "io.getlime.security:powerauth-java-crypto:1.4.0"
 
     androidTestImplementation "androidx.test:runner:1.5.2"
     androidTestImplementation "androidx.test:rules:1.5.0"
     androidTestImplementation "androidx.test.ext:junit:1.1.5"
     androidTestImplementation "com.wultra.android.powerauth:powerauth-sdk:${powerAuthSdkVersion}"
-    androidTestImplementation 'com.squareup.okhttp3:okhttp:3.12.12'
+    androidTestImplementation 'com.squareup.okhttp3:okhttp:4.10.0'
 }
 
 apply from: 'android-release-aar.gradle'

@@ -27,9 +27,8 @@ import com.wultra.android.sslpinning.interfaces.CryptoProvider
 import com.wultra.android.sslpinning.interfaces.ECPublicKey
 import com.wultra.android.sslpinning.interfaces.SecureDataStore
 import com.wultra.android.sslpinning.interfaces.SignedData
-import io.getlime.security.powerauth.crypto.lib.config.PowerAuthConfiguration
+import io.getlime.security.powerauth.crypto.lib.util.KeyConvertor
 import io.getlime.security.powerauth.crypto.lib.util.SignatureUtils
-import io.getlime.security.powerauth.provider.CryptoProviderUtilBouncyCastle
 import org.bouncycastle.jce.provider.BouncyCastleProvider
 import org.junit.Before
 import org.junit.BeforeClass
@@ -77,7 +76,6 @@ open class CommonKotlinTest {
         @JvmStatic
         fun setUpClass() {
             Security.addProvider(BouncyCastleProvider())
-            PowerAuthConfiguration.INSTANCE.keyConvertor = CryptoProviderUtilBouncyCastle()
         }
     }
 
@@ -116,7 +114,7 @@ open class CommonKotlinTest {
                     val utils = SignatureUtils()
                     val signedData: SignedData = invocation.getArgument(0)
                     val pubKey: PA2ECPublicKey = invocation.getArgument(1)
-                    val keyConvertor = PowerAuthConfiguration.INSTANCE.keyConvertor
+                    val keyConvertor = KeyConvertor()
                     utils.validateECDSASignature(signedData.data,
                             signedData.signature,
                             keyConvertor.convertBytesToPublicKey(pubKey.data))
