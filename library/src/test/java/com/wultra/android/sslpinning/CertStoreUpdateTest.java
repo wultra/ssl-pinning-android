@@ -54,7 +54,7 @@ public class CertStoreUpdateTest extends CommonJavaTest {
 
     @Test
     public void testCorrectUpdate() throws Exception {
-        when(cryptoProvider.ecdsaValidateSignatures(any(SignedData.class), any(ECPublicKey.class)))
+        when(cryptoProvider.ecdsaValidateSignature(any(SignedData.class), any(ECPublicKey.class)))
                 .thenAnswer(invocation -> true);
 
         String publicKey = "BC3kV9OIDnMuVoCdDR9nEA/JidJLTTDLuSA2TSZsGgODSshfbZg31MS90WC/HdbU/A5WL5GmyDkE/iks6INv+XE=";
@@ -65,7 +65,7 @@ public class CertStoreUpdateTest extends CommonJavaTest {
 
     @Test
     public void testInvalidSignatureUpdate() throws Exception {
-        when(cryptoProvider.ecdsaValidateSignatures(any(SignedData.class), any(ECPublicKey.class)))
+        when(cryptoProvider.ecdsaValidateSignature(any(SignedData.class), any(ECPublicKey.class)))
                 .thenAnswer(invocation -> false);
 
         String publicKey = "BC3kV9OIDnMuVoCdDR9nEA/JidJLTTDLuSA2TSZsGgODSshfbZg31MS90WC/HdbU/A5WL5GmyDkE/iks6INv+XE=";
@@ -76,7 +76,7 @@ public class CertStoreUpdateTest extends CommonJavaTest {
 
     @Test
     public void testExpiredUpdate() throws Exception {
-        when(cryptoProvider.ecdsaValidateSignatures(any(SignedData.class), any(ECPublicKey.class)))
+        when(cryptoProvider.ecdsaValidateSignature(any(SignedData.class), any(ECPublicKey.class)))
                 .thenAnswer(invocation -> false);
 
         String publicKey = "BC3kV9OIDnMuVoCdDR9nEA/JidJLTTDLuSA2TSZsGgODSshfbZg31MS90WC/HdbU/A5WL5GmyDkE/iks6INv+XE=";

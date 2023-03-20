@@ -117,7 +117,7 @@ public abstract class CommonJavaTest {
                         // we have to avoid EcPublicKey here as it loads native code
                         new TestPA2ECPublicKey((byte[])invocation.getArgument(0))
                 );
-        when(cryptoProvider.ecdsaValidateSignatures(any(SignedData.class), any(ECPublicKey.class)))
+        when(cryptoProvider.ecdsaValidateSignature(any(SignedData.class), any(ECPublicKey.class)))
                 .thenAnswer(invocation -> {
                     SignatureUtils utils = new SignatureUtils();
                     SignedData signedData = invocation.getArgument(0);

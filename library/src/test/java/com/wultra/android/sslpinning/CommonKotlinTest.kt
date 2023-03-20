@@ -108,7 +108,7 @@ open class CommonKotlinTest {
         Mockito.`when`<ECPublicKey>(cryptoProvider.importECPublicKey(any()))
                 .thenAnswer { invocation -> TestPA2ECPublicKey(invocation.getArgument(0) as ByteArray) }
 
-        Mockito.`when`<Boolean>(cryptoProvider.ecdsaValidateSignatures(any(), any()))
+        Mockito.`when`<Boolean>(cryptoProvider.ecdsaValidateSignature(any(), any()))
                 .thenAnswer { invocation ->
                     val utils = SignatureUtils()
                     val signedData: SignedData = invocation.getArgument(0)

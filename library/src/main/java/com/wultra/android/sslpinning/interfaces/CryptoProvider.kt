@@ -32,7 +32,7 @@ interface CryptoProvider {
      * @param publicKey EC public key
      * @return True if all signatures are correct
      */
-    fun ecdsaValidateSignatures(signedData: SignedData, publicKey: ECPublicKey): Boolean
+    fun ecdsaValidateSignature(signedData: SignedData, publicKey: ECPublicKey): Boolean
 
     /**
      * Constructs a new ECPublicKey object from given ASN.1 formatted data blob.

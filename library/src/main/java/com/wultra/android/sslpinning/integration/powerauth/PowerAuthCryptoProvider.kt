@@ -34,7 +34,7 @@ class PowerAuthCryptoProvider : CryptoProvider {
 
     private val randomGenerator = SecureRandom()
 
-    override fun ecdsaValidateSignatures(signedData: SignedData, publicKey: ECPublicKey): Boolean {
+    override fun ecdsaValidateSignature(signedData: SignedData, publicKey: ECPublicKey): Boolean {
         val ecKey = publicKey as? PA2ECPublicKey ?: throw IllegalArgumentException("Invalid ECPublicKey object.")
         return CryptoUtils.ecdsaValidateSignature(signedData.data, signedData.signature, ecKey.ecPublicKey)
     }
