@@ -22,7 +22,6 @@ import android.os.Handler;
 import android.os.Looper;
 import android.util.Log;
 
-import com.wultra.android.sslpinning.integration.powerauth.PA2ECPublicKey;
 import com.wultra.android.sslpinning.interfaces.CryptoProvider;
 import com.wultra.android.sslpinning.interfaces.ECPublicKey;
 import com.wultra.android.sslpinning.interfaces.SecureDataStore;
@@ -115,13 +114,14 @@ public abstract class CommonJavaTest {
                 });
         when(cryptoProvider.importECPublicKey(any(byte[].class)))
                 .thenAnswer(invocation ->
-                        new PA2ECPublicKey(invocation.getArgument(0))
+                        // we have to avoid EcPublicKey here as it loads native code
+                        new TestPA2ECPublicKey((byte[])invocation.getArgument(0))
                 );
         when(cryptoProvider.ecdsaValidateSignatures(any(SignedData.class), any(ECPublicKey.class)))
                 .thenAnswer(invocation -> {
                     SignatureUtils utils = new SignatureUtils();
                     SignedData signedData = invocation.getArgument(0);
-                    PA2ECPublicKey pubKey = invocation.getArgument(1);
+                    TestPA2ECPublicKey pubKey = invocation.getArgument(1);
                     final KeyConvertor keyConvertor = new KeyConvertor();
                     return utils.validateECDSASignature(signedData.getData(),
                             signedData.getSignature(),

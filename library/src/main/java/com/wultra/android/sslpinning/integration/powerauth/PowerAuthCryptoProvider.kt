@@ -36,13 +36,12 @@ class PowerAuthCryptoProvider : CryptoProvider {
 
     override fun ecdsaValidateSignatures(signedData: SignedData, publicKey: ECPublicKey): Boolean {
         val ecKey = publicKey as? PA2ECPublicKey ?: throw IllegalArgumentException("Invalid ECPublicKey object.")
-        val ecPublicKey = EcPublicKey(ecKey.data)
-        return CryptoUtils.ecdsaValidateSignature(signedData.data, signedData.signature, ecPublicKey)
+        return CryptoUtils.ecdsaValidateSignature(signedData.data, signedData.signature, ecKey.ecPublicKey)
     }
 
     override fun importECPublicKey(publicKey: ByteArray): ECPublicKey? {
         // TODO consider validation of the data
-        return PA2ECPublicKey(data = publicKey)
+        return PA2ECPublicKey(EcPublicKey(publicKey))
     }
 
     override fun hashSha256(data: ByteArray): ByteArray {
@@ -58,6 +57,8 @@ class PowerAuthCryptoProvider : CryptoProvider {
 
 /**
  * An implementation `ECPublicKey` protocol of a public key in EC based cryptography
- * done with PowerAuth.
+ * done with PowerAuth. PowerAuth is using NIST P-256 curve under the hood.
+ *
+ * @param ecPublicKey PowerAuth representation of public key for elliptic curve based cryptography routines.
  */
-data class PA2ECPublicKey(val data: ByteArray) : ECPublicKey
+data class PA2ECPublicKey(val ecPublicKey: EcPublicKey) : ECPublicKey
