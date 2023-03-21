@@ -22,7 +22,6 @@ import android.os.Handler;
 import android.os.Looper;
 import android.util.Log;
 
-import com.wultra.android.sslpinning.integration.powerauth.PA2ECPublicKey;
 import com.wultra.android.sslpinning.interfaces.CryptoProvider;
 import com.wultra.android.sslpinning.interfaces.ECPublicKey;
 import com.wultra.android.sslpinning.interfaces.SecureDataStore;
@@ -40,10 +39,8 @@ import java.security.MessageDigest;
 import java.security.Security;
 import java.util.Base64;
 
-import io.getlime.security.powerauth.crypto.lib.config.PowerAuthConfiguration;
+import io.getlime.security.powerauth.crypto.lib.util.KeyConvertor;
 import io.getlime.security.powerauth.crypto.lib.util.SignatureUtils;
-import io.getlime.security.powerauth.provider.CryptoProviderUtil;
-import io.getlime.security.powerauth.provider.CryptoProviderUtilBouncyCastle;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
@@ -86,7 +83,6 @@ public abstract class CommonJavaTest {
     @BeforeClass
     public static void setUpClass() {
         Security.addProvider(new BouncyCastleProvider());
-        PowerAuthConfiguration.INSTANCE.setKeyConvertor(new CryptoProviderUtilBouncyCastle());
     }
 
     @Before
@@ -118,14 +114,15 @@ public abstract class CommonJavaTest {
                 });
         when(cryptoProvider.importECPublicKey(any(byte[].class)))
                 .thenAnswer(invocation ->
-                        new PA2ECPublicKey(invocation.getArgument(0))
+                        // we have to avoid EcPublicKey here as it loads native code
+                        new TestPA2ECPublicKey((byte[])invocation.getArgument(0))
                 );
-        when(cryptoProvider.ecdsaValidateSignatures(any(SignedData.class), any(ECPublicKey.class)))
+        when(cryptoProvider.ecdsaValidateSignature(any(SignedData.class), any(ECPublicKey.class)))
                 .thenAnswer(invocation -> {
                     SignatureUtils utils = new SignatureUtils();
                     SignedData signedData = invocation.getArgument(0);
-                    PA2ECPublicKey pubKey = invocation.getArgument(1);
-                    final CryptoProviderUtil keyConvertor = PowerAuthConfiguration.INSTANCE.getKeyConvertor();
+                    TestPA2ECPublicKey pubKey = invocation.getArgument(1);
+                    final KeyConvertor keyConvertor = new KeyConvertor();
                     return utils.validateECDSASignature(signedData.getData(),
                             signedData.getSignature(),
                             keyConvertor.convertBytesToPublicKey(pubKey.getData()));

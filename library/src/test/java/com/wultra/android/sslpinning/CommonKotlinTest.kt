@@ -22,14 +22,12 @@ import android.os.Handler
 import android.os.Looper
 import android.util.Base64
 import android.util.Log
-import com.wultra.android.sslpinning.integration.powerauth.PA2ECPublicKey
 import com.wultra.android.sslpinning.interfaces.CryptoProvider
 import com.wultra.android.sslpinning.interfaces.ECPublicKey
 import com.wultra.android.sslpinning.interfaces.SecureDataStore
 import com.wultra.android.sslpinning.interfaces.SignedData
-import io.getlime.security.powerauth.crypto.lib.config.PowerAuthConfiguration
+import io.getlime.security.powerauth.crypto.lib.util.KeyConvertor
 import io.getlime.security.powerauth.crypto.lib.util.SignatureUtils
-import io.getlime.security.powerauth.provider.CryptoProviderUtilBouncyCastle
 import org.bouncycastle.jce.provider.BouncyCastleProvider
 import org.junit.Before
 import org.junit.BeforeClass
@@ -37,8 +35,8 @@ import org.mockito.ArgumentMatchers
 import org.mockito.ArgumentMatchers.anyString
 import org.mockito.Mock
 import org.mockito.Mockito
-import org.mockito.Mockito.`when`
 import org.mockito.Mockito.anyInt
+import org.mockito.Mockito.`when`
 import org.powermock.api.mockito.PowerMockito
 import org.powermock.core.classloader.annotations.PowerMockIgnore
 import org.powermock.core.classloader.annotations.PrepareForTest
@@ -77,7 +75,6 @@ open class CommonKotlinTest {
         @JvmStatic
         fun setUpClass() {
             Security.addProvider(BouncyCastleProvider())
-            PowerAuthConfiguration.INSTANCE.keyConvertor = CryptoProviderUtilBouncyCastle()
         }
     }
 
@@ -109,14 +106,14 @@ open class CommonKotlinTest {
                 }
 
         Mockito.`when`<ECPublicKey>(cryptoProvider.importECPublicKey(any()))
-                .thenAnswer { invocation -> PA2ECPublicKey(invocation.getArgument(0)) }
+                .thenAnswer { invocation -> TestPA2ECPublicKey(invocation.getArgument(0) as ByteArray) }
 
-        Mockito.`when`<Boolean>(cryptoProvider.ecdsaValidateSignatures(any(), any()))
+        Mockito.`when`<Boolean>(cryptoProvider.ecdsaValidateSignature(any(), any()))
                 .thenAnswer { invocation ->
                     val utils = SignatureUtils()
                     val signedData: SignedData = invocation.getArgument(0)
-                    val pubKey: PA2ECPublicKey = invocation.getArgument(1)
-                    val keyConvertor = PowerAuthConfiguration.INSTANCE.keyConvertor
+                    val pubKey: TestPA2ECPublicKey = invocation.getArgument(1)
+                    val keyConvertor = KeyConvertor()
                     utils.validateECDSASignature(signedData.data,
                             signedData.signature,
                             keyConvertor.convertBytesToPublicKey(pubKey.data))

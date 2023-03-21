@@ -29,7 +29,7 @@ task unitTestCoverageReport(type: JacocoReport,
         dependsOn: ['testDebugUnitTest']) {
 
     reports {
-        html.enabled = true
+        html.required = true
     }
 
     doFirst {
@@ -56,7 +56,7 @@ task unifiedCoverageReport(type: JacocoReport,
         dependsOn: ['testDebugUnitTest', 'createDebugCoverageReport', 'unitTestCoverageReport']) {
 
     reports {
-        html.enabled = true
+        html.required = true
     }
 
     doFirst {

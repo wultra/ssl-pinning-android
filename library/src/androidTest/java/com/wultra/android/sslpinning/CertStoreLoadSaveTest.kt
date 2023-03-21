@@ -78,8 +78,8 @@ class CertStoreLoadSaveTest : CommonTest() {
         val loadedData = store.loadCachedData()
         Assert.assertNotNull(loadedData)
         Assert.assertEquals((nextUpdate.time/1000)*1000, loadedData!!.nextUpdate.time)
-        Assert.assertEquals(2, loadedData!!.certificates.size)
-        val ci = loadedData!!.certificates[0]
+        Assert.assertEquals(2, loadedData.certificates.size)
+        val ci = loadedData.certificates[0]
         Assert.assertEquals("github.com", ci.commonName)
         Assert.assertEquals("aaa", String(ci.fingerprint))
         Assert.assertEquals((date.time/1000)*1000, ci.expires.time)
