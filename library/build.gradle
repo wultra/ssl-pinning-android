@@ -63,9 +63,9 @@ dependencies {
 
     compileOnly "com.wultra.android.powerauth:powerauth-sdk:${powerAuthSdkVersion}"
 
-    implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk7:$kotlinVersion"
+    implementation "org.jetbrains.kotlin:kotlin-stdlib:$kotlinVersion"
     implementation "com.google.code.gson:gson:${gsonVersion}"
-    implementation "androidx.annotation:annotation:1.5.0"
+    implementation "androidx.annotation:annotation:1.6.0"
 
     testImplementation "com.wultra.android.powerauth:powerauth-sdk:${powerAuthSdkVersion}"
     testImplementation 'junit:junit:4.13.2'

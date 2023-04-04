@@ -15,8 +15,8 @@
  */
 
 buildscript {
-    ext.kotlinVersion = '1.7.22'
-    ext.dokkaVersion = '1.7.20'
+    ext.kotlinVersion = '1.8.20'
+    ext.dokkaVersion = '1.8.10'
     ext.jacocoVersion = "0.8.8"
     repositories {
         mavenCentral()
