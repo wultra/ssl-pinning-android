@@ -80,6 +80,12 @@ dependencies {
     androidTestImplementation "androidx.test.ext:junit:1.1.5"
     androidTestImplementation "com.wultra.android.powerauth:powerauth-sdk:${powerAuthSdkVersion}"
     androidTestImplementation 'com.squareup.okhttp3:okhttp:4.10.0'
+
+    constraints {
+        implementation("org.jetbrains.kotlin:kotlin-stdlib-jdk8:$kotlinVersion") {
+            because "Avoids conflicts with 'kotlin-stdlib'"
+        }
+    }
 }
 
 apply from: 'android-release-aar.gradle'
