@@ -87,7 +87,11 @@ open class CommonKotlinTest {
 
         mockkStatic(Log::class)
         every { Log.e(any(), any()) } answers {
-            println(it.invocation.args[1] as String)
+            println("error: ${it.invocation.args[1] as String}")
+            0
+        }
+        every { Log.w(any(), any<String>()) } answers {
+            println("warning: ${it.invocation.args[1] as String}")
             0
         }
 

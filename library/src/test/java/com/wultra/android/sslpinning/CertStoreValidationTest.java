@@ -19,8 +19,6 @@ package com.wultra.android.sslpinning;
 import com.wultra.android.sslpinning.model.GetFingerprintResponse;
 
 import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.powermock.modules.junit4.PowerMockRunner;
 
 import java.net.URL;
 import java.security.cert.X509Certificate;
@@ -35,8 +33,7 @@ import static org.junit.Assert.assertEquals;
  *
  * @author Tomas Kypta, tomas.kypta@wultra.com
  */
-@RunWith(PowerMockRunner.class)
-public class CertStoreValidationTest extends CommonJavaTest {
+public class CertStoreValidationTest extends CommonKotlinTest {
 
     @Test
     public void testValidationGithubFallbackValid() throws Exception {

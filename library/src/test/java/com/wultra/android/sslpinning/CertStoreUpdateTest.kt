@@ -13,184 +13,163 @@
  * See the License for the specific language governing permissions
  * and limitations under the License.
  */
+package com.wultra.android.sslpinning
 
-package com.wultra.android.sslpinning;
-
-import androidx.annotation.NonNull;
-
-import com.wultra.android.sslpinning.integration.DefaultUpdateObserver;
-import com.wultra.android.sslpinning.interfaces.ECPublicKey;
-import com.wultra.android.sslpinning.interfaces.SignedData;
-import com.wultra.android.sslpinning.service.RemoteDataProvider;
-import com.wultra.android.sslpinning.service.RemoteDataRequest;
-import com.wultra.android.sslpinning.service.RemoteDataResponse;
-
-import org.jetbrains.annotations.NotNull;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.powermock.modules.junit4.PowerMockRunner;
-
-import java.net.URL;
-import java.util.Base64;
-import java.util.Date;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.TimeUnit;
-
-import static java.util.Collections.emptyMap;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
+import com.wultra.android.sslpinning.integration.DefaultUpdateObserver
+import com.wultra.android.sslpinning.service.RemoteDataProvider
+import com.wultra.android.sslpinning.service.RemoteDataResponse
+import io.mockk.every
+import io.mockk.mockk
+import org.junit.Assert
+import org.junit.Test
+import java.net.URL
+import java.util.Base64
+import java.util.Date
+import java.util.concurrent.CountDownLatch
+import java.util.concurrent.TimeUnit
 
 /**
- * Unit tests for {@link CertStore} updates.
+ * Unit tests for [CertStore] updates.
  *
  * @author Tomas Kypta, tomas.kypta@wultra.com
  */
-@RunWith(PowerMockRunner.class)
-public class CertStoreUpdateTest extends CommonJavaTest {
+class CertStoreUpdateTest : CommonKotlinTest() {
 
     @Test
-    public void testCorrectUpdate() throws Exception {
-        when(cryptoProvider.ecdsaValidateSignature(any(SignedData.class), any(ECPublicKey.class)))
-                .thenAnswer(invocation -> true);
+    @Throws(Exception::class)
+    fun testCorrectUpdate() {
+        every { cryptoProvider.ecdsaValidateSignature(any(), any()) } returns true
 
-        String publicKey = "BC3kV9OIDnMuVoCdDR9nEA/JidJLTTDLuSA2TSZsGgODSshfbZg31MS90WC/HdbU/A5WL5GmyDkE/iks6INv+XE=";
-        String pinningJsonUrl = "https://gist.githubusercontent.com/hvge/7c5a3f9ac50332a52aa974d90ea2408c/raw/07eb5b4b67e63d37d224912bc5951c7b589b35e6/ssl-pinning-signatures.json";
-        UpdateResult updateResult = performForcedUpdate(publicKey, pinningJsonUrl);
-        assertEquals(UpdateResult.OK, updateResult);
+        val publicKey =
+            "BC3kV9OIDnMuVoCdDR9nEA/JidJLTTDLuSA2TSZsGgODSshfbZg31MS90WC/HdbU/A5WL5GmyDkE/iks6INv+XE="
+        val pinningJsonUrl =
+            "https://gist.githubusercontent.com/hvge/7c5a3f9ac50332a52aa974d90ea2408c/raw/07eb5b4b67e63d37d224912bc5951c7b589b35e6/ssl-pinning-signatures.json"
+        val updateResult = performForcedUpdate(publicKey, pinningJsonUrl)
+        Assert.assertEquals(UpdateResult.OK, updateResult)
     }
 
     @Test
-    public void testInvalidSignatureUpdate() throws Exception {
-        when(cryptoProvider.ecdsaValidateSignature(any(SignedData.class), any(ECPublicKey.class)))
-                .thenAnswer(invocation -> false);
+    @Throws(Exception::class)
+    fun testInvalidSignatureUpdate() {
+        every { cryptoProvider.ecdsaValidateSignature(any(), any()) } returns false
 
-        String publicKey = "BC3kV9OIDnMuVoCdDR9nEA/JidJLTTDLuSA2TSZsGgODSshfbZg31MS90WC/HdbU/A5WL5GmyDkE/iks6INv+XE=";
-        String pinningJsonUrl = "https://gist.githubusercontent.com/TomasKypta/40be50cc63d2f4c00abcbbf4554f0e32/raw/9cc9029d9e8248b0cd9a36b98382040114dd1d4a/ssl-pinning-signatures_Mar2023.json";
-        UpdateResult updateResult = performForcedUpdate(publicKey, pinningJsonUrl);
-        assertEquals(UpdateResult.INVALID_SIGNATURE, updateResult);
+        val publicKey =
+            "BC3kV9OIDnMuVoCdDR9nEA/JidJLTTDLuSA2TSZsGgODSshfbZg31MS90WC/HdbU/A5WL5GmyDkE/iks6INv+XE="
+        val pinningJsonUrl =
+            "https://gist.githubusercontent.com/TomasKypta/40be50cc63d2f4c00abcbbf4554f0e32/raw/9cc9029d9e8248b0cd9a36b98382040114dd1d4a/ssl-pinning-signatures_Mar2023.json"
+        val updateResult = performForcedUpdate(publicKey, pinningJsonUrl)
+        Assert.assertEquals(UpdateResult.INVALID_SIGNATURE, updateResult)
     }
 
     @Test
-    public void testExpiredUpdate() throws Exception {
-        when(cryptoProvider.ecdsaValidateSignature(any(SignedData.class), any(ECPublicKey.class)))
-                .thenAnswer(invocation -> false);
+    @Throws(Exception::class)
+    fun testExpiredUpdate() {
+        every { cryptoProvider.ecdsaValidateSignature(any(), any()) } returns false
 
-        String publicKey = "BC3kV9OIDnMuVoCdDR9nEA/JidJLTTDLuSA2TSZsGgODSshfbZg31MS90WC/HdbU/A5WL5GmyDkE/iks6INv+XE=";
-        String pinningJsonUrl = "https://gist.githubusercontent.com/TomasKypta/5a6d99fe441a8c0d201b673d88e223a6/raw/0d12746cad1247ebf9a5b1706afabf8486a7a62e/ssl-pinning-signatures_expired.json";
-        UpdateResult updateResult = performForcedUpdate(publicKey, pinningJsonUrl);
-        assertEquals(UpdateResult.STORE_IS_EMPTY, updateResult);
+        val publicKey =
+            "BC3kV9OIDnMuVoCdDR9nEA/JidJLTTDLuSA2TSZsGgODSshfbZg31MS90WC/HdbU/A5WL5GmyDkE/iks6INv+XE="
+        val pinningJsonUrl =
+            "https://gist.githubusercontent.com/TomasKypta/5a6d99fe441a8c0d201b673d88e223a6/raw/0d12746cad1247ebf9a5b1706afabf8486a7a62e/ssl-pinning-signatures_expired.json"
+        val updateResult = performForcedUpdate(publicKey, pinningJsonUrl)
+        Assert.assertEquals(UpdateResult.STORE_IS_EMPTY, updateResult)
     }
 
     @Test
-    public void testUpdateSignatureGithub() throws Exception {
-        String publicKey = "BC3kV9OIDnMuVoCdDR9nEA/JidJLTTDLuSA2TSZsGgODSshfbZg31MS90WC/HdbU/A5WL5GmyDkE/iks6INv+XE=";
-        byte[] publicKeyBytes = java.util.Base64.getDecoder().decode(publicKey);
-
-        CertStoreConfiguration config = TestUtils.getCertStoreConfiguration(
-                new Date(),
-                new String[]{"github.com"},
-                new URL("https://gist.githubusercontent.com/"),
-                publicKeyBytes,
-                null);
-        RemoteDataProvider remoteDataProvider = mock(RemoteDataProvider.class);
-        String jsonData =
-                "{\n" +
-                        "  \"fingerprints\": [\n" +
-                        "    {\n" +
-                        "      \"name\" : \"github.com\",\n" +
-                        "      \"fingerprint\" : \"kqN/vV4hpTqVxxbhFE9EL1grlND6/Gc+tnF6TrUaiKc=\",\n" +
-                        "      \"expires\" : 1710460799,\n" +
-                        "      \"signature\" : \"MEUCICB69UpMPOdtrsR6XcJqHEh2L2RO4oSJ3SZ7BYnTBJbGAiEAnZ7rEWdMVGwa59Wx5QbAorEFxXH89Iu0CnqWa96Eda0=\"\n" +
-                        "    }\n" +
-                        "  ]\n" +
-                        "}";
-        when(remoteDataProvider.getFingerprints(new RemoteDataRequest(emptyMap()))).thenReturn(new RemoteDataResponse(200, emptyMap(), jsonData.getBytes()));
-
-        CertStore store = new CertStore(config, cryptoProvider, secureDataStore, remoteDataProvider);
-        TestUtils.assignHandler(store, handler);
-        TestUtils.updateAndCheck(store, UpdateMode.FORCED, UpdateResult.OK);
+    @Throws(Exception::class)
+    fun testUpdateSignatureGithub() {
+        val publicKey =
+            "BC3kV9OIDnMuVoCdDR9nEA/JidJLTTDLuSA2TSZsGgODSshfbZg31MS90WC/HdbU/A5WL5GmyDkE/iks6INv+XE="
+        val publicKeyBytes = Base64.getDecoder().decode(publicKey)
+        val config = TestUtils.getCertStoreConfiguration(
+            Date(), arrayOf("github.com"),
+            URL("https://gist.githubusercontent.com/"),
+            publicKeyBytes,
+            null
+        )
+        val remoteDataProvider: RemoteDataProvider = mockk()
+        val jsonData = """{
+  "fingerprints": [
+    {
+      "name" : "github.com",
+      "fingerprint" : "kqN/vV4hpTqVxxbhFE9EL1grlND6/Gc+tnF6TrUaiKc=",
+      "expires" : 1710460799,
+      "signature" : "MEUCICB69UpMPOdtrsR6XcJqHEh2L2RO4oSJ3SZ7BYnTBJbGAiEAnZ7rEWdMVGwa59Wx5QbAorEFxXH89Iu0CnqWa96Eda0="
+    }
+  ]
+}"""
+        every { remoteDataProvider.getFingerprints(any()) } answers {
+            RemoteDataResponse(200, emptyMap(), jsonData.toByteArray())
+        }
+        val store = CertStore(config, cryptoProvider, secureDataStore, remoteDataProvider)
+        TestUtils.assignHandler(store, handler)
+        TestUtils.updateAndCheck(store, UpdateMode.FORCED, UpdateResult.OK)
     }
 
     @Test
-    public void testUpdateWithNoUpdateObserver() throws Exception {
-        String publicKey = "BC3kV9OIDnMuVoCdDR9nEA/JidJLTTDLuSA2TSZsGgODSshfbZg31MS90WC/HdbU/A5WL5GmyDkE/iks6INv+XE=";
-        byte[] publicKeyBytes = java.util.Base64.getDecoder().decode(publicKey);
-
-        CertStoreConfiguration config = TestUtils.getCertStoreConfiguration(
-                new Date(),
-                new String[]{"github.com"},
-                new URL("https://gist.githubusercontent.com/hvge/7c5a3f9ac50332a52aa974d90ea2408c/raw/c5b021db0fcd40b1262ab513bf375e4641834925/ssl-pinning-signatures.json"),
-                publicKeyBytes,
-                null);
-        RemoteDataProvider remoteDataProvider = mock(RemoteDataProvider.class);
-        String jsonData =
-                "{\n" +
-                        "  \"fingerprints\": [\n" +
-                        "    {\n" +
-                        "      \"name\" : \"github.com\",\n" +
-                        "      \"fingerprint\" : \"trmmrz6GbL4OajB+fdoXOzcrLTrD8GrxX5dxh3OEgAg=\",\n" +
-                        "      \"expires\" : 1652184000,\n" +
-                        "      \"signature\" : \"MEUCIQCs1y/nyrKh4+2DIuX/PufUYiaVUdt2FBZQg6rBeZ/r4QIgNlT4owBwJ1ThrDsE0SwGipTNI74vP1vNyLNEwuXY4lE=\"\n" +
-                        "    }\n" +
-                        "  ]\n" +
-                        "}";
-
-        CountDownLatch latch = new CountDownLatch(1);
-        when(remoteDataProvider.getFingerprints(new RemoteDataRequest(emptyMap()))).thenAnswer(
-                invocation -> {
-                    byte[] bytes = jsonData.getBytes();
-                    latch.countDown();
-                    return new RemoteDataResponse(200, emptyMap(), bytes);
-                });
-
-        CertStore store = new CertStore(config, cryptoProvider, secureDataStore, remoteDataProvider);
-        TestUtils.assignHandler(store, handler);
-
-
-        store.update(UpdateMode.FORCED, new DefaultUpdateObserver() {
-            @Override
-            public void onUpdateStarted(@NotNull UpdateType type) {
-                assertEquals(UpdateType.DIRECT, type);
-                super.onUpdateStarted(type);
+    @Throws(Exception::class)
+    fun testUpdateWithNoUpdateObserver() {
+        val publicKey =
+            "BC3kV9OIDnMuVoCdDR9nEA/JidJLTTDLuSA2TSZsGgODSshfbZg31MS90WC/HdbU/A5WL5GmyDkE/iks6INv+XE="
+        val publicKeyBytes = Base64.getDecoder().decode(publicKey)
+        val config = TestUtils.getCertStoreConfiguration(
+            Date(), arrayOf("github.com"),
+            URL("https://gist.githubusercontent.com/hvge/7c5a3f9ac50332a52aa974d90ea2408c/raw/c5b021db0fcd40b1262ab513bf375e4641834925/ssl-pinning-signatures.json"),
+            publicKeyBytes,
+            null
+        )
+        val remoteDataProvider: RemoteDataProvider = mockk()
+        val jsonData = """{
+  "fingerprints": [
+    {
+      "name" : "github.com",
+      "fingerprint" : "trmmrz6GbL4OajB+fdoXOzcrLTrD8GrxX5dxh3OEgAg=",
+      "expires" : 1652184000,
+      "signature" : "MEUCIQCs1y/nyrKh4+2DIuX/PufUYiaVUdt2FBZQg6rBeZ/r4QIgNlT4owBwJ1ThrDsE0SwGipTNI74vP1vNyLNEwuXY4lE="
+    }
+  ]
+}"""
+        val latch = CountDownLatch(1)
+        every { remoteDataProvider.getFingerprints(any()) } answers {
+            val bytes = jsonData.toByteArray()
+            latch.countDown()
+            RemoteDataResponse(200, emptyMap(), bytes)
+        }
+        val store = CertStore(config, cryptoProvider, secureDataStore, remoteDataProvider)
+        TestUtils.assignHandler(store, handler)
+        store.update(UpdateMode.FORCED, object : DefaultUpdateObserver() {
+            override fun onUpdateStarted(type: UpdateType) {
+                Assert.assertEquals(UpdateType.DIRECT, type)
+                super.onUpdateStarted(type)
             }
 
-            @Override
-            public void onUpdateFinished(@NotNull UpdateType type, @NotNull UpdateResult result) {
-                assertEquals(UpdateType.DIRECT, type);
-                super.onUpdateFinished(type, result);
+            override fun onUpdateFinished(type: UpdateType, result: UpdateResult) {
+                Assert.assertEquals(UpdateType.DIRECT, type)
+                super.onUpdateFinished(type, result)
             }
 
-            @Override
-            public void handleFailedUpdate(@NotNull UpdateType type, @NotNull UpdateResult result) {
-                fail();
+            override fun handleFailedUpdate(type: UpdateType, result: UpdateResult) {
+                Assert.fail()
             }
 
-            @Override
-            public void continueExecution() {
-
-            }
-        });
-        assertTrue(latch.await(2, TimeUnit.SECONDS));
+            override fun continueExecution() {}
+        })
+        Assert.assertTrue(latch.await(2, TimeUnit.SECONDS))
     }
 
-    @NonNull
-    private UpdateResult performForcedUpdate(String publicKey,
-                                             String pinningJsonUrl) throws Exception {
-        byte[] publicKeyBytes = Base64.getDecoder().decode(publicKey);
-
-        CertStoreConfiguration config = TestUtils.getCertStoreConfiguration(
-                new Date(),
-                new String[]{"github.com"},
-                new URL(pinningJsonUrl),
-                publicKeyBytes,
-                null);
-        CertStore store = new CertStore(config, cryptoProvider, secureDataStore);
-        TestUtils.assignHandler(store, handler);
-
-        return TestUtils.updateAndCheck(store, UpdateMode.FORCED, null);
+    @Throws(Exception::class)
+    private fun performForcedUpdate(
+        publicKey: String,
+        pinningJsonUrl: String
+    ): UpdateResult {
+        val publicKeyBytes = Base64.getDecoder().decode(publicKey)
+        val config = TestUtils.getCertStoreConfiguration(
+            Date(), arrayOf("github.com"),
+            URL(pinningJsonUrl),
+            publicKeyBytes,
+            null
+        )
+        val store = CertStore(config, cryptoProvider, secureDataStore)
+        TestUtils.assignHandler(store, handler)
+        return TestUtils.updateAndCheck(store, UpdateMode.FORCED, null)
     }
 }
