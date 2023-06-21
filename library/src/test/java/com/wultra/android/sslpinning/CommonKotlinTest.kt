@@ -31,7 +31,9 @@ import io.mockk.MockKAnnotations
 import io.mockk.every
 import io.mockk.impl.annotations.MockK
 import io.mockk.mockkStatic
+import io.mockk.unmockkAll
 import org.bouncycastle.jce.provider.BouncyCastleProvider
+import org.junit.After
 import org.junit.Before
 import org.junit.BeforeClass
 import java.security.MessageDigest
@@ -124,5 +126,10 @@ open class CommonKotlinTest {
         every { context.getSharedPreferences(any(), any()) } returns sharedPrefs
 
         every { sharedPrefs.getInt(any(), any()) } returns 0
+    }
+
+    @After
+    fun tearDown() {
+        unmockkAll()
     }
 }
