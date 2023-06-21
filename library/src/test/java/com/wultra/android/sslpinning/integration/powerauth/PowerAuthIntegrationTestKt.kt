@@ -22,8 +22,6 @@ import com.wultra.android.sslpinning.CommonKotlinTest
 import com.wultra.android.sslpinning.TestUtils
 import org.junit.Assert
 import org.junit.Test
-import org.junit.runner.RunWith
-import org.powermock.modules.junit4.PowerMockRunner
 import java.net.URL
 
 /**
@@ -31,7 +29,6 @@ import java.net.URL
  *
  * @author Tomas Kypta, tomas.kypta@wultra.com
  */
-@RunWith(PowerMockRunner::class)
 class PowerAuthIntegrationTestKt : CommonKotlinTest() {
 
     @Test

@@ -72,6 +72,7 @@ dependencies {
     testImplementation "org.mockito:mockito-core:${mockitoVersion}"
     testImplementation "org.powermock:powermock-module-junit4:${powermockVersion}"
     testImplementation "org.powermock:powermock-api-mockito2:${powermockVersion}"
+    testImplementation("io.mockk:mockk:1.13.5")
     testImplementation 'org.bouncycastle:bcprov-jdk15on:1.70'
     testImplementation "io.getlime.security:powerauth-java-crypto:1.4.0"
 
