@@ -17,22 +17,22 @@
 package com.wultra.android.sslpinning
 
 import com.wultra.android.sslpinning.TestUtils.assignHandler
+import io.mockk.every
+import io.mockk.just
+import io.mockk.mockk
+import io.mockk.runs
+import io.mockk.verify
 import org.junit.Assert.assertEquals
+import org.junit.Before
 import org.junit.Test
-import org.junit.runner.RunWith
-import org.mockito.ArgumentMatchers.anyString
-import org.mockito.Mockito.*
-import org.powermock.modules.junit4.PowerMockRunner
 import java.net.URL
 import java.util.*
-import org.mockito.Mockito.`when` as wh
 
 /**
  * Test global validation observers.
  *
  * @author Tomas Kypta, tomas.kypta@wultra.com
  */
-@RunWith(PowerMockRunner::class)
 class ValidationObserverTest : CommonKotlinTest() {
 
     @Test
@@ -52,33 +52,53 @@ class ValidationObserverTest : CommonKotlinTest() {
         val store = CertStore(config, cryptoProvider, secureDataStore)
         assignHandler(store, handler)
 
-        var observer: ValidationObserver = mock(ValidationObserver::class.java)
+        var observer: ValidationObserver = mockkValidationObserver()
         store.addValidationObserver(observer)
         val result = store.validateCertificate(cert)
         assertEquals(ValidationResult.EMPTY, result)
-        verify(observer, times(0)).onValidationUntrusted(anyString())
-        verify(observer, times(1)).onValidationEmpty(anyString())
-        verify(observer, times(0)).onValidationTrusted(anyString())
+        verify(exactly = 0) {
+            observer.onValidationUntrusted(any())
+            observer.onValidationTrusted(any())
+        }
+        verify(exactly = 1) {
+            observer.onValidationEmpty(any())
+        }
         store.removeValidationObserver(observer)
 
         TestUtils.updateAndCheck(store, UpdateMode.FORCED, UpdateResult.OK)
 
-        observer = mock(ValidationObserver::class.java)
+        observer = mockkValidationObserver()
         store.addValidationObserver(observer)
         val result2 = store.validateCertificate(cert)
         assertEquals(ValidationResult.TRUSTED, result2)
-        verify(observer, times(0)).onValidationUntrusted(anyString())
-        verify(observer, times(0)).onValidationEmpty(anyString())
-        verify(observer, times(1)).onValidationTrusted(anyString())
+        verify(exactly = 0) {
+            observer.onValidationUntrusted(any())
+            observer.onValidationEmpty(any())
+        }
+        verify(exactly = 1) {
+            observer.onValidationTrusted(any())
+        }
         store.removeAllValidationObservers()
 
-        observer = mock(ValidationObserver::class.java)
+        observer = mockkValidationObserver()
         store.addValidationObserver(observer)
         val result3 = store.validateCertificate(certGoogle)
         assertEquals(ValidationResult.UNTRUSTED, result3)
-        verify(observer, times(1)).onValidationUntrusted(anyString())
-        verify(observer, times(0)).onValidationEmpty(anyString())
-        verify(observer, times(0)).onValidationTrusted(anyString())
+        verify(exactly = 0) {
+            observer.onValidationEmpty(any())
+            observer.onValidationTrusted(any())
+        }
+        verify(exactly = 1) {
+            observer.onValidationUntrusted(any())
+        }
         store.removeAllValidationObservers()
+    }
+
+    private fun mockkValidationObserver(): ValidationObserver {
+        val observer: ValidationObserver = mockk()
+        every { observer.onValidationEmpty(any()) } just runs
+        every { observer.onValidationTrusted(any()) } just runs
+        every { observer.onValidationUntrusted(any()) } just runs
+        return observer
     }
 }

@@ -18,13 +18,11 @@ package com.wultra.android.sslpinning.integration.powerauth;
 
 import com.wultra.android.sslpinning.CertStore;
 import com.wultra.android.sslpinning.CertStoreConfiguration;
-import com.wultra.android.sslpinning.CommonJavaTest;
+import com.wultra.android.sslpinning.CommonKotlinTest;
 import com.wultra.android.sslpinning.TestUtils;
 
 import org.junit.Assert;
 import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.powermock.modules.junit4.PowerMockRunner;
 
 import java.net.URL;
 
@@ -33,8 +31,7 @@ import java.net.URL;
  *
  * @author Tomas Kypta, tomas.kypta@wultra.com
  */
-@RunWith(PowerMockRunner.class)
-public class PowerAuthIntegrationTest extends CommonJavaTest {
+public class PowerAuthIntegrationTest extends CommonKotlinTest {
 
     @Test
     public void testPowerAuthCertStoreApis() throws Exception {

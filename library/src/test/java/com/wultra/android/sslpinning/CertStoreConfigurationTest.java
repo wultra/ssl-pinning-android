@@ -16,28 +16,24 @@
 
 package com.wultra.android.sslpinning;
 
-import com.wultra.android.sslpinning.model.GetFingerprintResponse;
-
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.powermock.modules.junit4.PowerMockRunner;
-
-import java.net.MalformedURLException;
-import java.net.URL;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Date;
-import java.util.concurrent.TimeUnit;
-
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 
+import com.wultra.android.sslpinning.model.GetFingerprintResponse;
+
+import org.junit.Test;
+
+import java.net.MalformedURLException;
+import java.net.URL;
+import java.util.Arrays;
+import java.util.Date;
+import java.util.concurrent.TimeUnit;
+
 /**
  * @author Tomas Kypta, tomas.kypta@wultra.com
  */
-@RunWith(PowerMockRunner.class)
-public class CertStoreConfigurationTest extends CommonJavaTest {
+public class CertStoreConfigurationTest extends CommonKotlinTest {
 
     @Test
     public void testBasicConfiguration() throws Exception {

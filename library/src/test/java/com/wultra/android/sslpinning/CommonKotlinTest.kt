@@ -23,23 +23,19 @@ import android.os.Looper
 import android.util.Base64
 import android.util.Log
 import com.wultra.android.sslpinning.interfaces.CryptoProvider
-import com.wultra.android.sslpinning.interfaces.ECPublicKey
 import com.wultra.android.sslpinning.interfaces.SecureDataStore
 import com.wultra.android.sslpinning.interfaces.SignedData
 import io.getlime.security.powerauth.crypto.lib.util.KeyConvertor
 import io.getlime.security.powerauth.crypto.lib.util.SignatureUtils
+import io.mockk.MockKAnnotations
+import io.mockk.every
+import io.mockk.impl.annotations.MockK
+import io.mockk.mockkStatic
+import io.mockk.unmockkAll
 import org.bouncycastle.jce.provider.BouncyCastleProvider
+import org.junit.After
 import org.junit.Before
 import org.junit.BeforeClass
-import org.mockito.ArgumentMatchers
-import org.mockito.ArgumentMatchers.anyString
-import org.mockito.Mock
-import org.mockito.Mockito
-import org.mockito.Mockito.anyInt
-import org.mockito.Mockito.`when`
-import org.powermock.api.mockito.PowerMockito
-import org.powermock.core.classloader.annotations.PowerMockIgnore
-import org.powermock.core.classloader.annotations.PrepareForTest
 import java.security.MessageDigest
 import java.security.Security
 
@@ -48,25 +44,21 @@ import java.security.Security
  *
  * @author Tomas Kypta, tomas.kypta@wultra.com
  */
-@PowerMockIgnore("javax.net.ssl.*", "javax.security.auth.x500.*", "org.bouncycastle.*", "java.security.*")
-@PrepareForTest(Base64::class,
-        Log::class,
-        Looper::class)
 open class CommonKotlinTest {
 
-    @Mock
+    @MockK
     lateinit var cryptoProvider: CryptoProvider
 
-    @Mock
+    @MockK
     lateinit var secureDataStore: SecureDataStore
 
-    @Mock
+    @MockK
     lateinit var handler: Handler
 
-    @Mock
+    @MockK
     lateinit var context: Context
 
-    @Mock
+    @MockK
     lateinit var sharedPrefs: SharedPreferences
 
     companion object {
@@ -78,59 +70,70 @@ open class CommonKotlinTest {
         }
     }
 
-    fun <T> any(): T = Mockito.any<T>()
-
     @Before
     fun setUp() {
-        PowerMockito.mockStatic(Base64::class.java)
-        Mockito.`when`<String>(Base64.encodeToString(any<ByteArray>(), ArgumentMatchers.anyInt()))
-                .thenAnswer { invocation -> String(java.util.Base64.getEncoder().encode(invocation.getArgument(0) as ByteArray)) }
+        MockKAnnotations.init(this, relaxUnitFun = true)
 
-        Mockito.`when`<ByteArray>(Base64.encode(any<ByteArray>(), ArgumentMatchers.anyInt()))
-                .thenAnswer { invocation -> java.util.Base64.getEncoder().encode(invocation.getArgument(0) as ByteArray) }
+        mockkStatic(Base64::class)
+        every { Base64.encodeToString(any(), any()) } answers {
+            String(java.util.Base64.getEncoder().encode(it.invocation.args[0] as ByteArray))
+        }
+        every { Base64.encode(any(), any()) } answers {
+            java.util.Base64.getEncoder().encode(it.invocation.args[0] as ByteArray)
+        }
+        every { Base64.decode(any<String>(), any()) } answers {
+            java.util.Base64.getDecoder().decode(it.invocation.args[0] as String)
+        }
 
-        Mockito.`when`<ByteArray>(Base64.decode(ArgumentMatchers.anyString(), ArgumentMatchers.anyInt()))
-                .thenAnswer { invocation -> java.util.Base64.getDecoder().decode(invocation.getArgument(0) as String) }
+        mockkStatic(Log::class)
+        every { Log.e(any(), any()) } answers {
+            println("error: ${it.invocation.args[1] as String}")
+            0
+        }
+        every { Log.w(any(), any<String>()) } answers {
+            println("warning: ${it.invocation.args[1] as String}")
+            0
+        }
 
-        PowerMockito.mockStatic(Log::class.java)
-        Mockito.`when`<Int>(Log.e(ArgumentMatchers.anyString(), ArgumentMatchers.anyString()))
-                .then { invocation ->
-                    println(invocation.getArgument(1) as String)
-                    0
-                }
+        every { cryptoProvider.hashSha256(any()) } answers {
+            val digest = MessageDigest.getInstance("SHA-256")
+            digest.digest(it.invocation.args[0] as ByteArray)
+        }
 
-        Mockito.`when`<ByteArray>(cryptoProvider.hashSha256(any()))
-                .thenAnswer { invocation ->
-                    val digest = MessageDigest.getInstance("SHA-256")
-                    digest.digest(invocation.getArgument(0))
-                }
+        every { cryptoProvider.importECPublicKey(any()) } answers {
+            TestPA2ECPublicKey(it.invocation.args[0] as ByteArray)
+        }
 
-        Mockito.`when`<ECPublicKey>(cryptoProvider.importECPublicKey(any()))
-                .thenAnswer { invocation -> TestPA2ECPublicKey(invocation.getArgument(0) as ByteArray) }
+        every { cryptoProvider.ecdsaValidateSignature(any(), any()) } answers {
+            val utils = SignatureUtils()
+            val signedData: SignedData = it.invocation.args[0] as SignedData
+            val pubKey: TestPA2ECPublicKey = it.invocation.args[1] as TestPA2ECPublicKey
+            val keyConvertor = KeyConvertor()
+            utils.validateECDSASignature(signedData.data,
+                signedData.signature,
+                keyConvertor.convertBytesToPublicKey(pubKey.data))
+        }
 
-        Mockito.`when`<Boolean>(cryptoProvider.ecdsaValidateSignature(any(), any()))
-                .thenAnswer { invocation ->
-                    val utils = SignatureUtils()
-                    val signedData: SignedData = invocation.getArgument(0)
-                    val pubKey: TestPA2ECPublicKey = invocation.getArgument(1)
-                    val keyConvertor = KeyConvertor()
-                    utils.validateECDSASignature(signedData.data,
-                            signedData.signature,
-                            keyConvertor.convertBytesToPublicKey(pubKey.data))
-                }
+        every { secureDataStore.load(any()) } returns null
+        every { secureDataStore.save(any(), any()) } returns false
 
-        PowerMockito.mockStatic(Looper::class.java)
-        Mockito.`when`<Looper>(Looper.getMainLooper())
-                .thenReturn(null)
+        mockkStatic(Looper::class)
+        every { Looper.getMainLooper() } returns null
 
-        Mockito.`when`<Boolean>(handler.post(any()))
-                .then { invocation ->
-                    val runnable = invocation.getArgument<Runnable>(0)
-                    runnable.run()
-                    return@then true
-                }
+        every { handler.post(any()) } answers {
+            val runnable = it.invocation.args[0] as Runnable
+            runnable.run()
+            true
+        }
 
-        `when`(context.applicationContext).thenReturn(context)
-        `when`(context.getSharedPreferences(anyString(), anyInt())).thenReturn(sharedPrefs)
+        every { context.applicationContext } returns context
+        every { context.getSharedPreferences(any(), any()) } returns sharedPrefs
+
+        every { sharedPrefs.getInt(any(), any()) } returns 0
+    }
+
+    @After
+    fun tearDown() {
+        unmockkAll()
     }
 }
