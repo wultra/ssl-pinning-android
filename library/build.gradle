@@ -89,4 +89,4 @@ dependencies {
 }
 
 apply from: 'android-release-aar.gradle'
-//apply from: 'android-coverage.gradle'
+apply from: 'android-coverage.gradle'
