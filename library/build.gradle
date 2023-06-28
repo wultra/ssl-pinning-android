@@ -47,8 +47,8 @@ android {
         }
     }
     compileOptions {
-        sourceCompatibility = '1.8'
-        targetCompatibility = '1.8'
+        sourceCompatibility = JavaVersion.VERSION_1_8
+        targetCompatibility = JavaVersion.VERSION_1_8
     }
     // avoids a gradle warning, otherwise unused due to custom config in android-release-aar.gradle
     publishing {
