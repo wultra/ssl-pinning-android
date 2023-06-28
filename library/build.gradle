@@ -24,6 +24,7 @@ plugins {
 
 android {
     namespace "com.wultra.android.sslpinning"
+    testNamespace "com.wultra.android.sslpinning.test"
     compileSdkVersion rootProject.ext.compileSdkVersion
 
     defaultConfig {
@@ -73,6 +74,7 @@ dependencies {
     testImplementation 'org.bouncycastle:bcprov-jdk15on:1.70'
     testImplementation "io.getlime.security:powerauth-java-crypto:1.4.0"
 
+//    androidTestImplementation 'androidx.core:core-ktx:+'
     androidTestImplementation "androidx.test:runner:1.5.2"
     androidTestImplementation "androidx.test:rules:1.5.0"
     androidTestImplementation "androidx.test.ext:junit:1.1.5"
@@ -87,4 +89,4 @@ dependencies {
 }
 
 apply from: 'android-release-aar.gradle'
-apply from: 'android-coverage.gradle'
+//apply from: 'android-coverage.gradle'
