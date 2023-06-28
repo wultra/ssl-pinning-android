@@ -45,5 +45,23 @@ internal data class CachedData(var certificates: Array<CertificateInfo>,
     internal fun sort() {
         certificates.sort()
     }
+
+    override fun equals(other: Any?): Boolean {
+        if (this === other) return true
+        if (javaClass != other?.javaClass) return false
+
+        other as CachedData
+
+        if (!certificates.contentEquals(other.certificates)) return false
+        if (nextUpdate != other.nextUpdate) return false
+
+        return true
+    }
+
+    override fun hashCode(): Int {
+        var result = certificates.contentHashCode()
+        result = 31 * result + nextUpdate.hashCode()
+        return result
+    }
 }
 

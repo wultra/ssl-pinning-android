@@ -55,6 +55,45 @@ data class GetFingerprintResponse(val fingerprints: Array<Entry>) {
             val signedString = "${name}&${fingerprintPart}&${expirationTimestampInSeconds}"
             return SignedData(data = signedString.toByteArray(Charsets.UTF_8), signature = signature)
         }
+
+        override fun equals(other: Any?): Boolean {
+            if (this === other) return true
+            if (javaClass != other?.javaClass) return false
+
+            other as Entry
+
+            if (name != other.name) return false
+            if (!fingerprint.contentEquals(other.fingerprint)) return false
+            if (expires != other.expires) return false
+            if (signature != null) {
+                if (other.signature == null) return false
+                if (!signature.contentEquals(other.signature)) return false
+            } else if (other.signature != null) return false
+
+            return true
+        }
+
+        override fun hashCode(): Int {
+            var result = name.hashCode()
+            result = 31 * result + fingerprint.contentHashCode()
+            result = 31 * result + expires.hashCode()
+            result = 31 * result + (signature?.contentHashCode() ?: 0)
+            return result
+        }
     }
 
+    override fun equals(other: Any?): Boolean {
+        if (this === other) return true
+        if (javaClass != other?.javaClass) return false
+
+        other as GetFingerprintResponse
+
+        if (!fingerprints.contentEquals(other.fingerprints)) return false
+
+        return true
+    }
+
+    override fun hashCode(): Int {
+        return fingerprints.contentHashCode()
+    }
 }
