@@ -82,6 +82,7 @@ abstract class SslValidationStrategy {
  * Implements SSL validation strategy that trust any server certificate.
  * See [SslValidationStrategy.noValidation] for more details.
  */
+@Suppress("CustomX509TrustManager")
 internal class NoSslValidationStrategy: SslValidationStrategy() {
     override fun sslSocketFactory(): SSLSocketFactory? {
         val trustAllCerts = Array(1) { object : X509TrustManager {
