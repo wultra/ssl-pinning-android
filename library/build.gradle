@@ -66,7 +66,7 @@ dependencies {
 
     implementation "org.jetbrains.kotlin:kotlin-stdlib:$kotlinVersion"
     implementation "com.google.code.gson:gson:${gsonVersion}"
-    implementation "androidx.annotation:annotation:1.6.0"
+    implementation "androidx.annotation:annotation:1.7.0"
 
     testImplementation "com.wultra.android.powerauth:powerauth-sdk:${powerAuthSdkVersion}"
     testImplementation 'junit:junit:4.13.2'
