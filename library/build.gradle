@@ -57,6 +57,12 @@ android {
             withJavadocJar()
         }
     }
+
+    lintOptions {
+        // to handle warning coming from a transitive dependency
+        // - obsolete 'androidx.fragment' through 'powerauth-sdk'
+        disable 'ObsoleteLintCustomCheck'
+    }
 }
 
 dependencies {
