@@ -100,4 +100,3 @@ dependencies {
 }
 
 apply("android-release-aar.gradle")
-apply("android-coverage.gradle")
