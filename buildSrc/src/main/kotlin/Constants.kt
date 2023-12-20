@@ -23,7 +23,6 @@ object Constants {
         val androidPluginVersion: String by System.getProperties()
         val kotlinVersion: String by System.getProperties()
         val dokkaVersion: String by System.getProperties()
-        val jacocoVersion: String by System.getProperties()
     }
 
     object Java {

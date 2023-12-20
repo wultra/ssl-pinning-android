@@ -23,13 +23,9 @@ buildscript {
         classpath("com.android.tools.build:gradle:${Constants.BuildScript.androidPluginVersion}")
         classpath("org.jetbrains.kotlin:kotlin-gradle-plugin:${Constants.BuildScript.kotlinVersion}")
         classpath("org.jetbrains.dokka:dokka-gradle-plugin:${Constants.BuildScript.dokkaVersion}")
-        classpath("org.jacoco:org.jacoco.core:${Constants.BuildScript.jacocoVersion}")
     }
 }
 
 tasks.register("clean", Delete::class) {
     delete(rootProject.buildDir)
 }
-
-// a hack to make buildSrc constant available in applied .gradle scripts
-project.extra["jacocoVersion"] = Constants.BuildScript.jacocoVersion
