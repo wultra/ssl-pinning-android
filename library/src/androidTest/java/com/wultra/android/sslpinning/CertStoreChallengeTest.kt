@@ -18,7 +18,10 @@ package com.wultra.android.sslpinning
 
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import android.util.Base64
+import androidx.test.platform.app.InstrumentationRegistry
 import com.wultra.android.sslpinning.integration.powerauth.powerAuthCertStore
+import org.junit.Assume
+import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
 import java.net.URL
@@ -26,17 +29,28 @@ import java.net.URL
 @RunWith(AndroidJUnit4::class)
 class CertStoreChallengeTest: CommonTest() {
 
-    private val baseUrl = "https://mobile-utility-server.herokuapp.com/app"
-    private val appName = "rb-ekonto"
+    private lateinit var baseUrl: String
+    private lateinit var appName: String
+
+    @Before
+    override fun setUp() {
+        super.setUp()
+        InstrumentationRegistry.getArguments().getString("test.sslPinning.baseUrl")?.let {
+            baseUrl = it
+        }
+        InstrumentationRegistry.getArguments().getString("test.sslPinning.appName")?.let {
+            appName = it
+        }
+    }
 
     @Test
     fun validateUpdateWithChallenge() {
+        Assume.assumeTrue(::baseUrl.isInitialized && ::appName.isInitialized)
         val config = CertStoreConfiguration.Builder(getServiceUrl("/init?appName=$appName"), getPublicKeyFromServer())
                 .useChallenge(true)
                 .build()
         val store = CertStore.powerAuthCertStore(config, appContext)
-        // currently the data are expired, therefore STORE_IS_EMPTY result
-        updateAndCheck(store, UpdateMode.FORCED, UpdateResult.STORE_IS_EMPTY)
+        updateAndCheck(store, UpdateMode.FORCED, UpdateResult.OK)
     }
 
     private fun getServiceUrl(relativePath: String): URL {

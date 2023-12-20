@@ -20,6 +20,7 @@ plugins {
     id("org.jetbrains.dokka")
     id("maven-publish")
     id("signing")
+    id("com.wultra.android.sslpinning.test")
 }
 
 android {

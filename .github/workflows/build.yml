@@ -95,7 +95,10 @@ jobs:
         uses: reactivecircus/android-emulator-runner@v2
         with:
           api-level: 29
-          script: ./gradlew library:connectedAndroidTest
+          script: > 
+            ./gradlew library:connectedAndroidTest
+            -Ptest.sslPinning.baseUrl=${{ secrets.SSL_PINNING_TEST_BASE_URL }}
+            -Ptest.sslPinning.appName=${{ secrets.SSL_PINNING_TEST_APP_NAME }}
 
       - name: Upload instrumentation test results artifact
         if: always()

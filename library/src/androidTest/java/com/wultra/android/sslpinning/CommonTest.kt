@@ -30,7 +30,7 @@ abstract class CommonTest {
     val appContext = InstrumentationRegistry.getInstrumentation().targetContext
 
     @Before
-    fun setUp() {
+    open fun setUp() {
         WultraDebug.loggingLevel = WultraDebug.WultraLoggingLevel.DEBUG
         clearStorage()
     }
