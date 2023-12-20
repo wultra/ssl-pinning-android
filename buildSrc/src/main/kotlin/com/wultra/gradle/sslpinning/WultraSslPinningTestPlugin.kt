@@ -36,7 +36,9 @@ class WultraSslPinningTestPlugin : Plugin<Project> {
 
     private fun Project.loadPropertiesFromGradleProps() {
         for (key in instrumentationArgumentKeys) {
-            instrumentationArguments[key] = project.properties[key]?.toString() ?: ""
+            project.properties[key]?.let {
+                instrumentationArguments[key] = it.toString()
+            }
         }
     }
 
