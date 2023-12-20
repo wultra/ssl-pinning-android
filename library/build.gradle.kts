@@ -72,15 +72,13 @@ android {
 }
 
 dependencies {
-    val powerAuthSdkVersion = "1.7.8"
-
-    compileOnly("com.wultra.android.powerauth:powerauth-sdk:${powerAuthSdkVersion}")
+    compileOnly("com.wultra.android.powerauth:powerauth-sdk:${Constants.Dependencies.powerAuthSdkVersion}")
 
     implementation("org.jetbrains.kotlin:kotlin-stdlib:${Constants.BuildScript.kotlinVersion}")
     implementation("com.google.code.gson:gson:2.10.1")
     implementation("androidx.annotation:annotation:1.7.1")
 
-    testImplementation("com.wultra.android.powerauth:powerauth-sdk:${powerAuthSdkVersion}")
+    testImplementation("com.wultra.android.powerauth:powerauth-sdk:${Constants.Dependencies.powerAuthSdkVersion}")
     testImplementation("junit:junit:4.13.2")
     testImplementation("io.mockk:mockk:1.13.5")
     testImplementation("org.bouncycastle:bcprov-jdk15on:1.70")
@@ -89,7 +87,7 @@ dependencies {
     androidTestImplementation("androidx.test:runner:1.5.2")
     androidTestImplementation("androidx.test:rules:1.5.0")
     androidTestImplementation("androidx.test.ext:junit:1.1.5")
-    androidTestImplementation("com.wultra.android.powerauth:powerauth-sdk:${powerAuthSdkVersion}")
+    androidTestImplementation("com.wultra.android.powerauth:powerauth-sdk:${Constants.Dependencies.powerAuthSdkVersion}")
     androidTestImplementation("com.squareup.okhttp3:okhttp:4.10.0")
 
     constraints {

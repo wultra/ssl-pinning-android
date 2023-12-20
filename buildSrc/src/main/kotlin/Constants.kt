@@ -38,4 +38,9 @@ object Constants {
         const val minSdkVersion = 19
         const val buildToolsVersion = "33.0.2"
     }
+
+
+    object Dependencies {
+        const val powerAuthSdkVersion = "1.7.8"
+    }
 }
