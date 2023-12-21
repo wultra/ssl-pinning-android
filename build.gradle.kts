@@ -14,24 +14,18 @@
  * and limitations under the License.
  */
 
-package com.wultra.android.sslpinning
-
-import androidx.test.platform.app.InstrumentationRegistry
-import com.wultra.android.sslpinning.service.WultraDebug
-import org.junit.Before
-
-/**
- * Common instrumentation test setup.
- *
- * @author Tomas Kypta, tomas.kypta@wultra.com
- */
-abstract class CommonTest {
-
-    val appContext = InstrumentationRegistry.getInstrumentation().targetContext
-
-    @Before
-    open fun setUp() {
-        WultraDebug.loggingLevel = WultraDebug.WultraLoggingLevel.DEBUG
-        clearStorage()
+buildscript {
+    repositories {
+        mavenCentral()
+        google()
     }
+    dependencies {
+        classpath("com.android.tools.build:gradle:${Constants.BuildScript.androidPluginVersion}")
+        classpath("org.jetbrains.kotlin:kotlin-gradle-plugin:${Constants.BuildScript.kotlinVersion}")
+        classpath("org.jetbrains.dokka:dokka-gradle-plugin:${Constants.BuildScript.dokkaVersion}")
+    }
+}
+
+tasks.register("clean", Delete::class) {
+    delete(rootProject.buildDir)
 }
