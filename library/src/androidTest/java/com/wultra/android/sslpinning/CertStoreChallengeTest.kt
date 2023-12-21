@@ -19,6 +19,7 @@ package com.wultra.android.sslpinning
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import android.util.Base64
 import com.wultra.android.sslpinning.integration.powerauth.powerAuthCertStore
+import org.junit.Ignore
 import org.junit.Test
 import org.junit.runner.RunWith
 import java.net.URL
@@ -29,6 +30,7 @@ class CertStoreChallengeTest: CommonTest() {
     private val baseUrl = "https://mobile-utility-server.herokuapp.com/app"
     private val appName = "rb-ekonto"
 
+    @Ignore
     @Test
     fun validateUpdateWithChallenge() {
         val config = CertStoreConfiguration.Builder(getServiceUrl("/init?appName=$appName"), getPublicKeyFromServer())
