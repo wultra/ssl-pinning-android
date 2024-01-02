@@ -81,7 +81,7 @@ class SSLPinningIntegration {
                         sc.init(null, trustSslPinningCerts, null)
                         return Tls12SocketFactory(sc.socketFactory)
                     } catch (e: Exception) {
-                        Log.e("TLS12Factory", e.message)
+                        Log.e("TLS12Factory", e.message ?: "")
                     }
                 }
 

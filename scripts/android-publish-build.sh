@@ -5,7 +5,8 @@
 TOP=$(dirname $0)
 source "${TOP}/common-functions.sh"
 source "${TOP}/deploy.cfg.sh"
-SRC_ROOT="`( cd \"$TOP/..\" && pwd )`"
+
+[[ -z "$SRC_ROOT" ]] && FAILURE "Missing SRC_ROOT in deploy.cfg.sh"
 
 # -----------------------------------------------------------------------------
 # USAGE prints help and exits the script with error code from provided parameter
@@ -64,44 +65,40 @@ function MAKE_VER
         VER_SUFFIX="-$VER_SUFFIX"
     fi
     local NEW_VER=${VER}${VER_SUFFIX}
-    local CUR_VER=$(LOAD_CURRENT_VERSION)
-    local PROP_PATH="$SRC_ROOT/${DEPLOY_VERSION_FILE}"
     
     VALIDATE_AND_SET_VERSION_STRING "$VER"
     
-    [[ "$CUR_VER" == "-1" ]] && FAILURE "Failed to load version from gradle.properties file."
+    LOG "Changing version to:"
     
-    PUSH_DIR "${SRC_ROOT}"
-    #### 
-    sed -e "s/$CUR_VER/$NEW_VER/g" "${PROP_PATH}" > "${PROP_PATH}.new"
-    $MV "${PROP_PATH}.new" "${PROP_PATH}"
-    git add ${DEPLOY_VERSION_FILE}
-    ####
-    POP_DIR
+    for PROP_FILE in "${DEPLOY_VERSION_FILES[@]}"
+    do
+        local PROP_PATH="$SRC_ROOT/${PROP_FILE}"
+        
+        local VERSION=$(GET_PROPERTY "$PROP_PATH" "VERSION_NAME")
+        local GROUP_ID=$(GET_PROPERTY "$PROP_PATH" "GROUP_ID")
+        local ARTIFACT_ID=$(GET_PROPERTY "$PROP_PATH" "ARTIFACT_ID")
+        
+        [[ -z "$VERSION" ]] && FAILURE "Failed to load VERSION_NAME from gradle.properties file."
+        [[ -z "$GROUP_ID" ]] && FAILURE "Failed to load GROUP_ID from gradle.properties file."
+        [[ -z "$ARTIFACT_ID" ]] && FAILURE "Failed to load ARTIFACT_ID from gradle.properties file."
+
+        local CUR_VER=$VERSION
     
-    LOG_LINE
-    LOG "Version changed to:"
-    PRINT_CURRENT_VERSION $DO_REPO
-    LOG_LINE
+        PUSH_DIR "${SRC_ROOT}"
+        #### 
+        sed -e "s/$CUR_VER/$NEW_VER/g" "${PROP_PATH}" > "${PROP_PATH}.new"
+        $MV "${PROP_PATH}.new" "${PROP_PATH}"
+        git add ${PROP_FILE}
+        ####
+        POP_DIR
+    
+        LOG_LINE
+        LOG " - Version     : ${NEW_VER}"
+        LOG " - Dependency  : ${GROUP_ID}:${ARTIFACT_ID}:${NEW_VER}" 
+        LOG_LINE
+    done
 }
 
-
-# -----------------------------------------------------------------------------
-# LOAD_CURRENT_VERSION loads version from gradle.properties file and prints
-# it to stdout.
-# -----------------------------------------------------------------------------
-function LOAD_CURRENT_VERSION
-{
-    local PROP_PATH="$SRC_ROOT/${DEPLOY_VERSION_FILE}"
-    local V="-1"
-    if [ -f "$PROP_PATH" ]; then
-        source "$PROP_PATH"
-        if [ ! -z "${VERSION_NAME}" ]; then
-            V="${VERSION_NAME}"
-        fi
-    fi
-    echo $V
-}
 # -----------------------------------------------------------------------------
 # PRINT_CURRENT_VERSION loads and prints rich version info from gradle.properties
 # file. Parameters:
@@ -110,15 +107,21 @@ function LOAD_CURRENT_VERSION
 function PRINT_CURRENT_VERSION
 {
     local REPO=$1
-    local VER=$(LOAD_CURRENT_VERSION)
-    local PROP_PATH="$SRC_ROOT/${DEPLOY_VERSION_FILE}"
+    for PROP_FILE in "${DEPLOY_VERSION_FILES[@]}"
+    do
+        local PROP_PATH="$SRC_ROOT/${PROP_FILE}"
     
-    [[ "$VER" == "-1" ]] && FAILURE "Failed to load version from gradle.properties file."
+        local VERSION=$(GET_PROPERTY "$PROP_PATH" "VERSION_NAME")
+        local GROUP_ID=$(GET_PROPERTY "$PROP_PATH" "GROUP_ID")
+        local ARTIFACT_ID=$(GET_PROPERTY "$PROP_PATH" "ARTIFACT_ID")
+        
+        [[ -z "$VERSION" ]] && FAILURE "Failed to load VERSION_NAME from gradle.properties file."
+        [[ -z "$GROUP_ID" ]] && FAILURE "Failed to load GROUP_ID from gradle.properties file."
+        [[ -z "$ARTIFACT_ID" ]] && FAILURE "Failed to load ARTIFACT_ID from gradle.properties file."
     
-    source "${PROP_PATH}"
-    
-    LOG " - Version     : ${VER}"
-    LOG " - Dependency  : ${GROUP_ID}:${ARTIFACT_ID}:${VER}"    
+        LOG " - Version     : ${VERSION}"
+        LOG " - Dependency  : ${GROUP_ID}:${ARTIFACT_ID}:${VERSION}" 
+    done
 }
 
 ###############################################################################
@@ -129,6 +132,7 @@ DO_PUBLISH=''
 DO_SIGN=$DEPLOY_ALLOW_SIGN
 DO_REPO=''
 GRADLE_PARAMS=''
+GRADLE_ROOT=${GRADLE_ROOT:-$SRC_ROOT}
 
 REQUIRE_COMMAND git
 
@@ -204,7 +208,7 @@ fi
 LOG_LINE
 
 
-PUSH_DIR "${SRC_ROOT}"
+PUSH_DIR "${GRADLE_ROOT}"
 ####
 GRADLE_CMD_LINE="$GRADLE_PARAMS $DO_CLEAN assembleRelease $DO_PUBLISH"
 DEBUG_LOG "Gradle command line >> ./gradlew $GRADLE_CMD_LINE"

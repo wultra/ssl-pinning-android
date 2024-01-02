@@ -1,11 +1,14 @@
 # gradle.properties file where library version is stored
-DEPLOY_VERSION_FILE="library/gradle.properties"
+DEPLOY_VERSION_FILES=("library/gradle.properties")
 # Name of remote repository. Variable is used in communication with user.
 DEPLOY_REMOTE_NAME="Maven Central"
 # Gradle task to publish library to remote repository
 DEPLOY_REMOTE_TASK="publishReleasePublicationToSonatypeRepository"
 # Set 0 / 1 whether signing is allowed
 DEPLOY_ALLOW_SIGN=1
+
+# Sources root
+SRC_ROOT="`( cd \"$TOP/..\" && pwd )`"
 
 # -----------------------------------------------------------------------------
 # Function that adjusts GRADLE_PARAMS global variable with parameters required

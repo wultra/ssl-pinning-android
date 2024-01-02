@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 Wultra s.r.o.
+ * Copyright 2023 Wultra s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,22 +16,9 @@
 
 package com.wultra.android.sslpinning
 
-import androidx.test.platform.app.InstrumentationRegistry
-import com.wultra.android.sslpinning.service.WultraDebug
-import org.junit.Before
+import com.wultra.android.sslpinning.interfaces.ECPublicKey
 
 /**
- * Common instrumentation test setup.
- *
- * @author Tomas Kypta, tomas.kypta@wultra.com
+ * Test PA2ECPublicKey class used to avoid loading native code in EcPublicKey.
  */
-abstract class CommonTest {
-
-    val appContext = InstrumentationRegistry.getInstrumentation().targetContext
-
-    @Before
-    open fun setUp() {
-        WultraDebug.loggingLevel = WultraDebug.WultraLoggingLevel.DEBUG
-        clearStorage()
-    }
-}
+data class TestPA2ECPublicKey(val data: ByteArray) : ECPublicKey

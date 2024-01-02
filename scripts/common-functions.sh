@@ -25,40 +25,40 @@ LAST_LOG_IS_LINE=0
  # -----------------------------------------------------------------------------
 function __COMMON_FUNCTIONS_SELF_UPDATE
 {
-	local self=$0
-	local backup=$self.backup
-	local remote="https://raw.githubusercontent.com/wultra/library-deploy/master/common-functions.sh"
-	LOG_LINE
-	LOG "This script is going to update itself:"
-	LOG "  source : $remote"
-	LOG "    dest : $self"
-	LOG_LINE
-	PROMPT_YES_FOR_CONTINUE
-	cp $self $backup
-	wget $remote -O $self
-	LOG_LINE
-	LOG "Update looks good. Now you can:"
-	LOG "  - press CTRL+C to cancel next step" 
-	LOG "  - or type 'y' to remove backup file"
-	LOG_LINE
-	PROMPT_YES_FOR_CONTINUE "Would you like to remove backup file?"
-	rm $backup
+    local self=$0
+    local backup=$self.backup
+    local remote="https://raw.githubusercontent.com/wultra/library-deploy/master/common-functions.sh"
+    LOG_LINE
+    LOG "This script is going to update itself:"
+    LOG "  source : $remote"
+    LOG "    dest : $self"
+    LOG_LINE
+    PROMPT_YES_FOR_CONTINUE
+    cp $self $backup
+    wget $remote -O $self
+    LOG_LINE
+    LOG "Update looks good. Now you can:"
+    LOG "  - press CTRL+C to cancel next step" 
+    LOG "  - or type 'y' to remove backup file"
+    LOG_LINE
+    PROMPT_YES_FOR_CONTINUE "Would you like to remove backup file?"
+    rm $backup
 }
 # -----------------------------------------------------------------------------
 # FAILURE prints error to stderr and exits the script with error code 1
 # -----------------------------------------------------------------------------
 function FAILURE
 {
-	echo "$CMD: Error: $@" 1>&2
-	exit 1
+    echo "$CMD: Error: $@" 1>&2
+    exit 1
 }
 # -----------------------------------------------------------------------------
 # WARNING prints warning to stderr
 # -----------------------------------------------------------------------------
 function WARNING
 {
-	echo "$CMD: Warning: $@" 1>&2
-	LAST_LOG_IS_LINE=0
+    echo "$CMD: Warning: $@" 1>&2
+    LAST_LOG_IS_LINE=0
 }
 # -----------------------------------------------------------------------------
 # LOG 
@@ -74,24 +74,24 @@ function WARNING
 # -----------------------------------------------------------------------------
 function LOG
 {
-	if [ $VERBOSE -gt 0 ]; then
-		echo "$CMD: $@"
-		LAST_LOG_IS_LINE=0
-	fi
+    if [ $VERBOSE -gt 0 ]; then
+        echo "$CMD: $@"
+        LAST_LOG_IS_LINE=0
+    fi
 }
 function LOG_LINE
 {
-	if [ $LAST_LOG_IS_LINE -eq 0 ] && [ $VERBOSE -gt 0 ]; then
-		echo "$CMD: -----------------------------------------------------------------------------"
-		LAST_LOG_IS_LINE=1
-	fi
+    if [ $LAST_LOG_IS_LINE -eq 0 ] && [ $VERBOSE -gt 0 ]; then
+        echo "$CMD: -----------------------------------------------------------------------------"
+        LAST_LOG_IS_LINE=1
+    fi
 }
 function DEBUG_LOG
 {
-	if [ $VERBOSE -gt 1 ]; then
-		echo "$CMD: $@"
-		LAST_LOG_IS_LINE=0
-	fi	
+    if [ $VERBOSE -gt 1 ]; then
+        echo "$CMD: $@"
+        LAST_LOG_IS_LINE=0
+    fi  
 }
 function EXIT_SUCCESS
 {
@@ -108,21 +108,21 @@ function EXIT_SUCCESS
 # -----------------------------------------------------------------------------
 function PROMPT_YES_FOR_CONTINUE
 {
-	local prompt="$@"
-	local answer
-	if [ -z "$prompt" ]; then
-		prompt="Would you like to continue?"
-	fi
-	read -p "$prompt (type y or yes): " answer
-	case "$answer" in
-		y | yes | Yes | YES)
-			LAST_LOG_IS_LINE=0
-			return
-			;;
-		*)
-			FAILURE "Aborted by user."
-			;;
-	esac
+    local prompt="$@"
+    local answer
+    if [ -z "$prompt" ]; then
+        prompt="Would you like to continue?"
+    fi
+    read -p "$prompt (type y or yes): " answer
+    case "$answer" in
+        y | yes | Yes | YES)
+            LAST_LOG_IS_LINE=0
+            return
+            ;;
+        *)
+            FAILURE "Aborted by user."
+            ;;
+    esac
 }
 # -----------------------------------------------------------------------------
 # REQUIRE_COMMAND uses "which" buildin command to test existence of requested
@@ -133,14 +133,14 @@ function PROMPT_YES_FOR_CONTINUE
 # -----------------------------------------------------------------------------
 function REQUIRE_COMMAND
 {
-	set +e
-	local tool=$1
-	local path=`which $tool`
-	if [ -z $path ]; then
-		FAILURE "$tool: required command not found."
-	fi
-	set -e
-	DEBUG_LOG "$tool: found at $path"
+    set +e
+    local tool=$1
+    local path=`which $tool`
+    if [ -z $path ]; then
+        FAILURE "$tool: required command not found."
+    fi
+    set -e
+    DEBUG_LOG "$tool: found at $path"
 }
 # -----------------------------------------------------------------------------
 # REQUIRE_COMMAND_PATH is similar to REQUIRE_COMMAND, but on success, prints
@@ -152,14 +152,14 @@ function REQUIRE_COMMAND
 # -----------------------------------------------------------------------------
 function REQUIRE_COMMAND_PATH
 {
-	set +e
-	local tool=$1
-	local path=`which $tool`
-	if [ -z $path ]; then
-		FAILURE "$tool: required command not found."
-	fi
-	set -e
-	echo $path
+    set +e
+    local tool=$1
+    local path=`which $tool`
+    if [ -z $path ]; then
+        FAILURE "$tool: required command not found."
+    fi
+    set -e
+    echo $path
 }
 # -----------------------------------------------------------------------------
 # Validates "verbose" command line switch and adjusts VERBOSE global variable
@@ -167,13 +167,13 @@ function REQUIRE_COMMAND_PATH
 # -----------------------------------------------------------------------------
 function SET_VERBOSE_LEVEL_FROM_SWITCH
 {
-	case "$1" in
-		-v0) VERBOSE=0 ;;
-		-v1) VERBOSE=1 ;;
-		-v2) VERBOSE=2 ;;
-		*) FAILURE "Invalid verbose level $1" ;;
-	esac
-	UPDATE_VERBOSE_COMMANDS
+    case "$1" in
+        -v0) VERBOSE=0 ;;
+        -v1) VERBOSE=1 ;;
+        -v2) VERBOSE=2 ;;
+        *) FAILURE "Invalid verbose level $1" ;;
+    esac
+    UPDATE_VERBOSE_COMMANDS
 }
 # -----------------------------------------------------------------------------
 # Updates verbose switches for common commands. Function will create following
@@ -185,19 +185,19 @@ function SET_VERBOSE_LEVEL_FROM_SWITCH
 # -----------------------------------------------------------------------------
 function UPDATE_VERBOSE_COMMANDS
 {
-	if [ $VERBOSE -lt 2 ]; then
-		# No verbose
-		CP="cp"
-		RM="rm -f"
-		MD="mkdir -p"
-		MV="mv"
-	else
-		# verbose
-		CP="cp -v"
-		RM="rm -f -v"
-		MD="mkdir -p -v"
-		MV="mv -v"
-	fi
+    if [ $VERBOSE -lt 2 ]; then
+        # No verbose
+        CP="cp"
+        RM="rm -f"
+        MD="mkdir -p"
+        MV="mv"
+    else
+        # verbose
+        CP="cp -v"
+        RM="rm -f -v"
+        MD="mkdir -p -v"
+        MV="mv -v"
+    fi
 }
 # -----------------------------------------------------------------------------
 # Validate if $1 as VERSION has valid format: x.y.z
@@ -205,19 +205,19 @@ function UPDATE_VERBOSE_COMMANDS
 # -----------------------------------------------------------------------------
 function VALIDATE_AND_SET_VERSION_STRING
 {
-	if [ -z "$1" ]; then
-		FAILURE "Version string is empty"
-	fi
-	local rx='^([0-9]+\.){2}(\*|[0-9]+)$'
-	if [[ ! "$1" =~ $rx ]]; then
-	 	FAILURE "Version string is invalid: '$1'"
-	fi
-	if [ -z "$VERSION" ]; then
-		VERSION=$1
-		DEBUG_LOG "Changing version to $VERSION"
-	else
-		FAILURE "Version string is already set to $VERSION"
-	fi
+    if [ -z "$1" ]; then
+        FAILURE "Version string is empty"
+    fi
+    local rx='^([0-9]+\.){2}(\*|[0-9]+)$'
+    if [[ ! "$1" =~ $rx ]]; then
+        FAILURE "Version string is invalid: '$1'"
+    fi
+    if [ -z "$VERSION" ]; then
+        VERSION=$1
+        DEBUG_LOG "Changing version to $VERSION"
+    else
+        FAILURE "Version string is already set to $VERSION"
+    fi
 }
 # -----------------------------------------------------------------------------
 # Loads shared credentials, like API keys & logins. The function performs
@@ -229,20 +229,20 @@ function VALIDATE_AND_SET_VERSION_STRING
 # -----------------------------------------------------------------------------
 function LOAD_API_CREDENTIALS
 {
-	if [ x${API_CREDENTIALS} == x1 ]; then
-		DEBUG_LOG "Credentials are already set."
-	elif [ ! -z "${API_CREDENTIALS_FILE}" ]; then
-		source "${API_CREDENTIALS_FILE}"
-	elif [ -f "${HOME}/.lime/credentials" ]; then
-		source "${HOME}/.lime/credentials"
-	elif [ -f ".lime-credentials" ]; then
-		source ".lime-credentials"
-	else
-		FAILURE "Unable to locate credentials file."
-	fi
-	if [ x${LIME_CREDENTIALS} != x1 ]; then
-		FAILURE "Credentials file must set LIME_CREDENTIALS variable to 1"
-	fi
+    if [ x${API_CREDENTIALS} == x1 ]; then
+        DEBUG_LOG "Credentials are already set."
+    elif [ ! -z "${API_CREDENTIALS_FILE}" ]; then
+        source "${API_CREDENTIALS_FILE}"
+    elif [ -f "${HOME}/.lime/credentials" ]; then
+        source "${HOME}/.lime/credentials"
+    elif [ -f ".lime-credentials" ]; then
+        source ".lime-credentials"
+    else
+        FAILURE "Unable to locate credentials file."
+    fi
+    if [ x${LIME_CREDENTIALS} != x1 ]; then
+        FAILURE "Credentials file must set LIME_CREDENTIALS variable to 1"
+    fi
 }
 
 # -----------------------------------------------------------------------------
@@ -251,19 +251,19 @@ function LOAD_API_CREDENTIALS
 # -----------------------------------------------------------------------------
 function PUSH_DIR
 {
-	if [ $VERBOSE -gt 1 ]; then
-		pushd "$1"
-	else
-		pushd "$1" > /dev/null
-	fi
+    if [ $VERBOSE -gt 1 ]; then
+        pushd "$1"
+    else
+        pushd "$1" > /dev/null
+    fi
 }
 function POP_DIR
 {
-	if [ $VERBOSE -gt 1 ]; then
-		popd
-	else
-		popd > /dev/null
-	fi
+    if [ $VERBOSE -gt 1 ]; then
+        popd
+    else
+        popd > /dev/null
+    fi
 }
 
 # -----------------------------------------------------------------------------
@@ -275,18 +275,18 @@ function POP_DIR
 # -----------------------------------------------------------------------------
 function SHA256
 {
-	local HASH=( `shasum -a 256 "$1"` )
-	echo ${HASH[0]}
+    local HASH=( `shasum -a 256 "$1"` )
+    echo ${HASH[0]}
 }
 function SHA384
 {
-	local HASH=( `shasum -a 384 "$1"` )
-	echo ${HASH[0]}
+    local HASH=( `shasum -a 384 "$1"` )
+    echo ${HASH[0]}
 }
 function SHA512
 {
-	local HASH=( `shasum -a 512 "$1"` )
-	echo ${HASH[0]}
+    local HASH=( `shasum -a 512 "$1"` )
+    echo ${HASH[0]}
 }
 
 # -----------------------------------------------------------------------------
@@ -315,6 +315,21 @@ function GET_XCODE_VERSION
     esac
 }
 
+# -----------------------------------------------------------------------------
+# Prints value of property from Java property file into stdout. 
+# The format of file is:
+#   KEY1=VALUE1
+#   KEY2=VALUE2
+#
+# Parameters:
+#   $1   - property file
+#   $2   - property key to print
+# -----------------------------------------------------------------------------
+function GET_PROPERTY
+{
+    grep "^$2=" "$1" | cut -d'=' -f2
+}
+
 ###############################################################################
 # Global scope
 #   Gets full path to current directory and exits with error when 
@@ -332,5 +347,5 @@ if [ -z "$TOP" ]; then
 fi
 
 if [ "$CMD" == "common-functions.sh" ] && [ "$1" == "selfupdate" ]; then
-	__COMMON_FUNCTIONS_SELF_UPDATE
+    __COMMON_FUNCTIONS_SELF_UPDATE
 fi

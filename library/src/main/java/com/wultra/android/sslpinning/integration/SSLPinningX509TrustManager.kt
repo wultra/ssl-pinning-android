@@ -28,6 +28,7 @@ import javax.net.ssl.X509TrustManager
  *
  * @author Tomas Kypta, tomas.kypta@wultra.com
  */
+@Suppress("CustomX509TrustManager")
 class SSLPinningX509TrustManager(private val certStore: CertStore) : X509TrustManager {
 
     @SuppressLint("TrustAllX509TrustManager")

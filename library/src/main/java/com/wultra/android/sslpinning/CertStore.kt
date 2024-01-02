@@ -312,7 +312,7 @@ class CertStore internal constructor(private val configuration: CertStoreConfigu
             var signedBytes = challenge.toByteArray(Charsets.UTF_8)
             signedBytes += '&'.code.toByte()
             signedBytes += data
-            if (!cryptoProvider.ecdsaValidateSignatures(SignedData(signedBytes, signature), publicKey)) {
+            if (!cryptoProvider.ecdsaValidateSignature(SignedData(signedBytes, signature), publicKey)) {
                 WultraDebug.error("Invalid signature in $RESPONSE_SIGNATURE_HEADER header")
                 return UpdateResult.INVALID_SIGNATURE
             }
@@ -361,7 +361,7 @@ class CertStore internal constructor(private val configuration: CertStoreConfigu
                         break
                     }
 
-                    if (!cryptoProvider.ecdsaValidateSignatures(signedData, publicKey)) {
+                    if (!cryptoProvider.ecdsaValidateSignature(signedData, publicKey)) {
                         // detected invalid signature
                         WultraDebug.error("CertStore: Invalid signature detected. CN = '${entry.name}'")
                         result = UpdateResult.INVALID_SIGNATURE

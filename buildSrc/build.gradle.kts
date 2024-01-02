@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 Wultra s.r.o.
+ * Copyright 2023 Wultra s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,24 +14,19 @@
  * and limitations under the License.
  */
 
-package com.wultra.android.sslpinning
+plugins {
+    `kotlin-dsl`
+}
 
-import androidx.test.platform.app.InstrumentationRegistry
-import com.wultra.android.sslpinning.service.WultraDebug
-import org.junit.Before
+repositories {
+    mavenCentral()
+    google()
+}
 
-/**
- * Common instrumentation test setup.
- *
- * @author Tomas Kypta, tomas.kypta@wultra.com
- */
-abstract class CommonTest {
+val androidPluginVersion: String by System.getProperties()
+val kotlinVersion: String by System.getProperties()
 
-    val appContext = InstrumentationRegistry.getInstrumentation().targetContext
-
-    @Before
-    open fun setUp() {
-        WultraDebug.loggingLevel = WultraDebug.WultraLoggingLevel.DEBUG
-        clearStorage()
-    }
+dependencies {
+    implementation("com.android.tools.build", "gradle", androidPluginVersion)
+    implementation(kotlin("gradle-plugin", kotlinVersion))
 }

@@ -5,7 +5,8 @@
 TOP=$(dirname $0)
 source "${TOP}/common-functions.sh"
 source "${TOP}/deploy.cfg.sh"
-SRC_ROOT="`( cd \"$TOP/..\" && pwd )`"
+
+[[ -z "$SRC_ROOT" ]] && FAILURE "Missing SRC_ROOT in deploy.cfg.sh"
 
 # -----------------------------------------------------------------------------
 # USAGE prints help and exits the script with error code from provided parameter

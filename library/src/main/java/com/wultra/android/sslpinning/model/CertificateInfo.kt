@@ -17,7 +17,7 @@
 package com.wultra.android.sslpinning.model
 
 import java.io.Serializable
-import java.util.*
+import java.util.Date
 
 /**
  * Data class for holding certificate info necessary for certificate validation.
@@ -44,5 +44,25 @@ data class CertificateInfo(val commonName: String,
             return -this.expires.compareTo(other.expires)
         }
         return this.commonName.compareTo(other.commonName)
+    }
+
+    override fun equals(other: Any?): Boolean {
+        if (this === other) return true
+        if (javaClass != other?.javaClass) return false
+
+        other as CertificateInfo
+
+        if (commonName != other.commonName) return false
+        if (!fingerprint.contentEquals(other.fingerprint)) return false
+        if (expires != other.expires) return false
+
+        return true
+    }
+
+    override fun hashCode(): Int {
+        var result = commonName.hashCode()
+        result = 31 * result + fingerprint.contentHashCode()
+        result = 31 * result + expires.hashCode()
+        return result
     }
 }
