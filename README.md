@@ -71,7 +71,7 @@ implementation 'com.wultra.android.sslpinning:wultra-ssl-pinning:1.x.y'
 
 Note that this documentation is using version `1.x.y` as an example. You can find the latest version at [github's release](https://github.com/wultra/ssl-pinning-android/releases#docucheck-keep-link) page. The Android Studio IDE can also find and offer updates for your application’s dependencies.
 
-Also make sure you have `jcenter()` repository among the project repositories.
+Also make sure you have `mavenCentral()` repository among the project repositories.
 
 ## Usage
 
@@ -401,7 +401,7 @@ update is necessary to make a change.
 Yes, you can change how much information is printed to the debug console:
 
 ```kotlin
-WultraDebug.loggingLevel = WultraLoggingLevel.RELEASE
+WultraDebug.loggingLevel = WultraDebug.WultraLoggingLevel.DEBUG
 ```
 
 ### Is there a dependency on PowerAuthSDK?

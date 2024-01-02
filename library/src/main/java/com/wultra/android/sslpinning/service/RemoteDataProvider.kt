@@ -16,7 +16,7 @@
 
 package com.wultra.android.sslpinning.service
 
-import android.support.annotation.WorkerThread
+import androidx.annotation.WorkerThread
 
 /**
  * Abstract remote APIs of SSL pinning library.

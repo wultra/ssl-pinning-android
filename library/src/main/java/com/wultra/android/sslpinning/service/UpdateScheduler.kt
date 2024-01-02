@@ -50,7 +50,7 @@ internal class UpdateScheduler(private val periodicUpdateIntervalMillis: Long,
         val processedCommonNames = mutableSetOf<String>()
 
         // set nextExpired to approximately +10 years
-        var nextExpired = currentDate.time + TimeUnit.DAYS.toMillis(10 * 365)
+        var nextExpired = currentDate.time + TimeUnit.DAYS.toMillis(10L * 365)
         for (certificateInfo in certificates) {
             if (processedCommonNames.contains(certificateInfo.commonName)) {
                 continue

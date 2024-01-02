@@ -16,7 +16,7 @@
 
 package com.wultra.android.sslpinning.service
 
-import android.support.annotation.WorkerThread
+import androidx.annotation.WorkerThread
 import com.wultra.android.sslpinning.SslValidationStrategy
 import java.io.IOException
 import java.lang.Exception
@@ -88,7 +88,7 @@ class RestApi(
                 if (headerName != null) {
                     val headerValue = connection.getHeaderField(headerName)
                     if (headerValue != null) {
-                        headers[headerName.toLowerCase(Locale.getDefault())] = headerValue
+                        headers[headerName.lowercase(Locale.getDefault())] = headerValue
                     }
                 }
             }

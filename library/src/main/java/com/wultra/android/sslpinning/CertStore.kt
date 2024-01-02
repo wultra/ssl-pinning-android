@@ -19,8 +19,8 @@ package com.wultra.android.sslpinning
 import android.os.Handler
 import android.os.Looper
 import android.os.Process
-import android.support.annotation.WorkerThread
 import android.util.Base64
+import androidx.annotation.WorkerThread
 import com.google.gson.Gson
 import com.google.gson.GsonBuilder
 import com.wultra.android.sslpinning.interfaces.CryptoProvider
@@ -310,7 +310,7 @@ class CertStore internal constructor(private val configuration: CertStoreConfigu
                 return UpdateResult.INVALID_SIGNATURE
             }
             var signedBytes = challenge.toByteArray(Charsets.UTF_8)
-            signedBytes += '&'.toByte()
+            signedBytes += '&'.code.toByte()
             signedBytes += data
             if (!cryptoProvider.ecdsaValidateSignatures(SignedData(signedBytes, signature), publicKey)) {
                 WultraDebug.error("Invalid signature in $RESPONSE_SIGNATURE_HEADER header")
@@ -325,6 +325,8 @@ class CertStore internal constructor(private val configuration: CertStoreConfigu
             null
         } ?: return UpdateResult.INVALID_DATA
 
+        // this can be null as it's serialize
+        @Suppress("SENSELESS_COMPARISON")
         if (response.fingerprints == null) {
             // this can be caused by invalid data in json
             return UpdateResult.INVALID_DATA

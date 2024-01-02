@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 Wultra s.r.o.
+ * Copyright 2021 Wultra s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,81 +14,48 @@
  * and limitations under the License.
  */
 
-apply plugin: 'com.jfrog.bintray'
-apply plugin: 'maven-publish'
-
+/*
+ * External properties required for proper SDK publishing:
+ *
+ * Credentials to nexus:
+ *   nexus.user              - login / User Token to nexus
+ *   nexus.password          - password to nexus
+ *   nexus.stagingProfileId  - staging profile ID
+ *                             (click on your staging profile and copy ID from browser's URL)
+ *
+ * Signing options:
+ *   signing.gnupg.keyName    - GPG key identifier
+ *   signing.gnupg.passphrase - GPG key passphrase
+ *
+ * If gpg2 executable is not available, then also set
+ *   signing.gnupg.executable=gpg
+ */
 
 ext {
-    bintrayRepo = "WultraSSLPinning"
-    bintrayName = project.GROUP_ID
-    libraryName = project.ARTIFACT_ID
+    // Group, artifact & version
+    GROUP_ID = project.GROUP_ID
+    ARTIFACT_ID = project.ARTIFACT_ID
+    VERSION_NAME = project.VERSION_NAME
 
-    publishedGroupId = project.GROUP_ID
-    artifact = project.ARTIFACT_ID
-    libraryVersion = project.VERSION_NAME
+    // Nexus credentials
+    NEXUS_USERNAME = findProperty('nexus.user')
+    NEXUS_PASSWORD = findProperty('nexus.password')
+    //NEXUS_STAGING_PROFILE = findProperty('nexus.stagingProfileId')
 
-    libraryDescription = "Android library implementing dynamic SSL pinning"
-    siteUrl = "https://github.com/wultra/ssl-pinning-android"
-    gitUrl = "https://github.com/wultra/ssl-pinning-android.git"
-    developerId = "wultra"
-    developerName = "Wultra s.r.o."
-    developerEmail = "support@wultra.com"
-    licenseName = "Apache License Software License, Version 2.0"
-    licenseUrl = 'http://www.apache.org/licenses/LICENSE-2.0.txt'
-    allLicenses = ["Apache-2.0"]
+    // POM content
+    POM_LIBRARY_NAME = "Dynamic SSL pinning"
+    POM_DESCRIPTION = "Android library implementing dynamic SSL pinning"
+    POM_PACKAGING = "aar"
+    POM_SITE_URL = "https://github.com/wultra/ssl-pinning-android"
+    POM_SCM_CONNECTION_URL = "scm:git:github.com/wultra/ssl-pinning-android.git"
+    POM_SCM_URL = "https://github.com/wultra/ssl-pinning-android"
+    POM_DEVELOPER_ID =" wultra"
+    POM_DEVELOPER_NAME = "Wultra s.r.o."
+    POM_DEVELOPER_EMAIL = "support@wultra.com"
+    POM_LICENSE_NAME = "Apache License Software License, Version 2.0"
+    POM_LICENSE_URL = "https://www.apache.org/licenses/LICENSE-2.0.txt"
 }
 
-group = publishedGroupId
-version = libraryVersion
-
-afterEvaluate {
-    publishing {
-        publications {
-            // Creates a Maven publication called "release".
-            release(MavenPublication) {
-                // Applies the component for the release build variant.
-                from components.release
-
-                // Adds javadocs and sources as separate jars.
-                artifact androidSourcesJar
-                artifact androidJavadocsJar
-
-                groupId = publishedGroupId
-                artifactId = artifact
-                version = version
-
-                tasks.withType(GenerateModuleMetadata) {
-                    enabled = false
-                }
-
-                pom {
-                    name = libraryName
-                    description = libraryDescription
-                    url = siteUrl
-
-                    licenses {
-                        license {
-                            name = licenseName
-                            url = licenseUrl
-                        }
-                    }
-                    developers {
-                        developer {
-                            id = developerId
-                            name = developerName
-                            email = developerEmail
-                        }
-                    }
-                    scm {
-                        connection = gitUrl
-                        developerConnection = gitUrl
-                        url = siteUrl
-                    }
-                }
-            }
-        }
-    }
-}
 
 task androidJavadocs(type: Javadoc) {
     enabled = false // we have to disable because there are no java sources, only kotlin
@@ -104,10 +71,10 @@ task androidJavadocs(type: Javadoc) {
     options.addStringOption('encoding', 'UTF-8')
 }
 
-task androidJavadocsJar(type: Jar, dependsOn: [androidJavadocs, dokka]) {
+task("androidJavadocsJar", type: Jar, dependsOn: [androidJavadocs, dokkaJavadoc]) {
     archiveClassifier = 'javadoc'
     from androidJavadocs.destinationDir
-    from dokka.outputDirectory
+    from dokkaJavadoc.outputDirectory
 }
 
 task androidSourcesJar(type: Jar) {
@@ -115,35 +82,100 @@ task androidSourcesJar(type: Jar) {
 	from android.sourceSets.main.java.srcDirs
 }
 
+artifacts {
+    archives androidSourcesJar
+    archives androidJavadocsJar
+}
 
-// Bintray
-Properties properties = new Properties()
-properties.load(project.rootProject.file('local.properties').newDataInputStream())
+publishing {
+    publications {
+        release(MavenPublication) {
+            // POM group, artifact & version
+            groupId GROUP_ID
+            artifactId = ARTIFACT_ID
+            version = VERSION_NAME
 
-bintray {
-    user = properties.getProperty("bintray.user")
-    key = properties.getProperty("bintray.apiKey")
+            // Include artifacts, the `aar` and the sources
+            artifact("$buildDir/outputs/aar/${project.getName()}-release.aar")
+            artifact androidSourcesJar
+            artifact androidJavadocsJar
 
-    publications = ['release']
-    pkg {
-        repo = bintrayRepo
-        name = bintrayName
-        userOrg = properties.getProperty("bintray.userOrg")
-        desc = libraryDescription
-        websiteUrl = siteUrl
-        vcsUrl = gitUrl
-        licenses = allLicenses
-        dryRun = false
-        publish = true
-        publicDownloadNumbers = false
-        override = false
-        version {
-            desc = libraryDescription
-            gpg {
-                sign = false //Determines whether to GPG sign the files. The default is false
-                passphrase = properties.getProperty("bintray.gpg.password")
-                //Optional. The passphrase for GPG signing'
+            // Define POM
+            pom {
+                packaging = POM_PACKAGING
+                name = POM_LIBRARY_NAME
+                description = POM_DESCRIPTION
+                url = POM_SITE_URL
+                licenses {
+                    license {
+                        name = POM_LICENSE_NAME
+                        url = POM_LICENSE_URL
+                    }
+                }
+                developers {
+                    developer {
+                        id = POM_DEVELOPER_ID
+                        name = POM_DEVELOPER_NAME
+                        email = POM_DEVELOPER_EMAIL
+                    }
+                }
+                scm {
+                    connection = POM_SCM_CONNECTION_URL
+                    developerConnection = POM_SCM_CONNECTION_URL
+                    url = POM_SCM_URL
+                }
+
+                // A slightly hacky fix so that your POM will include any transitive dependencies
+                // that your library builds upon
+                withXml {
+                    def dependenciesNode = asNode().appendNode('dependencies')
+
+                    project.configurations.implementation.allDependencies.each {
+                        if (it.name == 'unspecified') return
+                        def dependencyNode = dependenciesNode.appendNode('dependency')
+                        dependencyNode.appendNode('groupId', it.group)
+                        dependencyNode.appendNode('artifactId', it.name)
+                        dependencyNode.appendNode('version', it.version)
+                    }
+                }
             }
         }
     }
+    // The repository to publish to, Sonatype/MavenCentral
+    repositories {
+        maven {
+            name = 'sonatype'
+
+            def releasesRepoUrl = "https://s01.oss.sonatype.org/service/local/staging/deploy/maven2/"
+            def snapshotsRepoUrl = "https://s01.oss.sonatype.org/content/repositories/snapshots/"
+            url = isReleaseBuild() ? releasesRepoUrl : snapshotsRepoUrl
+
+            credentials {
+                username NEXUS_USERNAME
+                password NEXUS_PASSWORD
+            }
+        }
+    }
+}
+
+signing {
+    required { shouldSignArtifacts() }
+    if (shouldSignArtifacts()) {
+        // This must be also conditional, otherwise developers with no signing capabilities will
+        // not be able to publish library to the local maven.
+        useGpgCmd()
+    }
+    sign publishing.publications
+}
+
+// Helper functions
+
+def isReleaseBuild() {
+    return !VERSION_NAME.contains("SNAPSHOT")
+}
+
+def shouldSignArtifacts() {
+    def keyId = findProperty('signing.gnupg.keyName')
+    def keyPass = findProperty('signing.gnupg.passphrase')
+    return keyId != null && keyPass != null
 }
