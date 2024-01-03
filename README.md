@@ -50,7 +50,7 @@ Before you start using the library, you should also check our other related proj
 
 ### Requirements
 
-- `minSdkVersion 19` (Android 4.4 KitKat)
+- `minSdkVersion 21` (Android 5.0 Lollipop)
 
 ### Gradle
 
