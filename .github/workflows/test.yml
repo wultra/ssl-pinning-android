@@ -1,0 +1,44 @@
+name: Tests
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  unitTests:
+    name: Unit Tests
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout the repo
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+
+      - name: Unit Test
+        run: ./gradlew library:test
+
+  intrTests:
+    name: Instrumentation Tests
+    runs-on: macos-latest
+    steps:
+      - name: Checkout the repo
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+
+      - name: Run instrumentation tests on emulator
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 29
+          script: > 
+            ./gradlew library:connectedAndroidTest
+            -Ptest.sslPinning.baseUrl=${{ secrets.SSL_PINNING_TEST_BASE_URL }}
+            -Ptest.sslPinning.appName=${{ secrets.SSL_PINNING_TEST_APP_NAME }}

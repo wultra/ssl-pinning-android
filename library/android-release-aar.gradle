@@ -179,3 +179,9 @@ def shouldSignArtifacts() {
     def keyPass = findProperty('signing.gnupg.passphrase')
     return keyId != null && keyPass != null
 }
+
+afterEvaluate {
+    signReleasePublication.dependsOn bundleReleaseAar
+    publishReleasePublicationToSonatypeRepository.dependsOn bundleReleaseAar
+    publishReleasePublicationToMavenLocal.dependsOn bundleReleaseAar
+}

@@ -1,11 +1,11 @@
-name: Build
+name: Lint
 
 on:
   pull_request:
 
 jobs:
-  buildJob:
-    name: Build
+  lint:
+    name: Lint
     runs-on: ubuntu-latest
     steps:
       - name: Checkout the repo
@@ -17,5 +17,5 @@ jobs:
           java-version: '17'
           distribution: 'temurin'
 
-      - name: Assemble Library
-        run: ./gradlew library:assemble
+      - name: Lint
+        run: ./gradlew library:lint
