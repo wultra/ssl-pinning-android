@@ -7,6 +7,7 @@ pinningtool
 
 # Test resources
 library/src/test/resources
+library/src/androidTest/assets
 
 # Files for the ART/Dalvik VM
 *.dex

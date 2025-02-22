@@ -33,10 +33,11 @@ class CertStoreValidateTest : CommonTest() {
 
     @Test
     fun validateWithFallback() {
-        val fallbackFingerprints = GSON.fromJson(jsonData, GetFingerprintResponse::class.java)
-        val config = CertStoreConfiguration.Builder(url, getPublicKeyBytes())
-                .fallbackCertificates(fallbackFingerprints)
-                .build()
+        val fallbackFingerprints = GSON.fromJson(validFingerprintJsonResponse().decodeToString(), GetFingerprintResponse::class.java)
+        val config = CertStoreConfiguration.Builder(serviceUrl, pubKey)
+            .useChallenge(true)
+            .fallbackCertificates(fallbackFingerprints)
+            .build()
         val store = CertStore.powerAuthCertStore(config, appContext)
 
         val cert = getCertificateFromUrl("https://github.com")
@@ -46,8 +47,7 @@ class CertStoreValidateTest : CommonTest() {
 
     @Test
     fun validateAfterUpdate() {
-        val config = CertStoreConfiguration.Builder(url, getPublicKeyBytes())
-                .build()
+        val config = CertStoreConfiguration.Builder(serviceUrl, pubKey).useChallenge(true).build()
         val store = CertStore.powerAuthCertStore(config, appContext)
         updateAndCheck(store, UpdateMode.FORCED, UpdateResult.OK)
 

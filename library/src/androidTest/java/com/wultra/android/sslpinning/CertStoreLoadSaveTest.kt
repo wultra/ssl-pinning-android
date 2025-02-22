@@ -36,8 +36,9 @@ class CertStoreLoadSaveTest : CommonTest() {
 
     @Test
     fun testLoadingPreviouslySavedFingerprints() {
-        val config = CertStoreConfiguration.Builder(url, getPublicKeyBytes()).build()
-        val store = CertStore(config, PowerAuthCryptoProvider(), PowerAuthSecureDataStore(appContext), remoteDataProvider)
+
+        val config = CertStoreConfiguration.Builder(serviceUrl, pubKey).useChallenge(true).build()
+        val store = CertStore(config, PowerAuthCryptoProvider(), PowerAuthSecureDataStore(appContext))
 
         val cert = getCertificateFromUrl("https://github.com")
         val result = store.validateCertificate(cert)
@@ -52,7 +53,7 @@ class CertStoreLoadSaveTest : CommonTest() {
         Assert.assertEquals(ValidationResult.TRUSTED, result2)
 
         // create new store that loads saved data
-        val store2 = CertStore(config, PowerAuthCryptoProvider(), PowerAuthSecureDataStore(appContext), remoteDataProvider)
+        val store2 = CertStore(config, PowerAuthCryptoProvider(), PowerAuthSecureDataStore(appContext))
 
         // test with loaded data
         val result3 = store2.validateCertificate(cert)
@@ -61,8 +62,8 @@ class CertStoreLoadSaveTest : CommonTest() {
 
     @Test
     fun testSaveAndLoad() {
-        val config = CertStoreConfiguration.Builder(url, getPublicKeyBytes()).build()
-        val store = CertStore(config, PowerAuthCryptoProvider(), PowerAuthSecureDataStore(appContext), remoteDataProvider)
+        val config = CertStoreConfiguration.Builder(serviceUrl, pubKey).useChallenge(true).build()
+        val store = CertStore(config, PowerAuthCryptoProvider(), PowerAuthSecureDataStore(appContext))
 
         Assert.assertNull(store.loadCachedData())
 

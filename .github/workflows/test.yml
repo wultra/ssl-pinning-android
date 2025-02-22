@@ -36,6 +36,9 @@ jobs:
           java-version: '17'
           distribution: 'temurin'
 
+      - name: Prepare tests
+        script: sh scripts/prepare-valid-certificate.sh
+
       - name: Run instrumentation tests on emulator
         uses: reactivecircus/android-emulator-runner@v2
         with:

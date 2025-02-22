@@ -66,11 +66,9 @@ const val jsonData = """
 const val jsonDataFingerprintsEmpty = "{\"fingerprints\":[]}"
 const val jsonDataAllEmpty = "{}"
 
-
-val url = URL("https://gist.githubusercontent.com/hvge/7c5a3f9ac50332a52aa974d90ea2408c/raw/07eb5b4b67e63d37d224912bc5951c7b589b35e6/ssl-pinning-signatures.json")
 const val publicKey = "BC3kV9OIDnMuVoCdDR9nEA/JidJLTTDLuSA2TSZsGgODSshfbZg31MS90WC/HdbU/A5WL5GmyDkE/iks6INv+XE="
 fun getPublicKeyBytes(): ByteArray {
-    return Base64.decode(publicKey, android.util.Base64.NO_WRAP)
+    return Base64.decode(publicKey, Base64.NO_WRAP)
 }
 
 val GSON = GsonBuilder()

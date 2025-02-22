@@ -17,6 +17,9 @@ TARGETJSONFILE="${TESTFOLDER}/valid_github.json"
 TARGETPUBKEYFILE="${TESTFOLDER}/pub.key"
 TARGETCERTFILE="${TESTFOLDER}/cert.pem"
 
+ANDROIDTESTFOLDER="../library/src/androidTest/assets"
+ANDROIDTARGETJSONFILE="${ANDROIDTESTFOLDER}/valid_github.json"
+
 rm -rf "${FOLDER}"
 mkdir "${FOLDER}"
 
@@ -43,5 +46,8 @@ mkdir -p "${TESTFOLDER}"
 cp "${OUTPUT}" "${TARGETJSONFILE}"
 cp "${PUBKEY}" "${TARGETPUBKEYFILE}"
 cp "${CERT}" "${TARGETCERTFILE}"
+
+mkdir -p "${ANDROIDTESTFOLDER}"
+cp "${OUTPUT}" "${ANDROIDTARGETJSONFILE}"
 
 popd

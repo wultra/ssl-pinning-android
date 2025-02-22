@@ -34,15 +34,15 @@ class CertStoreUpdateTest : CommonTest() {
 
     @Test
     fun testLocalUpdateSignatureGithub() {
-        val config = CertStoreConfiguration.Builder(url, getPublicKeyBytes()).build()
-        val store = CertStore(config, PowerAuthCryptoProvider(), PowerAuthSecureDataStore(appContext), remoteDataProvider)
+        val config = CertStoreConfiguration.Builder(serviceUrl, pubKey).useChallenge(true).build()
+        val store = CertStore(config, PowerAuthCryptoProvider(), PowerAuthSecureDataStore(appContext))
 
         updateAndCheck(store, UpdateMode.FORCED, UpdateResult.OK)
     }
 
     @Test
     fun testRemoteUpdateSignatureGithub() {
-        val config = CertStoreConfiguration.Builder(url, getPublicKeyBytes()).build()
+        val config = CertStoreConfiguration.Builder(serviceUrl, pubKey).useChallenge(true).build()
         val store = CertStore.powerAuthCertStore(config, appContext)
 
         updateAndCheck(store, UpdateMode.FORCED, UpdateResult.OK, UpdateType.DIRECT)
@@ -50,7 +50,7 @@ class CertStoreUpdateTest : CommonTest() {
 
     @Test
     fun testRemoteUpdateSignatureGithubDefault() {
-        val config = CertStoreConfiguration.Builder(url, getPublicKeyBytes()).build()
+        val config = CertStoreConfiguration.Builder(serviceUrl, pubKey).useChallenge(true).build()
         val store = CertStore.powerAuthCertStore(config, appContext)
 
         updateAndCheck(store, UpdateMode.DEFAULT, UpdateResult.OK, UpdateType.DIRECT)
@@ -62,9 +62,9 @@ class CertStoreUpdateTest : CommonTest() {
     fun testRemoteUpdateSignatureGithub_InvalidSignature() {
         // intentionally different signature
         val publicKey = "BEG6g28LNWRcmdFzexSNTKPBYZnDtKrCyiExFKbktttfKAF7wG4Cx1Nycr5PwCoICG1dRseLyuDxUilAmppPxAo="
-        val publicKeyBytes = Base64.decode(publicKey, android.util.Base64.NO_WRAP)
+        val publicKeyBytes = Base64.decode(publicKey, Base64.NO_WRAP)
 
-        val config = CertStoreConfiguration.Builder(url, publicKeyBytes).build()
+        val config = CertStoreConfiguration.Builder(serviceUrl, publicKeyBytes).useChallenge(true).build()
         val store = CertStore.powerAuthCertStore(config, appContext)
 
         updateAndCheck(store, UpdateMode.FORCED, UpdateResult.INVALID_SIGNATURE)

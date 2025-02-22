@@ -39,8 +39,7 @@ class SSLPinningIntegrationTest : CommonTest() {
 
     @Test
     fun testValidationwithHttpsUrlConnection_ValidCert() {
-        val config = CertStoreConfiguration.Builder(url, getPublicKeyBytes())
-                .build()
+        val config = CertStoreConfiguration.Builder(serviceUrl, pubKey).useChallenge(true).build()
         val store = CertStore.powerAuthCertStore(config, appContext)
         updateAndCheck(store, UpdateMode.FORCED, UpdateResult.OK)
 
@@ -61,8 +60,7 @@ class SSLPinningIntegrationTest : CommonTest() {
 
     @Test(expected = SSLHandshakeException::class)
     fun testValidationwithHttpsUrlConnection_InvalidCert() {
-        val config = CertStoreConfiguration.Builder(url, getPublicKeyBytes())
-                .build()
+        val config = CertStoreConfiguration.Builder(serviceUrl, pubKey).useChallenge(true).build()
         val store = CertStore.powerAuthCertStore(config, appContext)
         updateAndCheck(store, UpdateMode.FORCED, UpdateResult.OK)
 
@@ -83,8 +81,7 @@ class SSLPinningIntegrationTest : CommonTest() {
 
     @Test
     fun testValidationwithOkHttp_ValidCert() {
-        val config = CertStoreConfiguration.Builder(url, getPublicKeyBytes())
-                .build()
+        val config = CertStoreConfiguration.Builder(serviceUrl, pubKey).useChallenge(true).build()
         val store = CertStore.powerAuthCertStore(config, appContext)
         updateAndCheck(store, UpdateMode.FORCED, UpdateResult.OK)
 
@@ -110,8 +107,7 @@ class SSLPinningIntegrationTest : CommonTest() {
 
     @Test(expected = SSLHandshakeException::class)
     fun testValidationwithOkHttp_InvalidCert() {
-        val config = CertStoreConfiguration.Builder(url, getPublicKeyBytes())
-                .build()
+        val config = CertStoreConfiguration.Builder(serviceUrl, pubKey).useChallenge(true).build()
         val store = CertStore.powerAuthCertStore(config, appContext)
         updateAndCheck(store, UpdateMode.FORCED, UpdateResult.OK)
 

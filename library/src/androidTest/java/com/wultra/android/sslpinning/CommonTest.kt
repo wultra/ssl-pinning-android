@@ -16,9 +16,12 @@
 
 package com.wultra.android.sslpinning
 
+import android.util.Base64
 import androidx.test.platform.app.InstrumentationRegistry
 import com.wultra.android.sslpinning.service.WultraDebug
 import org.junit.Before
+import java.io.File
+import java.net.URL
 
 /**
  * Common instrumentation test setup.
@@ -27,11 +30,36 @@ import org.junit.Before
  */
 abstract class CommonTest {
 
+    private lateinit var baseUrl: String
+    private lateinit var appName: String
+    protected lateinit var pubKey: ByteArray
+    protected val serviceUrl by lazy { URL("$baseUrl/init?appName=$appName") }
+
     val appContext = InstrumentationRegistry.getInstrumentation().targetContext
 
     @Before
     open fun setUp() {
         WultraDebug.loggingLevel = WultraDebug.WultraLoggingLevel.DEBUG
         clearStorage()
+        baseUrl = InstrumentationRegistry.getArguments().getString("test.sslPinning.baseUrl") ?: "https://int-mus-dev.wultra.app/app"
+        appName = InstrumentationRegistry.getArguments().getString("test.sslPinning.appName") ?: "ssl-pinning-tests"
+        pubKey = getPublicKeyFromServer()
+    }
+
+    private data class PublicKeyResponse(var publicKey: String)
+
+    private fun getPublicKeyFromServer(): ByteArray {
+        val url = URL("$baseUrl/init/public-key?appName=$appName")
+        val responseString = url.readText(Charsets.UTF_8)
+        val responseObject = GSON.fromJson(responseString, PublicKeyResponse::class.java)
+        return Base64.decode(responseObject.publicKey, Base64.NO_WRAP)
+    }
+
+    fun validFingerprintJsonResponse() = """{ "fingerprints": [ ${readAssetFile("valid_github.json")} ] }""".toByteArray()
+
+    private fun readAssetFile(fileName: String): String {
+        val context = InstrumentationRegistry.getInstrumentation().context
+        val inputStream = context.assets.open(fileName)
+        return inputStream.bufferedReader().use { it.readText() }
     }
 }

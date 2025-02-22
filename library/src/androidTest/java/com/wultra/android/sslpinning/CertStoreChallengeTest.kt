@@ -29,40 +29,12 @@ import java.net.URL
 @RunWith(AndroidJUnit4::class)
 class CertStoreChallengeTest: CommonTest() {
 
-    private lateinit var baseUrl: String
-    private lateinit var appName: String
-
-    @Before
-    override fun setUp() {
-        super.setUp()
-        InstrumentationRegistry.getArguments().getString("test.sslPinning.baseUrl")?.let {
-            baseUrl = it
-        }
-        InstrumentationRegistry.getArguments().getString("test.sslPinning.appName")?.let {
-            appName = it
-        }
-    }
-
     @Test
     fun validateUpdateWithChallenge() {
-        Assume.assumeTrue(::baseUrl.isInitialized && ::appName.isInitialized)
-        val config = CertStoreConfiguration.Builder(getServiceUrl("/init?appName=$appName"), getPublicKeyFromServer())
-                .useChallenge(true)
-                .build()
+        val config = CertStoreConfiguration.Builder(serviceUrl, pubKey)
+            .useChallenge(true)
+            .build()
         val store = CertStore.powerAuthCertStore(config, appContext)
         updateAndCheck(store, UpdateMode.FORCED, UpdateResult.OK)
-    }
-
-    private fun getServiceUrl(relativePath: String): URL {
-        return URL("$baseUrl$relativePath")
-    }
-
-    private data class PublicKeyResponse(var publicKey: String)
-
-    private fun getPublicKeyFromServer(): ByteArray {
-        val url = getServiceUrl("/init/public-key?appName=$appName")
-        val responseString = url.readText(Charsets.UTF_8)
-        val responseObject = GSON.fromJson(responseString, PublicKeyResponse::class.java)
-        return Base64.decode(responseObject.publicKey, Base64.NO_WRAP)
     }
 }
