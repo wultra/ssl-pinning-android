@@ -20,7 +20,11 @@ import com.wultra.android.sslpinning.CommonKotlinTest
 import com.wultra.android.sslpinning.TestUtils
 import com.wultra.android.sslpinning.UpdateMode
 import com.wultra.android.sslpinning.UpdateResult
+import com.wultra.android.sslpinning.service.RemoteDataProvider
+import com.wultra.android.sslpinning.service.RemoteDataResponse
 import io.getlime.security.powerauth.networking.ssl.HttpClientValidationStrategy
+import io.mockk.every
+import io.mockk.mockk
 import io.mockk.verify
 import org.junit.Assert
 import org.junit.Test
@@ -39,16 +43,24 @@ class PowerAuthSslPinningValidationStrategyTest : CommonKotlinTest() {
     @Test
     @Throws(Exception::class)
     fun testPowerAuthSslPinningValidationStrategyOnGithubSuccess() {
-        val publicKey =
-            "BC3kV9OIDnMuVoCdDR9nEA/JidJLTTDLuSA2TSZsGgODSshfbZg31MS90WC/HdbU/A5WL5GmyDkE/iks6INv+XE="
-        val publicKeyBytes = Base64.getDecoder().decode(publicKey)
+        val publicKeyBytes = Base64.getDecoder().decode(TestUtils.testPubKey())
+        val remoteDataProvider: RemoteDataProvider = mockk()
+        every { remoteDataProvider.getFingerprints(any()) } answers {
+            RemoteDataResponse(
+                200,
+                emptyMap(),
+                TestUtils.validFingerprintJsonResponse()
+            )
+        }
+
         val config = TestUtils.getCertStoreConfiguration(
-            Date(), arrayOf("github.com"),
-            URL("https://gist.githubusercontent.com/hvge/7c5a3f9ac50332a52aa974d90ea2408c/raw/07eb5b4b67e63d37d224912bc5951c7b589b35e6/ssl-pinning-signatures.json"),
+            Date(),
+            arrayOf("github.com"),
+            URL("https://test"),
             publicKeyBytes,
             null
         )
-        val store = CertStore(config, cryptoProvider, secureDataStore)
+        val store = CertStore(config, cryptoProvider, secureDataStore, remoteDataProvider)
         TestUtils.assignHandler(store, handler)
         TestUtils.updateAndCheck(store, UpdateMode.FORCED, UpdateResult.OK)
         val strategy: HttpClientValidationStrategy = PowerAuthSslPinningValidationStrategy(store)

@@ -1,7 +1,6 @@
 name: Tests
 
 on:
-  push:
   pull_request:
 
 jobs:
@@ -17,6 +16,9 @@ jobs:
         with:
           java-version: '17'
           distribution: 'temurin'
+
+      - name: Prepare tests
+        script: sh scripts/prepare-valid-certificate.sh
 
       - name: Unit Test
         run: ./gradlew library:test

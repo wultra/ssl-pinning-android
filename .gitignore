@@ -2,6 +2,12 @@
 *.apk
 *.ap_
 
+# PinningTool used in tests
+pinningtool
+
+# Test resources
+library/src/test/resources
+
 # Files for the ART/Dalvik VM
 *.dex
 

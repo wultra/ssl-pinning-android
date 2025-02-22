@@ -38,103 +38,110 @@ class CertStoreUpdateTest : CommonKotlinTest() {
     @Test
     @Throws(Exception::class)
     fun testCorrectUpdate() {
+
+        val remoteDataProvider: RemoteDataProvider = mockk()
+        every { remoteDataProvider.getFingerprints(any()) } answers {
+            RemoteDataResponse(
+                200,
+                emptyMap(),
+                """
+                    {
+                      "fingerprints": [
+                        {
+                          "name" : "github.com",
+                          "fingerprint" : "kqN/vV4hpTqVxxbhFE9EL1grlND6/Gc+tnF6TrUaiKc=",
+                          "expires" : 2212460799,
+                          "signature" : "MEUCICB69UpMPOdtrsR6XcJqHEh2L2RO4oSJ3SZ7BYnTBJbGAiEAnZ7rEWdMVGwa59Wx5QbAorEFxXH89Iu0CnqWa96Eda0="
+                        }
+                      ]
+                    }
+                """.toByteArray()
+            )
+        }
+
         every { cryptoProvider.ecdsaValidateSignature(any(), any()) } returns true
 
-        val publicKey =
-            "BC3kV9OIDnMuVoCdDR9nEA/JidJLTTDLuSA2TSZsGgODSshfbZg31MS90WC/HdbU/A5WL5GmyDkE/iks6INv+XE="
-        val pinningJsonUrl =
-            "https://gist.githubusercontent.com/hvge/7c5a3f9ac50332a52aa974d90ea2408c/raw/07eb5b4b67e63d37d224912bc5951c7b589b35e6/ssl-pinning-signatures.json"
-        val updateResult = performForcedUpdate(publicKey, pinningJsonUrl)
+        val updateResult = performForcedUpdate(remoteDataProvider)
         Assert.assertEquals(UpdateResult.OK, updateResult)
     }
 
     @Test
     @Throws(Exception::class)
     fun testInvalidSignatureUpdate() {
-        every { cryptoProvider.ecdsaValidateSignature(any(), any()) } returns false
 
-        val publicKey =
-            "BC3kV9OIDnMuVoCdDR9nEA/JidJLTTDLuSA2TSZsGgODSshfbZg31MS90WC/HdbU/A5WL5GmyDkE/iks6INv+XE="
-        val pinningJsonUrl =
-            "https://gist.githubusercontent.com/TomasKypta/40be50cc63d2f4c00abcbbf4554f0e32/raw/9cc9029d9e8248b0cd9a36b98382040114dd1d4a/ssl-pinning-signatures_Mar2023.json"
-        val updateResult = performForcedUpdate(publicKey, pinningJsonUrl)
+        val remoteDataProvider: RemoteDataProvider = mockk()
+        every { remoteDataProvider.getFingerprints(any()) } answers {
+            RemoteDataResponse(
+                200,
+                emptyMap(),
+                """
+                    { 
+                      "fingerprints": [{
+                        "name" : "github.com",
+                        "fingerprint" : "kqN/vV4hpTqVxxbhFE9EL1grlND6/Gc+tnF6TrUaiKc=",
+                        "expires" : 2212460799,
+                        "signature" : "MEQCIAiq/O5IbZ8K2SsZtDbpsvHWecxu4eLOSS7oOXjDk2KeAiBKkI53ESVByK+wKwaLA5LsEu8oonUHiYVM2zQtWf46DA=="
+                      }]
+                    }
+                """.toByteArray()
+            )
+        }
+
+        every { cryptoProvider.ecdsaValidateSignature(any(), any()) } returns false
+        val updateResult = performForcedUpdate(remoteDataProvider)
         Assert.assertEquals(UpdateResult.INVALID_SIGNATURE, updateResult)
     }
 
     @Test
     @Throws(Exception::class)
     fun testExpiredUpdate() {
+
+        val remoteDataProvider: RemoteDataProvider = mockk()
+        every { remoteDataProvider.getFingerprints(any()) } answers {
+            RemoteDataResponse(
+                200,
+                emptyMap(),
+                """
+                    {
+                      "fingerprints": [
+                        {
+                          "name" : "github.com",
+                          "fingerprint" : "MRFQDEpmASza4zPsP8ocnd5FyVREDn7kE3Fr/zZjwHQ=",
+                          "expires" : 1531185600,
+                          "signature" : "MEUCIQD8nGyux9GM8u3XCrRiuJj/N2eEuB0oiHzTEpGyy2gE9gIgYIRfyed6ykDzZbK1ougq1SoRW8UBe5q3VmWihHuL2JY="
+                        }
+                      ]
+                    }
+                """.toByteArray()
+            )
+        }
+
         every { cryptoProvider.ecdsaValidateSignature(any(), any()) } returns false
 
-        val publicKey =
-            "BC3kV9OIDnMuVoCdDR9nEA/JidJLTTDLuSA2TSZsGgODSshfbZg31MS90WC/HdbU/A5WL5GmyDkE/iks6INv+XE="
-        val pinningJsonUrl =
-            "https://gist.githubusercontent.com/TomasKypta/5a6d99fe441a8c0d201b673d88e223a6/raw/0d12746cad1247ebf9a5b1706afabf8486a7a62e/ssl-pinning-signatures_expired.json"
-        val updateResult = performForcedUpdate(publicKey, pinningJsonUrl)
+        val updateResult = performForcedUpdate(remoteDataProvider)
         Assert.assertEquals(UpdateResult.STORE_IS_EMPTY, updateResult)
     }
 
     @Test
     @Throws(Exception::class)
-    fun testUpdateSignatureGithub() {
-        val publicKey =
-            "BC3kV9OIDnMuVoCdDR9nEA/JidJLTTDLuSA2TSZsGgODSshfbZg31MS90WC/HdbU/A5WL5GmyDkE/iks6INv+XE="
-        val publicKeyBytes = Base64.getDecoder().decode(publicKey)
-        val config = TestUtils.getCertStoreConfiguration(
-            Date(), arrayOf("github.com"),
-            URL("https://gist.githubusercontent.com/"),
-            publicKeyBytes,
-            null
-        )
-        val remoteDataProvider: RemoteDataProvider = mockk()
-        val jsonData = """{
-  "fingerprints": [
-    {
-      "name" : "github.com",
-      "fingerprint" : "kqN/vV4hpTqVxxbhFE9EL1grlND6/Gc+tnF6TrUaiKc=",
-      "expires" : 1710460799,
-      "signature" : "MEUCICB69UpMPOdtrsR6XcJqHEh2L2RO4oSJ3SZ7BYnTBJbGAiEAnZ7rEWdMVGwa59Wx5QbAorEFxXH89Iu0CnqWa96Eda0="
-    }
-  ]
-}"""
-        every { remoteDataProvider.getFingerprints(any()) } answers {
-            RemoteDataResponse(200, emptyMap(), jsonData.toByteArray())
-        }
-        val store = CertStore(config, cryptoProvider, secureDataStore, remoteDataProvider)
-        TestUtils.assignHandler(store, handler)
-        TestUtils.updateAndCheck(store, UpdateMode.FORCED, UpdateResult.OK)
-    }
-
-    @Test
-    @Throws(Exception::class)
     fun testUpdateWithNoUpdateObserver() {
-        val publicKey =
-            "BC3kV9OIDnMuVoCdDR9nEA/JidJLTTDLuSA2TSZsGgODSshfbZg31MS90WC/HdbU/A5WL5GmyDkE/iks6INv+XE="
-        val publicKeyBytes = Base64.getDecoder().decode(publicKey)
-        val config = TestUtils.getCertStoreConfiguration(
-            Date(), arrayOf("github.com"),
-            URL("https://gist.githubusercontent.com/hvge/7c5a3f9ac50332a52aa974d90ea2408c/raw/c5b021db0fcd40b1262ab513bf375e4641834925/ssl-pinning-signatures.json"),
-            publicKeyBytes,
-            null
-        )
         val remoteDataProvider: RemoteDataProvider = mockk()
-        val jsonData = """{
-  "fingerprints": [
-    {
-      "name" : "github.com",
-      "fingerprint" : "trmmrz6GbL4OajB+fdoXOzcrLTrD8GrxX5dxh3OEgAg=",
-      "expires" : 1652184000,
-      "signature" : "MEUCIQCs1y/nyrKh4+2DIuX/PufUYiaVUdt2FBZQg6rBeZ/r4QIgNlT4owBwJ1ThrDsE0SwGipTNI74vP1vNyLNEwuXY4lE="
-    }
-  ]
-}"""
         val latch = CountDownLatch(1)
         every { remoteDataProvider.getFingerprints(any()) } answers {
-            val bytes = jsonData.toByteArray()
+            val bytes = """{
+              "fingerprints": [
+                {
+                  "name" : "github.com",
+                  "fingerprint" : "trmmrz6GbL4OajB+fdoXOzcrLTrD8GrxX5dxh3OEgAg=",
+                  "expires" : 1652184000,
+                  "signature" : "MEUCIQCs1y/nyrKh4+2DIuX/PufUYiaVUdt2FBZQg6rBeZ/r4QIgNlT4owBwJ1ThrDsE0SwGipTNI74vP1vNyLNEwuXY4lE="
+                }
+              ]
+            }""".toByteArray()
             latch.countDown()
             RemoteDataResponse(200, emptyMap(), bytes)
         }
-        val store = CertStore(config, cryptoProvider, secureDataStore, remoteDataProvider)
+        val store = getCertStore(remoteDataProvider)
         TestUtils.assignHandler(store, handler)
         store.update(UpdateMode.FORCED, object : DefaultUpdateObserver() {
             override fun onUpdateStarted(type: UpdateType) {
@@ -157,19 +164,21 @@ class CertStoreUpdateTest : CommonKotlinTest() {
     }
 
     @Throws(Exception::class)
-    private fun performForcedUpdate(
-        publicKey: String,
-        pinningJsonUrl: String
-    ): UpdateResult {
-        val publicKeyBytes = Base64.getDecoder().decode(publicKey)
+    private fun performForcedUpdate(remoteDataProvider: RemoteDataProvider): UpdateResult {
+        val store = getCertStore(remoteDataProvider)
+        TestUtils.assignHandler(store, handler)
+        return TestUtils.updateAndCheck(store, UpdateMode.FORCED, null)
+    }
+
+    private fun getCertStore(remoteDataProvider: RemoteDataProvider): CertStore {
+        val publicKeyBytes = Base64.getDecoder().decode("BC3kV9OIDnMuVoCdDR9nEA/JidJLTTDLuSA2TSZsGgODSshfbZg31MS90WC/HdbU/A5WL5GmyDkE/iks6INv+XE=")
         val config = TestUtils.getCertStoreConfiguration(
-            Date(), arrayOf("github.com"),
-            URL(pinningJsonUrl),
+            Date(),
+            arrayOf("github.com"),
+            URL("https://test"),
             publicKeyBytes,
             null
         )
-        val store = CertStore(config, cryptoProvider, secureDataStore)
-        TestUtils.assignHandler(store, handler)
-        return TestUtils.updateAndCheck(store, UpdateMode.FORCED, null)
+        return CertStore(config, cryptoProvider, secureDataStore, remoteDataProvider)
     }
 }

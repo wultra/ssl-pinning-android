@@ -260,6 +260,7 @@ class CertStore internal constructor(private val configuration: CertStoreConfigu
             }
             remoteDataProvider.getFingerprints(request)
         } catch (e: Exception) {
+            WultraDebug.error("Failed to update: ${e.message}")
             return UpdateResult.NETWORK_ERROR
         }
         return processReceivedData(response.data, challenge, response.responseHeaders, currentDate)
