@@ -33,7 +33,7 @@ abstract class CommonTest {
     private lateinit var baseUrl: String
     private lateinit var appName: String
     protected lateinit var pubKey: ByteArray
-    protected val serviceUrl by lazy { URL("$baseUrl/init?appName=$appName") }
+    protected val serviceUrl by lazy { URL("$baseUrl/app/init?appName=$appName") }
 
     val appContext = InstrumentationRegistry.getInstrumentation().targetContext
 
@@ -41,15 +41,15 @@ abstract class CommonTest {
     open fun setUp() {
         WultraDebug.loggingLevel = WultraDebug.WultraLoggingLevel.DEBUG
         clearStorage()
-        baseUrl = InstrumentationRegistry.getArguments().getString("test.sslPinning.baseUrl") ?: "https://int-mus-dev.wultra.app/app"
-        appName = InstrumentationRegistry.getArguments().getString("test.sslPinning.appName") ?: "ssl-pinning-tests"
+        baseUrl = InstrumentationRegistry.getArguments().getString("test.sslPinning.baseUrl") ?: throw IllegalArgumentException("Missing test.sslPinning.baseUrl parameter for tests")
+        appName = InstrumentationRegistry.getArguments().getString("test.sslPinning.appName") ?: throw IllegalArgumentException("Missing test.sslPinning.appName parameter for tests")
         pubKey = getPublicKeyFromServer()
     }
 
     private data class PublicKeyResponse(var publicKey: String)
 
     private fun getPublicKeyFromServer(): ByteArray {
-        val url = URL("$baseUrl/init/public-key?appName=$appName")
+        val url = URL("$baseUrl/app/init/public-key?appName=$appName")
         val responseString = url.readText(Charsets.UTF_8)
         val responseObject = GSON.fromJson(responseString, PublicKeyResponse::class.java)
         return Base64.decode(responseObject.publicKey, Base64.NO_WRAP)
