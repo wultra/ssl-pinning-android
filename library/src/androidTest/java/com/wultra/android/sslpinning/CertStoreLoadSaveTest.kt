@@ -72,7 +72,9 @@ class CertStoreLoadSaveTest : CommonTest() {
     @Test
     fun testLoadingPreviouslySavedFingerprintsDefault() {
 
-        val store = CertStore(config, DefaultCryptoProvider(), DefaultSecureDataStore(appContext, UUID.randomUUID().toString()))
+        val identifier = UUID.randomUUID().toString()
+
+        val store = CertStore(config, DefaultCryptoProvider(), DefaultSecureDataStore(appContext, identifier))
 
         val cert = getCertificateFromUrl("https://github.com")
         val result = store.validateCertificate(cert)
@@ -87,7 +89,7 @@ class CertStoreLoadSaveTest : CommonTest() {
         Assert.assertEquals(ValidationResult.TRUSTED, result2)
 
         // create new store that loads saved data
-        val store2 = CertStore(config, appContext)
+        val store2 = CertStore(config, DefaultCryptoProvider(), DefaultSecureDataStore(appContext, identifier))
 
         // test with loaded data
         val result3 = store2.validateCertificate(cert)
