@@ -19,22 +19,34 @@ package com.wultra.android.sslpinning
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import android.util.Base64
 import androidx.test.platform.app.InstrumentationRegistry
+import com.wultra.android.sslpinning.integration.DefaultCryptoProvider
+import com.wultra.android.sslpinning.integration.DefaultSecureDataStore
 import com.wultra.android.sslpinning.integration.powerauth.powerAuthCertStore
 import org.junit.Assume
 import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
 import java.net.URL
+import java.util.UUID
 
 @RunWith(AndroidJUnit4::class)
 class CertStoreChallengeTest: CommonTest() {
 
+    private lateinit var certStores: Array<CertStore>
+
+    override fun setUp() {
+        super.setUp()
+        val config = CertStoreConfiguration.Builder(serviceUrl, pubKey).useChallenge(true).build()
+        certStores = arrayOf(
+            CertStore.powerAuthCertStore(config, appContext, UUID.randomUUID().toString()),
+            CertStore(config, DefaultCryptoProvider(), DefaultSecureDataStore(appContext, UUID.randomUUID().toString()))
+        )
+    }
+
     @Test
     fun validateUpdateWithChallenge() {
-        val config = CertStoreConfiguration.Builder(serviceUrl, pubKey)
-            .useChallenge(true)
-            .build()
-        val store = CertStore.powerAuthCertStore(config, appContext)
-        updateAndCheck(store, UpdateMode.FORCED, UpdateResult.OK)
+        certStores.forEach { store ->
+            updateAndCheck(store, UpdateMode.FORCED, UpdateResult.OK)
+        }
     }
 }

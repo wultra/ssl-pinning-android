@@ -17,8 +17,11 @@
 package com.wultra.android.sslpinning
 
 import androidx.test.ext.junit.runners.AndroidJUnit4
+import com.wultra.android.sslpinning.integration.DefaultCryptoProvider
+import com.wultra.android.sslpinning.integration.DefaultSecureDataStore
 import com.wultra.android.sslpinning.integration.powerauth.PowerAuthCryptoProvider
 import com.wultra.android.sslpinning.integration.powerauth.PowerAuthSecureDataStore
+import com.wultra.android.sslpinning.integration.powerauth.powerAuthCertStore
 import com.wultra.android.sslpinning.model.CachedData
 import com.wultra.android.sslpinning.model.CertificateInfo
 import org.junit.Assert
@@ -34,10 +37,16 @@ import java.util.*
 @RunWith(AndroidJUnit4::class)
 class CertStoreLoadSaveTest : CommonTest() {
 
-    @Test
-    fun testLoadingPreviouslySavedFingerprints() {
+    lateinit var config: CertStoreConfiguration
 
-        val config = CertStoreConfiguration.Builder(serviceUrl, pubKey).useChallenge(true).build()
+    override fun setUp() {
+        super.setUp()
+        config = CertStoreConfiguration.Builder(serviceUrl, pubKey).useChallenge(true).build()
+    }
+
+    @Test
+    fun testLoadingPreviouslySavedFingerprintsPowerAuth() {
+
         val store = CertStore(config, PowerAuthCryptoProvider(), PowerAuthSecureDataStore(appContext))
 
         val cert = getCertificateFromUrl("https://github.com")
@@ -61,28 +70,57 @@ class CertStoreLoadSaveTest : CommonTest() {
     }
 
     @Test
+    fun testLoadingPreviouslySavedFingerprintsDefault() {
+
+        val store = CertStore(config, DefaultCryptoProvider(), DefaultSecureDataStore(appContext, UUID.randomUUID().toString()))
+
+        val cert = getCertificateFromUrl("https://github.com")
+        val result = store.validateCertificate(cert)
+
+        // first test no data
+        Assert.assertEquals(ValidationResult.EMPTY, result)
+
+        updateAndCheck(store, UpdateMode.FORCED, UpdateResult.OK)
+
+        // test after update
+        val result2 = store.validateCertificate(cert)
+        Assert.assertEquals(ValidationResult.TRUSTED, result2)
+
+        // create new store that loads saved data
+        val store2 = CertStore(config, appContext)
+
+        // test with loaded data
+        val result3 = store2.validateCertificate(cert)
+        Assert.assertEquals(ValidationResult.TRUSTED, result3)
+    }
+
+    @Test
     fun testSaveAndLoad() {
-        val config = CertStoreConfiguration.Builder(serviceUrl, pubKey).useChallenge(true).build()
-        val store = CertStore(config, PowerAuthCryptoProvider(), PowerAuthSecureDataStore(appContext))
 
-        Assert.assertNull(store.loadCachedData())
+        arrayOf(
+            CertStore.powerAuthCertStore(config, appContext, UUID.randomUUID().toString()),
+            CertStore(config, DefaultCryptoProvider(), DefaultSecureDataStore(appContext, UUID.randomUUID().toString()))
+        ).forEach { store ->
 
-        val date = Date()
-        val nextUpdate = Date(date.time + 10000)
-        val certInfos = arrayOf(
+            Assert.assertNull(store.loadCachedData())
+
+            val date = Date()
+            val nextUpdate = Date(date.time + 10000)
+            val certInfos = arrayOf(
                 CertificateInfo("github.com", "aaa".toByteArray(), date),
                 CertificateInfo("wultra.com", "bbb".toByteArray(), date)
-        )
-        val data = CachedData(certInfos, nextUpdate)
-        store.saveDataToCache(data)
+            )
+            val data = CachedData(certInfos, nextUpdate)
+            store.saveDataToCache(data)
 
-        val loadedData = store.loadCachedData()
-        Assert.assertNotNull(loadedData)
-        Assert.assertEquals((nextUpdate.time/1000)*1000, loadedData!!.nextUpdate.time)
-        Assert.assertEquals(2, loadedData.certificates.size)
-        val ci = loadedData.certificates[0]
-        Assert.assertEquals("github.com", ci.commonName)
-        Assert.assertEquals("aaa", String(ci.fingerprint))
-        Assert.assertEquals((date.time/1000)*1000, ci.expires.time)
+            val loadedData = store.loadCachedData()
+            Assert.assertNotNull(loadedData)
+            Assert.assertEquals((nextUpdate.time / 1000) * 1000, loadedData!!.nextUpdate.time)
+            Assert.assertEquals(2, loadedData.certificates.size)
+            val ci = loadedData.certificates[0]
+            Assert.assertEquals("github.com", ci.commonName)
+            Assert.assertEquals("aaa", String(ci.fingerprint))
+            Assert.assertEquals((date.time / 1000) * 1000, ci.expires.time)
+        }
     }
 }

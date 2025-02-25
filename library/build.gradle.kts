@@ -83,6 +83,7 @@ dependencies {
     implementation("org.jetbrains.kotlin:kotlin-stdlib:${Constants.BuildScript.kotlinVersion}")
     implementation("com.google.code.gson:gson:2.10.1")
     implementation("androidx.annotation:annotation:1.7.1")
+    implementation("androidx.security:security-crypto:1.0.0")
 
     testImplementation("com.wultra.android.powerauth:powerauth-sdk:${Constants.Dependencies.powerAuthSdkVersion}")
     testImplementation("junit:junit:4.13.2")
