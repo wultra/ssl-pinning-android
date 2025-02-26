@@ -26,7 +26,6 @@ import com.google.gson.Gson
 import com.google.gson.GsonBuilder
 import com.wultra.android.sslpinning.integration.DefaultCryptoProvider
 import com.wultra.android.sslpinning.integration.DefaultSecureDataStore
-import com.wultra.android.sslpinning.integration.powerauth.PowerAuthSecureDataStore
 import com.wultra.android.sslpinning.interfaces.CryptoProvider
 import com.wultra.android.sslpinning.interfaces.SecureDataStore
 import com.wultra.android.sslpinning.interfaces.SignedData
