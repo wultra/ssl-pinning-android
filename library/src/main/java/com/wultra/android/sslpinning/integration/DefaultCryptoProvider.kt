@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2024, Wultra s.r.o. (www.wultra.com).
+ * Copyright (c) 2025, Wultra s.r.o. (www.wultra.com).
  *
  * All rights reserved. This source code can be used only for purposes specified
  * by the given license contract signed by the rightful deputy of Wultra s.r.o.
@@ -11,18 +11,13 @@
 
 package com.wultra.android.sslpinning.integration
 
-import android.os.Build
-import androidx.annotation.RequiresApi
 import com.wultra.android.sslpinning.interfaces.CryptoProvider
 import com.wultra.android.sslpinning.interfaces.ECPublicKey
 import com.wultra.android.sslpinning.interfaces.SignedData
 import com.wultra.android.sslpinning.service.WultraDebug
-import java.lang.IllegalArgumentException
 import java.math.BigInteger
 import java.security.*
-import java.security.interfaces.ECKey
 import java.security.spec.*
-import kotlin.jvm.Throws
 
 class DefaultCryptoProvider: CryptoProvider {
 
@@ -76,47 +71,6 @@ class DefaultCryptoProvider: CryptoProvider {
 
         return publicKey.encoded // X.509 SPKI format
     }
-
-//    override fun importECPublicKey(publicKey: ByteArray): ECPublicKey? {
-//        return try {
-//            val keyFactory = KeyFactory.getInstance("EC")
-//            val publicKeySpec = X509EncodedKeySpec(publicKey)
-//            val publicKey = keyFactory.generatePublic(publicKeySpec)
-//            DefaultProviderPublicKey(publicKey)
-//        } catch (e: Exception) {
-//            WultraDebug.error("Failed to import EC public key: $e")
-//            null
-//        }
-//    }
-
-//    override fun importECPublicKey(publicKey: ByteArray): ECPublicKey? {
-//        if (publicKey.isEmpty() || publicKey[0] != 0x04.toByte()) {
-//            throw IllegalArgumentException("Invalid X9.63 public key format")
-//        }
-//
-//        try {
-//            val keyFactory = KeyFactory.getInstance("EC")
-//            val params = (keyFactory.generatePublic(
-//                ECPublicKeySpec(
-//                    ECPoint.POINT_INFINITY, null
-//                )
-//            ) as ECKey).params // Get curve params
-//
-//            // Extract X and Y coordinates from X9.63 representation
-//            val coordinateSize = (publicKey.size - 1) / 2
-//            val x = publicKey.copyOfRange(1, 1 + coordinateSize)
-//            val y = publicKey.copyOfRange(1 + coordinateSize, publicKey.size)
-//
-//            val ecPoint = ECPoint(BigInteger(x), BigInteger(y))
-//            val ecPublicKeySpec = ECPublicKeySpec(ecPoint, params)
-//
-//            val key = keyFactory.generatePublic(ecPublicKeySpec)
-//            return DefaultProviderPublicKey(key)
-//        } catch (e: Exception) {
-//            WultraDebug.error("Failed to import EC public key: $e")
-//            return null
-//        }
-//    }
 
     override fun hashSha256(data: ByteArray): ByteArray {
         val digest = MessageDigest.getInstance("SHA-256")

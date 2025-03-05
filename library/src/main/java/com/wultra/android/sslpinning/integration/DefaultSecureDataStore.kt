@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2024, Wultra s.r.o. (www.wultra.com).
+ * Copyright (c) 2025, Wultra s.r.o. (www.wultra.com).
  *
  * All rights reserved. This source code can be used only for purposes specified
  * by the given license contract signed by the rightful deputy of Wultra s.r.o.
@@ -35,6 +35,7 @@ class DefaultSecureDataStore @JvmOverloads constructor(
     )
 
     override fun save(data: ByteArray, key: String): Boolean {
+        // save raw data as ISO 8859-1 to avoid encoding
         preferences.edit().putString(key, String(data, Charsets.ISO_8859_1)).apply()
         return true
     }
