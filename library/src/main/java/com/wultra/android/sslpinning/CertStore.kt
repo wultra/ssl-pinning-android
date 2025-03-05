@@ -26,7 +26,6 @@ import com.google.gson.Gson
 import com.google.gson.GsonBuilder
 import com.wultra.android.sslpinning.integration.DefaultCryptoProvider
 import com.wultra.android.sslpinning.integration.DefaultSecureDataStore
-import com.wultra.android.sslpinning.integration.powerauth.PowerAuthSecureDataStore
 import com.wultra.android.sslpinning.interfaces.CryptoProvider
 import com.wultra.android.sslpinning.interfaces.SecureDataStore
 import com.wultra.android.sslpinning.interfaces.SignedData
@@ -34,13 +33,11 @@ import com.wultra.android.sslpinning.model.CachedData
 import com.wultra.android.sslpinning.model.CertificateInfo
 import com.wultra.android.sslpinning.model.GetFingerprintResponse
 import com.wultra.android.sslpinning.service.*
-import com.wultra.android.sslpinning.service.UpdateScheduler
 import com.wultra.android.sslpinning.util.ByteArrayTypeAdapter
 import com.wultra.android.sslpinning.util.CertUtils
 import com.wultra.android.sslpinning.util.DateTypeAdapter
-import java.lang.IllegalArgumentException
 import java.security.cert.X509Certificate
-import java.util.*
+import java.util.Date
 
 /**
  * The main class that provides features of the dynamic SSL pinning library.
