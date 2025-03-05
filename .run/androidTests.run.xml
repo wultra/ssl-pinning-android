@@ -10,7 +10,7 @@
       </option>
       <option name="taskNames">
         <list>
-          <option value="library:connectedPowerauthDebugAndroidTest" />
+          <option value=":library:connectedAndroidTest" />
         </list>
       </option>
       <option name="vmOptions" />

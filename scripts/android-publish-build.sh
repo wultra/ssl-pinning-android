@@ -209,17 +209,11 @@ LOG_LINE
 
 
 PUSH_DIR "${GRADLE_ROOT}"
-
-#### BASIC BUILD
-GRADLE_CMD_LINE="$GRADLE_PARAMS $DO_CLEAN assembleBasicRelease $DO_PUBLISH"
+####
+GRADLE_CMD_LINE="$GRADLE_PARAMS $DO_CLEAN assembleRelease $DO_PUBLISH"
 DEBUG_LOG "Gradle command line >> ./gradlew $GRADLE_CMD_LINE"
 ./gradlew $GRADLE_CMD_LINE
-
-#### BUILD WITH POWERAUTH
-GRADLE_CMD_LINE="$GRADLE_PARAMS $DO_CLEAN assemblePowerauthRelease $DO_PUBLISH"
-DEBUG_LOG "Gradle command line >> ./gradlew $GRADLE_CMD_LINE"
-./gradlew $GRADLE_CMD_LINE
-
+####
 POP_DIR
 
 EXIT_SUCCESS -l

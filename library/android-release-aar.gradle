@@ -42,8 +42,6 @@ ext {
     NEXUS_PASSWORD = findProperty('nexus.password')
     //NEXUS_STAGING_PROFILE = findProperty('nexus.stagingProfileId')
 
-    FLAVOR = getProperty("flavor")
-
     // POM content
     POM_LIBRARY_NAME = "Dynamic SSL pinning"
     POM_DESCRIPTION = "Android library implementing dynamic SSL pinning"
@@ -98,7 +96,7 @@ publishing {
             version = VERSION_NAME
 
             // Include artifacts, the `aar` and the sources
-            artifact("$buildDir/outputs/aar/${project.getName()}-${FLAVOR}-release.aar")
+            artifact("$buildDir/outputs/aar/${project.getName()}-release.aar")
             artifact androidSourcesJar
             artifact androidJavadocsJar
 
@@ -183,7 +181,7 @@ def shouldSignArtifacts() {
 }
 
 afterEvaluate {
-    signReleasePublication.dependsOn "bundle${FLAVOR.capitalize()}ReleaseAar"
-    publishReleasePublicationToSonatypeRepository.dependsOn "bundle${FLAVOR.capitalize()}ReleaseAar"
-    publishReleasePublicationToMavenLocal.dependsOn "bundle${FLAVOR.capitalize()}ReleaseAar"
+    signReleasePublication.dependsOn bundleReleaseAar
+    publishReleasePublicationToSonatypeRepository.dependsOn bundleReleaseAar
+    publishReleasePublicationToMavenLocal.dependsOn bundleReleaseAar
 }
