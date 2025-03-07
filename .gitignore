@@ -2,6 +2,16 @@
 *.apk
 *.ap_
 
+# PinningTool used in tests
+pinningtool
+
+# Test resources
+library/src/test/resources
+library/src/androidTest/assets
+
+# Test configs
+configs
+
 # Files for the ART/Dalvik VM
 *.dex
 

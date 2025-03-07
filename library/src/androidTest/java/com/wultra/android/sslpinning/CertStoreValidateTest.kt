@@ -17,11 +17,14 @@
 package com.wultra.android.sslpinning
 
 import androidx.test.ext.junit.runners.AndroidJUnit4
+import com.wultra.android.sslpinning.integration.DefaultCryptoProvider
+import com.wultra.android.sslpinning.integration.DefaultSecureDataStore
 import com.wultra.android.sslpinning.integration.powerauth.powerAuthCertStore
 import com.wultra.android.sslpinning.model.GetFingerprintResponse
 import org.junit.Assert
 import org.junit.Test
 import org.junit.runner.RunWith
+import java.util.UUID
 
 /**
  * Test [CertStore] validation.
@@ -33,26 +36,34 @@ class CertStoreValidateTest : CommonTest() {
 
     @Test
     fun validateWithFallback() {
-        val fallbackFingerprints = GSON.fromJson(jsonData, GetFingerprintResponse::class.java)
-        val config = CertStoreConfiguration.Builder(url, getPublicKeyBytes())
-                .fallbackCertificates(fallbackFingerprints)
-                .build()
-        val store = CertStore.powerAuthCertStore(config, appContext)
-
+        val fallbackFingerprints = GSON.fromJson(validFingerprintJsonResponse().decodeToString(), GetFingerprintResponse::class.java)
+        val config = CertStoreConfiguration.Builder(serviceUrl, pubKey)
+            .useChallenge(true)
+            .fallbackCertificates(fallbackFingerprints)
+            .build()
         val cert = getCertificateFromUrl("https://github.com")
-        val result = store.validateCertificate(cert)
-        Assert.assertEquals(ValidationResult.TRUSTED, result)
+
+        arrayOf(
+            CertStore.powerAuthCertStore(config, appContext),
+            CertStore(config, DefaultCryptoProvider(), DefaultSecureDataStore(appContext, UUID.randomUUID().toString()))
+        ).forEach { store ->
+            val result = store.validateCertificate(cert)
+            Assert.assertEquals(ValidationResult.TRUSTED, result)
+        }
     }
 
     @Test
     fun validateAfterUpdate() {
-        val config = CertStoreConfiguration.Builder(url, getPublicKeyBytes())
-                .build()
-        val store = CertStore.powerAuthCertStore(config, appContext)
-        updateAndCheck(store, UpdateMode.FORCED, UpdateResult.OK)
-
+        val config = CertStoreConfiguration.Builder(serviceUrl, pubKey).useChallenge(true).build()
         val cert = getCertificateFromUrl("https://github.com")
-        val result = store.validateCertificate(cert)
-        Assert.assertEquals(ValidationResult.TRUSTED, result)
+
+        arrayOf(
+            CertStore.powerAuthCertStore(config, appContext),
+            CertStore(config, DefaultCryptoProvider(), DefaultSecureDataStore(appContext, UUID.randomUUID().toString()))
+        ).forEach { store ->
+            updateAndCheck(store, UpdateMode.FORCED, UpdateResult.OK)
+            val result = store.validateCertificate(cert)
+            Assert.assertEquals(ValidationResult.TRUSTED, result)
+        }
     }
 }

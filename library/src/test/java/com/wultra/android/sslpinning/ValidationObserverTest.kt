@@ -16,7 +16,9 @@
 
 package com.wultra.android.sslpinning
 
-import com.wultra.android.sslpinning.TestUtils.assignHandler
+import com.wultra.android.sslpinning.TestUtils.Companion.assignHandler
+import com.wultra.android.sslpinning.service.RemoteDataProvider
+import com.wultra.android.sslpinning.service.RemoteDataResponse
 import io.mockk.every
 import io.mockk.just
 import io.mockk.mockk
@@ -37,19 +39,30 @@ class ValidationObserverTest : CommonKotlinTest() {
 
     @Test
     fun testValidationObservers() {
-        val cert = TestUtils.getCertificateFromUrl("https://github.com")
+
+        val cert = TestUtils.githubCert()
         val certGoogle = TestUtils.getCertificateFromUrl("https://google.com")
 
-        val publicKey = "BC3kV9OIDnMuVoCdDR9nEA/JidJLTTDLuSA2TSZsGgODSshfbZg31MS90WC/HdbU/A5WL5GmyDkE/iks6INv+XE="
-        val publicKeyBytes = java.util.Base64.getDecoder().decode(publicKey)
+        val publicKeyBytes = Base64.getDecoder().decode(TestUtils.testPubKey())
+
+        val remoteDataProvider: RemoteDataProvider = mockk()
+        every { remoteDataProvider.getFingerprints(any()) } answers {
+            RemoteDataResponse(
+                200,
+                emptyMap(),
+                TestUtils.validFingerprintJsonResponse()
+            )
+        }
 
         val config = TestUtils.getCertStoreConfiguration(
                 Date(),
                 arrayOf("github.com"),
-                URL("https://gist.githubusercontent.com/hvge/7c5a3f9ac50332a52aa974d90ea2408c/raw/07eb5b4b67e63d37d224912bc5951c7b589b35e6/ssl-pinning-signatures.json"),
+                URL("https://test"),
                 publicKeyBytes,
-                null)
-        val store = CertStore(config, cryptoProvider, secureDataStore)
+                null
+        )
+
+        val store = CertStore(config, cryptoProvider, secureDataStore, remoteDataProvider)
         assignHandler(store, handler)
 
         var observer: ValidationObserver = mockkValidationObserver()

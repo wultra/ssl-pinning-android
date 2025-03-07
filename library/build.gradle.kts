@@ -1,3 +1,8 @@
+import com.android.build.api.dsl.DefaultConfig
+import com.android.build.gradle.BaseExtension
+import java.io.FileInputStream
+import java.util.Properties
+
 /*
  * Copyright 2018 Wultra s.r.o.
  *
@@ -20,7 +25,6 @@ plugins {
     id("org.jetbrains.dokka")
     id("maven-publish")
     id("signing")
-    id("com.wultra.android.sslpinning.test")
 }
 
 android {
@@ -35,6 +39,7 @@ android {
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         testInstrumentationRunnerArguments["clearPackageData"] = "true"
+        loadInstrumentationTestConfigProperties(project, this)
     }
 
     buildTypes {
@@ -78,6 +83,7 @@ dependencies {
     implementation("org.jetbrains.kotlin:kotlin-stdlib:${Constants.BuildScript.kotlinVersion}")
     implementation("com.google.code.gson:gson:2.10.1")
     implementation("androidx.annotation:annotation:1.7.1")
+    implementation("androidx.security:security-crypto:1.0.0")
 
     testImplementation("com.wultra.android.powerauth:powerauth-sdk:${Constants.Dependencies.powerAuthSdkVersion}")
     testImplementation("junit:junit:4.13.2")
@@ -99,3 +105,31 @@ dependencies {
 }
 
 apply("android-release-aar.gradle")
+
+// Load properties for instrumentation tests.
+fun loadInstrumentationTestConfigProperties(project: Project, defaultConfig: DefaultConfig) {
+    val configsRoot = File("${project.rootProject.projectDir}/configs")
+    val defaultConfigFile = File(configsRoot, "integration-tests.properties")
+    val privateConfigFile = File(configsRoot, "private-integration-tests.properties")
+    val configPropertiesFile = if (privateConfigFile.canRead()) {
+        privateConfigFile
+    } else {
+        defaultConfigFile
+    }
+    val instrumentationArguments = arrayOf(
+        "test.sslPinning.baseUrl",
+        "test.sslPinning.appName"
+    )
+
+    project.logger.info("LOADING_PROPERTIES Reading $configPropertiesFile")
+    if (configPropertiesFile.canRead()) {
+        val props = Properties()
+        props.load(FileInputStream(configPropertiesFile))
+
+        for (key in instrumentationArguments) {
+            defaultConfig.testInstrumentationRunnerArguments[key] = "${props[key]}"
+        }
+    } else {
+        project.logger.warn("Loading properties error: Missing $configPropertiesFile")
+    }
+}

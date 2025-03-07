@@ -32,13 +32,11 @@ import javax.security.auth.x500.X500Principal;
  */
 public class DistinguishedNameParserTest {
 
-    @Ignore("Works only online")
     @Test
     public void testGithubCNFromUrl() throws Exception {
         testCNForURL("github.com", "https://github.com");
     }
 
-    @Ignore("Works only online")
     @Test
     public void testGoogleCNFromUrl() throws Exception {
         testCNForURL("www.google.com", "https://www.google.com");

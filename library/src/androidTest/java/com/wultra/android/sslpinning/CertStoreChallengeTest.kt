@@ -17,52 +17,31 @@
 package com.wultra.android.sslpinning
 
 import androidx.test.ext.junit.runners.AndroidJUnit4
-import android.util.Base64
-import androidx.test.platform.app.InstrumentationRegistry
+import com.wultra.android.sslpinning.integration.DefaultCryptoProvider
+import com.wultra.android.sslpinning.integration.DefaultSecureDataStore
 import com.wultra.android.sslpinning.integration.powerauth.powerAuthCertStore
-import org.junit.Assume
-import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
-import java.net.URL
+import java.util.UUID
 
 @RunWith(AndroidJUnit4::class)
 class CertStoreChallengeTest: CommonTest() {
 
-    private lateinit var baseUrl: String
-    private lateinit var appName: String
+    private lateinit var certStores: Array<CertStore>
 
-    @Before
     override fun setUp() {
         super.setUp()
-        InstrumentationRegistry.getArguments().getString("test.sslPinning.baseUrl")?.let {
-            baseUrl = it
-        }
-        InstrumentationRegistry.getArguments().getString("test.sslPinning.appName")?.let {
-            appName = it
-        }
+        val config = CertStoreConfiguration.Builder(serviceUrl, pubKey).useChallenge(true).build()
+        certStores = arrayOf(
+            CertStore.powerAuthCertStore(config, appContext, UUID.randomUUID().toString()),
+            CertStore(config, DefaultCryptoProvider(), DefaultSecureDataStore(appContext, UUID.randomUUID().toString()))
+        )
     }
 
     @Test
     fun validateUpdateWithChallenge() {
-        Assume.assumeTrue(::baseUrl.isInitialized && ::appName.isInitialized)
-        val config = CertStoreConfiguration.Builder(getServiceUrl("/init?appName=$appName"), getPublicKeyFromServer())
-                .useChallenge(true)
-                .build()
-        val store = CertStore.powerAuthCertStore(config, appContext)
-        updateAndCheck(store, UpdateMode.FORCED, UpdateResult.OK)
-    }
-
-    private fun getServiceUrl(relativePath: String): URL {
-        return URL("$baseUrl$relativePath")
-    }
-
-    private data class PublicKeyResponse(var publicKey: String)
-
-    private fun getPublicKeyFromServer(): ByteArray {
-        val url = getServiceUrl("/init/public-key?appName=$appName")
-        val responseString = url.readText(Charsets.UTF_8)
-        val responseObject = GSON.fromJson(responseString, PublicKeyResponse::class.java)
-        return Base64.decode(responseObject.publicKey, Base64.NO_WRAP)
+        certStores.forEach { store ->
+            updateAndCheck(store, UpdateMode.FORCED, UpdateResult.OK)
+        }
     }
 }

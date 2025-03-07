@@ -34,11 +34,11 @@ object Constants {
     object Android {
         const val compileSdkVersion = 33
         const val targetSdkVersion = 33
-        const val minSdkVersion = 21
+        const val minSdkVersion = 23
         const val buildToolsVersion = "33.0.2"
     }
 
     object Dependencies {
-        const val powerAuthSdkVersion = "1.8.0"
+        const val powerAuthSdkVersion = "1.9.3"
     }
 }

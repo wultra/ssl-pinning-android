@@ -16,6 +16,7 @@
 
 package com.wultra.android.sslpinning
 
+import android.content.Context
 import android.os.Handler
 import android.os.Looper
 import android.os.Process
@@ -23,6 +24,8 @@ import android.util.Base64
 import androidx.annotation.WorkerThread
 import com.google.gson.Gson
 import com.google.gson.GsonBuilder
+import com.wultra.android.sslpinning.integration.DefaultCryptoProvider
+import com.wultra.android.sslpinning.integration.DefaultSecureDataStore
 import com.wultra.android.sslpinning.interfaces.CryptoProvider
 import com.wultra.android.sslpinning.interfaces.SecureDataStore
 import com.wultra.android.sslpinning.interfaces.SignedData
@@ -30,23 +33,23 @@ import com.wultra.android.sslpinning.model.CachedData
 import com.wultra.android.sslpinning.model.CertificateInfo
 import com.wultra.android.sslpinning.model.GetFingerprintResponse
 import com.wultra.android.sslpinning.service.*
-import com.wultra.android.sslpinning.service.UpdateScheduler
 import com.wultra.android.sslpinning.util.ByteArrayTypeAdapter
 import com.wultra.android.sslpinning.util.CertUtils
 import com.wultra.android.sslpinning.util.DateTypeAdapter
-import java.lang.IllegalArgumentException
 import java.security.cert.X509Certificate
-import java.util.*
+import java.util.Date
 
 /**
  * The main class that provides features of the dynamic SSL pinning library.
  *
  * @author Tomas Kypta, tomas.kypta@wultra.com
  */
-class CertStore internal constructor(private val configuration: CertStoreConfiguration,
-                                     private val cryptoProvider: CryptoProvider,
-                                     private val secureDataStore: SecureDataStore,
-                                     remoteDataProvider: RemoteDataProvider?) {
+class CertStore internal constructor(
+    private val configuration: CertStoreConfiguration,
+    private val cryptoProvider: CryptoProvider,
+    private val secureDataStore: SecureDataStore,
+    remoteDataProvider: RemoteDataProvider?
+) {
 
     private val remoteDataProvider: RemoteDataProvider
 
@@ -88,9 +91,16 @@ class CertStore internal constructor(private val configuration: CertStoreConfigu
         }
     }
 
-    constructor(configuration: CertStoreConfiguration,
-                cryptoProvider: CryptoProvider,
-                secureDataStore: SecureDataStore) : this(configuration, cryptoProvider, secureDataStore, null)
+    constructor(
+        configuration: CertStoreConfiguration,
+        context: Context
+    ) : this(configuration, DefaultCryptoProvider(), DefaultSecureDataStore(context))
+
+    constructor(
+        configuration: CertStoreConfiguration,
+        cryptoProvider: CryptoProvider,
+        secureDataStore: SecureDataStore
+    ) : this(configuration, cryptoProvider, secureDataStore, null)
 
     /**
      * Identifier of the instance.
@@ -260,6 +270,7 @@ class CertStore internal constructor(private val configuration: CertStoreConfigu
             }
             remoteDataProvider.getFingerprints(request)
         } catch (e: Exception) {
+            WultraDebug.error("Failed to update: ${e.message}")
             return UpdateResult.NETWORK_ERROR
         }
         return processReceivedData(response.data, challenge, response.responseHeaders, currentDate)

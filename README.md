@@ -50,7 +50,7 @@ Before you start using the library, you should also check our other related proj
 
 ### Requirements
 
-- `minSdkVersion 21` (Android 5.0 Lollipop)
+- `minSdkVersion 23` (Android 6 Marshmallow)
 
 ### Gradle
 
@@ -85,7 +85,7 @@ val configuration = CertStoreConfiguration.Builder(
                         .expectedCommonNames(expectedCommonNames)
                         .fallbackCertificates(fallbackCertificates)
                         .build()
-val certStore = CertStore.powerAuthCertStore(configuration = configuration, appContext)
+val certStore = CertStore(configuration, appContext)
 ```
 
 The configuration has the following properties:
@@ -121,7 +121,7 @@ val configuration = CertStoreConfiguration.Builder(
                             publicKey= publicKey)
                     .fallbackCertificates(fallbackCertificates)
                     .build()
-val certStore = CertStore.powerAuthCertStore(configuration = configuration, appContext)
+val certStore = CertStore(configuration, appContext)
 ```
 
 ## Updating Fingerprints
@@ -256,14 +256,12 @@ val certStoreConfiguration = CertStoreConfiguration.Builder(
                     
 val powerAuthCertStore = CertStore.powerAuthCertStore(certStoreConfiguration, appContext)
 
-
 val powerAuthConfiguration = PowerAuthConfiguration.Builder(
                 appContext.packageName,
-                BuildConfig.PA_API_SERVER,
-                BuildConfig.PA_APPLICATION_KEY,
-                BuildConfig.PA_APPLICATION_SECRET,
-                BuildConfig.PA_MASTER_SERVER_PUBLIC_KEY
+                BuildConfig.PA_SDK_CONFIG
             ).build()
+
+val sslPinningValidationStrategy = PowerAuthSslPinningValidationStrategy(powerAuthCertStore)
 
 val powerAuthClientConfiguration = PowerAuthClientConfiguration.Builder()
                 .clientValidationStrategy(sslPinningValidationStrategy)
@@ -347,11 +345,9 @@ WultraDebug.loggingLevel = WultraDebug.WultraLoggingLevel.DEBUG
 
 There's an optional dependency on [PowerAuthSDK](https://github.com/wultra/powerauth-mobile-sdk). 
 
-However, the library requires several cryptographic primitives (see `CryptoProvider`) that are provided by **PowerAuthSDK**. Also, most of our clients are already using PowerAuthSDK in their applications. Therefore it's a no-brainer to use **PowerAuthSDK** for the cryptography in **WultraSSLPinning**.
+This makes the library easier to use with for Wultra customers using our PowerAuthSDK.
 
-> Be aware that library version 1.1.x+ requires at least PowerAuth mobile SDK 1.4.2 and newer. This requirement is due to improvements in the secure data storage we have implemented in that version of the SDK.
-
-If needed the library can be used without PowerAuthSDK. In this case, you can't use any class from the `com.wultra.android.sslpinning.integration.powerauth` package since they expect PowerAuthSDK to be present. Also, you have to provide your implementation of `CryptoProvider` and `SecureDataStore`.
+In case PowerAuth library is not available, you can't use any class from the `com.wultra.android.sslpinning.integration.powerauth` package since they expect PowerAuthSDK to be present and any such usage will result in an ClassNotFound exception.
 
 ### What is pinned?
 
@@ -381,11 +377,6 @@ byte[] bytesToComputeFringerprintFrom = certificate.getPublicKey().getEncoded();
 ```
 
 This means that `CertificatePinner` cannot be readily used with the **WultraSSLPinning** library.
-
-
-**PowerAuthSDK** already provides these functions.
-
-If you do not desire to integrate PowerAuthSDK you can implement necessary interfaces yourself. The core of the library uses `CryptoProvider` and `SecureDataStore` interfaces and therefore is implementation-independent.
 
 ### How to use public key pinning instead of certificate pinning?
 

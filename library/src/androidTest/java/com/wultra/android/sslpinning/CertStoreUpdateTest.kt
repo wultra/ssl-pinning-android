@@ -18,11 +18,14 @@ package com.wultra.android.sslpinning
 
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import android.util.Base64
+import com.wultra.android.sslpinning.integration.DefaultCryptoProvider
+import com.wultra.android.sslpinning.integration.DefaultSecureDataStore
 import com.wultra.android.sslpinning.integration.powerauth.PowerAuthCryptoProvider
 import com.wultra.android.sslpinning.integration.powerauth.PowerAuthSecureDataStore
 import com.wultra.android.sslpinning.integration.powerauth.powerAuthCertStore
 import org.junit.Test
 import org.junit.runner.RunWith
+import java.util.UUID
 
 /**
  * Instrumentation test for update signature validation on a device/emulator.
@@ -32,41 +35,53 @@ import org.junit.runner.RunWith
 @RunWith(AndroidJUnit4::class)
 class CertStoreUpdateTest : CommonTest() {
 
+    private lateinit var certStores: Array<CertStore>
+
+    override fun setUp() {
+        super.setUp()
+        val config = CertStoreConfiguration.Builder(serviceUrl, pubKey).useChallenge(true).build()
+        certStores = arrayOf(
+            CertStore.powerAuthCertStore(config, appContext, UUID.randomUUID().toString()),
+            CertStore(config, DefaultCryptoProvider(), DefaultSecureDataStore(appContext, UUID.randomUUID().toString()))
+        )
+    }
+
     @Test
     fun testLocalUpdateSignatureGithub() {
-        val config = CertStoreConfiguration.Builder(url, getPublicKeyBytes()).build()
-        val store = CertStore(config, PowerAuthCryptoProvider(), PowerAuthSecureDataStore(appContext), remoteDataProvider)
-
-        updateAndCheck(store, UpdateMode.FORCED, UpdateResult.OK)
+        certStores.forEach { store ->
+            updateAndCheck(store, UpdateMode.FORCED, UpdateResult.OK)
+        }
     }
 
     @Test
     fun testRemoteUpdateSignatureGithub() {
-        val config = CertStoreConfiguration.Builder(url, getPublicKeyBytes()).build()
-        val store = CertStore.powerAuthCertStore(config, appContext)
-
-        updateAndCheck(store, UpdateMode.FORCED, UpdateResult.OK, UpdateType.DIRECT)
+        certStores.forEach { store ->
+            updateAndCheck(store, UpdateMode.FORCED, UpdateResult.OK, UpdateType.DIRECT)
+        }
     }
 
     @Test
     fun testRemoteUpdateSignatureGithubDefault() {
-        val config = CertStoreConfiguration.Builder(url, getPublicKeyBytes()).build()
-        val store = CertStore.powerAuthCertStore(config, appContext)
-
-        updateAndCheck(store, UpdateMode.DEFAULT, UpdateResult.OK, UpdateType.DIRECT)
-
-        updateAndCheck(store, UpdateMode.DEFAULT, UpdateResult.OK, UpdateType.NO_UPDATE)
+        certStores.forEach { store ->
+            updateAndCheck(store, UpdateMode.DEFAULT, UpdateResult.OK, UpdateType.DIRECT)
+            updateAndCheck(store, UpdateMode.DEFAULT, UpdateResult.OK, UpdateType.NO_UPDATE)
+        }
     }
 
     @Test
     fun testRemoteUpdateSignatureGithub_InvalidSignature() {
         // intentionally different signature
         val publicKey = "BEG6g28LNWRcmdFzexSNTKPBYZnDtKrCyiExFKbktttfKAF7wG4Cx1Nycr5PwCoICG1dRseLyuDxUilAmppPxAo="
-        val publicKeyBytes = Base64.decode(publicKey, android.util.Base64.NO_WRAP)
+        val publicKeyBytes = Base64.decode(publicKey, Base64.NO_WRAP)
 
-        val config = CertStoreConfiguration.Builder(url, publicKeyBytes).build()
-        val store = CertStore.powerAuthCertStore(config, appContext)
+        val config = CertStoreConfiguration.Builder(serviceUrl, publicKeyBytes).useChallenge(true).build()
+        val customCertStores = arrayOf(
+            CertStore.powerAuthCertStore(config, appContext, UUID.randomUUID().toString()),
+            CertStore(config, DefaultCryptoProvider(), DefaultSecureDataStore(appContext, UUID.randomUUID().toString()))
+        )
 
-        updateAndCheck(store, UpdateMode.FORCED, UpdateResult.INVALID_SIGNATURE)
+        customCertStores.forEach { store ->
+            updateAndCheck(store, UpdateMode.FORCED, UpdateResult.INVALID_SIGNATURE)
+        }
     }
 }
