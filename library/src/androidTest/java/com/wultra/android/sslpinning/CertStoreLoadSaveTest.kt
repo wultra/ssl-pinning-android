@@ -45,55 +45,41 @@ class CertStoreLoadSaveTest : CommonTest() {
     }
 
     @Test
-    fun testLoadingPreviouslySavedFingerprintsPowerAuth() {
+    fun testLoadingPreviouslySavedFingerprints() {
 
-        val store = CertStore(config, PowerAuthCryptoProvider(), PowerAuthSecureDataStore(appContext))
+        // random UUID to ensure the stores are empty by default
+        val uuid = UUID.randomUUID().toString()
+        // we need to create the store several times with the same ID -> prepare "factories"
+        val factories = arrayOf(
+            { CertStore(config, DefaultCryptoProvider(), DefaultSecureDataStore(appContext, "${uuid}_default")) },
+            { CertStore(config, PowerAuthCryptoProvider(), PowerAuthSecureDataStore(appContext, "${uuid}_pa")) }
+        )
 
-        val cert = getCertificateFromUrl("https://github.com")
-        val result = store.validateCertificate(cert)
+        factories.forEach { factory ->
 
-        // first test no data
-        Assert.assertEquals(ValidationResult.EMPTY, result)
+            // create an new empty store
+            val store = factory()
 
-        updateAndCheck(store, UpdateMode.FORCED, UpdateResult.OK)
+            val cert = getCertificateFromUrl("https://github.com")
+            val result = store.validateCertificate(cert)
 
-        // test after update
-        val result2 = store.validateCertificate(cert)
-        Assert.assertEquals(ValidationResult.TRUSTED, result2)
+            // first test when store is empty
+            Assert.assertEquals(ValidationResult.EMPTY, result)
 
-        // create new store that loads saved data
-        val store2 = CertStore(config, PowerAuthCryptoProvider(), PowerAuthSecureDataStore(appContext))
+            // update the store
+            updateAndCheck(store, UpdateMode.FORCED, UpdateResult.OK)
 
-        // test with loaded data
-        val result3 = store2.validateCertificate(cert)
-        Assert.assertEquals(ValidationResult.TRUSTED, result3)
-    }
+            // test after update (we expect that the latest github cert is on the server)
+            val result2 = store.validateCertificate(cert)
+            Assert.assertEquals(ValidationResult.TRUSTED, result2)
 
-    @Test
-    fun testLoadingPreviouslySavedFingerprintsDefault() {
+            // create new store that loads saved data
+            val store2 = factory()
 
-        val identifier = UUID.randomUUID().toString()
-
-        val store = CertStore(config, DefaultCryptoProvider(), DefaultSecureDataStore(appContext, identifier))
-
-        val cert = getCertificateFromUrl("https://github.com")
-        val result = store.validateCertificate(cert)
-
-        // first test no data
-        Assert.assertEquals(ValidationResult.EMPTY, result)
-
-        updateAndCheck(store, UpdateMode.FORCED, UpdateResult.OK)
-
-        // test after update
-        val result2 = store.validateCertificate(cert)
-        Assert.assertEquals(ValidationResult.TRUSTED, result2)
-
-        // create new store that loads saved data
-        val store2 = CertStore(config, DefaultCryptoProvider(), DefaultSecureDataStore(appContext, identifier))
-
-        // test with loaded data
-        val result3 = store2.validateCertificate(cert)
-        Assert.assertEquals(ValidationResult.TRUSTED, result3)
+            // new store with the same ID should work on the previously stored data and thus the cert. should be trusted
+            val result3 = store2.validateCertificate(cert)
+            Assert.assertEquals(ValidationResult.TRUSTED, result3)
+        }
     }
 
     @Test

@@ -19,3 +19,11 @@ jobs:
 
       - name: Lint
         run: ./gradlew library:lint
+
+      - name: Upload lint results artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: lint-results-debug
+          path: library/build/reports/lint-results-debug.html
+          retention-days: 5
