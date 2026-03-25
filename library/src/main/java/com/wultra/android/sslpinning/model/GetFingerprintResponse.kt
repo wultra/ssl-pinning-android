@@ -27,7 +27,10 @@ import java.util.concurrent.TimeUnit
  * @property fingerprints List of entry objects
  * @author Tomas Kypta, tomas.kypta@wultra.com
  */
-data class GetFingerprintResponse(val fingerprints: Array<Entry>) {
+data class GetFingerprintResponse @JvmOverloads constructor(
+    val fingerprints: Array<Entry>,
+    val domainsConfig: DomainsConfig? = null
+) {
 
     /**
      * Data class for an item in JSON response received from the server.
@@ -37,11 +40,16 @@ data class GetFingerprintResponse(val fingerprints: Array<Entry>) {
      * @property expires Expiration date
      * @property signature ECDSA signature, optional for servers that supports challenge in request
      *                     and provides signature for the whole response.
+     * @property depth Certificate depth in the TLS chain. 0 is the leaf certificate (default),
+     *                 1..N-1 are intermediate certificates, and N is the root certificate.
      */
-    data class Entry(val name: String,
-                     val fingerprint: ByteArray,
-                     val expires: Date,
-                     val signature: ByteArray?) {
+    data class Entry @JvmOverloads constructor(
+        val name: String,
+        val fingerprint: ByteArray,
+        val expires: Date,
+        val signature: ByteArray?,
+        val depth: Int? = null
+    ) {
 
         /**
          * Get normalized data which can be used for the signature validation.
@@ -89,11 +97,14 @@ data class GetFingerprintResponse(val fingerprints: Array<Entry>) {
         other as GetFingerprintResponse
 
         if (!fingerprints.contentEquals(other.fingerprints)) return false
+        if (domainsConfig != other.domainsConfig) return false
 
         return true
     }
 
     override fun hashCode(): Int {
-        return fingerprints.contentHashCode()
+        var result = fingerprints.contentHashCode()
+        result = 31 * result + (domainsConfig?.hashCode() ?: 0)
+        return result
     }
 }

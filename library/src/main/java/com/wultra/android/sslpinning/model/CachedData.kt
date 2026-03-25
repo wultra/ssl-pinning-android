@@ -24,7 +24,8 @@ import java.util.*
  * @author Tomas Kypta, tomas.kypta@wultra.com
  */
 internal data class CachedData(var certificates: Array<CertificateInfo>,
-                               var nextUpdate: Date) {
+                               var nextUpdate: Date,
+                               var domainsConfig: DomainsConfig? = null) {
 
     internal fun numberOfValidCertificates(date: Date): Int {
         var result = 0
@@ -54,6 +55,7 @@ internal data class CachedData(var certificates: Array<CertificateInfo>,
 
         if (!certificates.contentEquals(other.certificates)) return false
         if (nextUpdate != other.nextUpdate) return false
+        if (domainsConfig != other.domainsConfig) return false
 
         return true
     }
@@ -61,6 +63,7 @@ internal data class CachedData(var certificates: Array<CertificateInfo>,
     override fun hashCode(): Int {
         var result = certificates.contentHashCode()
         result = 31 * result + nextUpdate.hashCode()
+        result = 31 * result + (domainsConfig?.hashCode() ?: 0)
         return result
     }
 }

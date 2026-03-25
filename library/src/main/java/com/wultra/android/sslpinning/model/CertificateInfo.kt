@@ -26,11 +26,12 @@ import java.util.Date
  */
 data class CertificateInfo(val commonName: String,
                            val fingerprint: ByteArray,
-                           val expires: Date) : Serializable, Comparable<CertificateInfo> {
+                           val expires: Date,
+                           val depth: Int = 0) : Serializable, Comparable<CertificateInfo> {
 
     internal constructor(responseEntry: GetFingerprintResponse.Entry) :
             this(commonName = responseEntry.name, fingerprint = responseEntry.fingerprint,
-                    expires = responseEntry.expires)
+                    expires = responseEntry.expires, depth = responseEntry.depth ?: 0)
 
     /**
      * Check if the info is expired.
@@ -55,6 +56,7 @@ data class CertificateInfo(val commonName: String,
         if (commonName != other.commonName) return false
         if (!fingerprint.contentEquals(other.fingerprint)) return false
         if (expires != other.expires) return false
+        if (depth != other.depth) return false
 
         return true
     }
@@ -63,6 +65,7 @@ data class CertificateInfo(val commonName: String,
         var result = commonName.hashCode()
         result = 31 * result + fingerprint.contentHashCode()
         result = 31 * result + expires.hashCode()
+        result = 31 * result + depth
         return result
     }
 }
