@@ -39,6 +39,8 @@ android {
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         testInstrumentationRunnerArguments["clearPackageData"] = "true"
+        // Network tests (CertStoreNetworkTest) require additional arguments:
+        //   test.sslPinning.adminLogin, test.sslPinning.adminPassword, test.sslPinning.urlToPin
         loadInstrumentationTestConfigProperties(project, this)
     }
 

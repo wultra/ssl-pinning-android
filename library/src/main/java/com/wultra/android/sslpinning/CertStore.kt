@@ -421,7 +421,8 @@ class CertStore internal constructor(
 
     /**
      * Validates whether provided certificate fingerprint is trusted for given common name.
-     * Validates the leaf certificate (depth 0), which is the default behavior.
+     * Validates the leaf certificate (depth 0), which is the default behavior and is
+     * fully backward-compatible.
      *
      * @param commonName A common name
      * @param fingerprint A SHA-256 fingerprint calculated from certificate's data
