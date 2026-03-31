@@ -409,7 +409,10 @@ class CertStore internal constructor(
                     expirationUpdateThresholdMillis = configuration.expirationUpdateThresholdMillis,
                     thresholdMultiplier = 0.125)
             val nextUpdate = scheduler.scheduleNextUpdate(certArray, currentDate)
-            return@updateCachedData CachedData(certificates = certArray, nextUpdate = nextUpdate)
+            return@updateCachedData CachedData(
+                certificates = certArray,
+                nextUpdate = nextUpdate,
+                domainsConfig =  response.domainsConfig)
         }
         return result
     }
@@ -418,6 +421,7 @@ class CertStore internal constructor(
 
     /**
      * Validates whether provided certificate fingerprint is trusted for given common name.
+     * Validates the leaf certificate (depth 0), which is the default behavior.
      *
      * @param commonName A common name
      * @param fingerprint A SHA-256 fingerprint calculated from certificate's data
@@ -425,10 +429,34 @@ class CertStore internal constructor(
      * @return Validation result
      */
     fun validateFingerprint(commonName: String, fingerprint: ByteArray): ValidationResult {
+        return validateFingerprint(commonName, fingerprint, depth = 0)
+    }
+
+    /**
+     * Validates whether provided certificate fingerprint at a specific chain depth is trusted for given common name.
+     *
+     * When [DomainsConfig] is available from a server update and the domain has [DomainConfig.sslPinningRequired]
+     * set to `false`, the validation returns [ValidationResult.TRUSTED] immediately without checking the fingerprint.
+     *
+     * @param commonName A common name from the leaf server certificate
+     * @param fingerprint A SHA-256 fingerprint calculated from certificate's data
+     * @param depth The certificate depth in the TLS chain (0 = leaf, 1..N-1 = intermediate, N = root)
+     *
+     * @return Validation result
+     */
+    fun validateFingerprint(commonName: String, fingerprint: ByteArray, depth: Int): ValidationResult {
         val expected = configuration.expectedCommonNames
         if (expected != null && !expected.contains(commonName)) {
             notifyValidationObservers(commonName, ValidationObserver::onValidationUntrusted)
             return ValidationResult.UNTRUSTED
+        }
+
+        getCachedData()?.domainsConfig?.let { domainsConfig ->
+            // Check if pinning is required for this domain
+            if (!domainsConfig.isPinningRequired(commonName)) {
+                notifyValidationObservers(commonName, ValidationObserver::onValidationTrusted)
+                return ValidationResult.TRUSTED
+            }
         }
 
         val certificates = getCertificates()
@@ -439,13 +467,13 @@ class CertStore internal constructor(
 
         val now = Date()
         var matchAttempts = 0
-        // iterate over all entries and check common name and fingerprint
-        // filter out already expired certificates (including the fallback certificate)
+        // Iterate over all entries and look for common name & fingerprint.
+        // Also filter out already expired certificates (including the fallback certificate).
         for (info in certificates) {
             if (info.isExpired(now)) {
                 continue
             }
-            if (info.commonName == commonName) {
+            if (info.commonName == commonName && info.depth == depth) {
                 if (info.fingerprint.contentEquals(fingerprint)) {
                     notifyValidationObservers(commonName, ValidationObserver::onValidationTrusted)
                     return ValidationResult.TRUSTED
@@ -465,6 +493,7 @@ class CertStore internal constructor(
 
     /**
      * Validates whether provided certificate data in DER format is trusted for given common name.
+     * Call this method to validate the leaf (depth 0) certificate.
      *
      * @param commonName Common name (CN).
      * @param certificateData Certificate data in DER format.
@@ -472,20 +501,53 @@ class CertStore internal constructor(
      */
     fun validateCertificateData(commonName: String, certificateData: ByteArray): ValidationResult {
         val fingerprint = cryptoProvider.hashSha256(certificateData)
-        return validateFingerprint(commonName, fingerprint)
+        return validateFingerprint(commonName, fingerprint, depth = 0)
+    }
+
+    /**
+     * Validates whether provided certificate data in DER format is trusted for given common name.
+     *
+     * @param commonName Common name (CN).
+     * @param certificateData Certificate data in DER format.
+     * @param depth The certificate depth in the TLS chain (0 = leaf, 1..N-1 = intermediate, N = root).
+     * @return Validation result.
+     */
+    fun validateCertificateData(commonName: String, certificateData: ByteArray, depth: Int): ValidationResult {
+        val fingerprint = cryptoProvider.hashSha256(certificateData)
+        return validateFingerprint(commonName, fingerprint, depth)
     }
 
     /**
      * Validates whether provided certificate is trusted.
+     * Validates the leaf certificate (depth 0), which is the default behavior.
      *
      * @param certificate Certificate to test.
      * @return Validation result.
      */
     fun validateCertificate(certificate: X509Certificate): ValidationResult {
-        val key = certificate.encoded
-        val fingerprint = cryptoProvider.hashSha256(key)
-        val commonName = CertUtils.parseCommonName(certificate)
-        return validateFingerprint(commonName, fingerprint)
+        return validateCertificateChain(arrayOf(certificate), depth = 0)
+    }
+
+    /**
+     * Validates whether provided TLS certificate chain is trusted at a specific chain depth.
+     *
+     * The common name is always taken from the leaf certificate (chain[0]).
+     * The fingerprint is computed from the certificate at the given [depth].
+     *
+     * If [depth] is out of range (negative or >= chain size), returns [ValidationResult.UNTRUSTED].
+     *
+     * @param chain The TLS certificate chain, where chain[0] is the leaf certificate.
+     * @param depth The certificate depth in the TLS chain (0 = leaf, 1..N-1 = intermediate, N = root).
+     * @return Validation result.
+     */
+    fun validateCertificateChain(chain: Array<out X509Certificate>, depth: Int): ValidationResult {
+        if (depth < 0 || depth >= chain.size) {
+            notifyValidationObservers(CertUtils.parseCommonName(chain[0]), ValidationObserver::onValidationUntrusted)
+            return ValidationResult.UNTRUSTED
+        }
+        val commonName = CertUtils.parseCommonName(chain[0])
+        val fingerprint = cryptoProvider.hashSha256(chain[depth].encoded)
+        return validateFingerprint(commonName, fingerprint, depth)
     }
 
     /*** GLOBAL VALIDATION OBSERVERS ***/
