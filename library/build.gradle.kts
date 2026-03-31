@@ -120,7 +120,10 @@ fun loadInstrumentationTestConfigProperties(project: Project, defaultConfig: Def
     }
     val instrumentationArguments = arrayOf(
         "test.sslPinning.baseUrl",
-        "test.sslPinning.appName"
+        "test.sslPinning.appName",
+        "test.sslPinning.adminLogin",
+        "test.sslPinning.adminPassword",
+        "test.sslPinning.urlToPin",
     )
 
     project.logger.info("LOADING_PROPERTIES Reading $configPropertiesFile")
