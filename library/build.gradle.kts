@@ -34,7 +34,6 @@ android {
 
     defaultConfig {
         minSdk = Constants.Android.minSdkVersion
-        @Suppress("DEPRECATION")
         targetSdk = Constants.Android.targetSdkVersion
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"

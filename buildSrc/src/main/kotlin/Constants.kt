@@ -32,10 +32,10 @@ object Constants {
     }
 
     object Android {
-        const val compileSdkVersion = 33
-        const val targetSdkVersion = 33
+        const val compileSdkVersion = 34
+        const val targetSdkVersion = 34
         const val minSdkVersion = 23
-        const val buildToolsVersion = "33.0.2"
+        const val buildToolsVersion = "34.0.0"
     }
 
     object Dependencies {
