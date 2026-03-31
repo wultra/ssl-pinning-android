@@ -27,7 +27,7 @@ package com.wultra.android.sslpinning.model
  *           not explicitly listed in [domains].
  * @property domains Domain-specific SSL pinning configuration entries.
  */
-data class DomainsConfig(
+internal data class DomainsConfig(
     val sslPinningRequiredForUnlisted: Boolean,
     val domains: List<DomainConfig>
 ) {
@@ -52,7 +52,7 @@ data class DomainsConfig(
  * @property name The domain name.
  * @property sslPinningRequired Whether SSL pinning is required for this domain.
  */
-data class DomainConfig(
+internal data class DomainConfig(
     val name: String,
     val sslPinningRequired: Boolean
 )

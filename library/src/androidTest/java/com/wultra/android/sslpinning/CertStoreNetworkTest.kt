@@ -103,7 +103,14 @@ class CertStoreNetworkTest {
     // MARK: - Helpers
 
     private val hostToPin: String
-        get() = urlToPin.host ?: fail("Failed to get host from URL to pin").let { "" }
+        get() {
+            val host = urlToPin.host
+            if (host.isNullOrEmpty()) {
+                fail("Failed to get host from URL to pin")
+                error("Missing host in URL to pin")
+            }
+            return host
+        }
 
     private val adminCredsBase64: String
         get() = Base64.encodeToString(
