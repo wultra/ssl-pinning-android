@@ -206,6 +206,19 @@ class CertStoreDepthTest : CommonKotlinTest() {
      */
     @Test
     fun testCertDepth_PersistedAndRestoredFromCache() {
+        // Set up an in-memory store so save/load round-trips work
+        val inMemoryStore = mutableMapOf<String, ByteArray>()
+        every { secureDataStore.save(any(), any()) } answers {
+            val bytes = it.invocation.args[0] as ByteArray
+            val key = it.invocation.args[1] as String
+            inMemoryStore[key] = bytes
+            true
+        }
+        every { secureDataStore.load(any()) } answers {
+            val key = it.invocation.args[0] as String
+            inMemoryStore[key]
+        }
+
         val data = responseGenerator.removeAll()
             .append(commonName = CN_1, fingerprint = FP_1, depth = 2)
             .toByteArray()
@@ -214,8 +227,7 @@ class CertStoreDepthTest : CommonKotlinTest() {
         assertEquals(UpdateResult.OK, updateStore(certStore))
 
         // Verify that data was saved
-        val cachedJson = secureDataStore.load(null)
-        assertNotNull(cachedJson)
+        assertNotNull(inMemoryStore["default"])
 
         // Simulate app restart: new CertStore backed by the same data store
         val publicKeyBytes = Base64.getDecoder().decode(

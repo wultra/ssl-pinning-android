@@ -232,6 +232,19 @@ class CertStoreDomainsConfigTest : CommonKotlinTest() {
      */
     @Test
     fun testDomainsConfig_PersistedAndRestoredFromCache() {
+        // Set up an in-memory store so save/load round-trips work
+        val inMemoryStore = mutableMapOf<String, ByteArray>()
+        every { secureDataStore.save(any(), any()) } answers {
+            val bytes = it.invocation.args[0] as ByteArray
+            val key = it.invocation.args[1] as String
+            inMemoryStore[key] = bytes
+            true
+        }
+        every { secureDataStore.load(any()) } answers {
+            val key = it.invocation.args[0] as String
+            inMemoryStore[key]
+        }
+
         val domainsConfigJson = """{"sslPinningRequiredForUnlisted":true,"domains":[{"name":"$CN_1","sslPinningRequired":false}]}"""
         val data = responseGenerator.removeAll()
             .append(commonName = CN_1, fingerprint = FP_1)
