@@ -25,6 +25,7 @@ import com.wultra.android.sslpinning.integration.DefaultSecureDataStore
 import com.wultra.android.sslpinning.service.WultraDebug
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
+import org.junit.Assert.assertTrue
 import org.junit.Assert.fail
 import org.junit.Before
 import org.junit.Test
@@ -396,5 +397,57 @@ class CertStoreNetworkTest {
         assertNotNull(restoredResult)
         assertEquals("Expected TRUSTED after bypass cleared (valid cert registered)", ValidationResult.TRUSTED, restoredResult)
         assertEquals("Expected request to succeed after bypass cleared", true, restoredRequestResult)
+    }
+
+    /**
+     * Tests the `sslPinningRequiredForUnlisted` field in `domainsConfig` on a real-world server response.
+     *
+     * The backend always sends `sslPinningRequiredForUnlisted: true`, meaning every domain that is
+     * **not** explicitly listed in `domainsConfig.domains` must satisfy normal fingerprint-based
+     * pinning. The test covers three scenarios in sequence:
+     *
+     * 1. **Listed domain, pinning bypassed** — the target host is added to the bypass list
+     *    (`sslPinningRequired: false`). A real HTTPS request returns TRUSTED because the
+     *    host is listed and pinning is not required for it.
+     *
+     * 2. **Unlisted domain, `sslPinningRequiredForUnlisted: true`** — while the bypass is still
+     *    active, an unlisted domain is validated directly. Because pinning is required for
+     *    unlisted domains and no cert is stored for it, the SDK returns EMPTY.
+     *
+     * 3. **Previously listed domain becomes unlisted** — after clearing the bypass list the target
+     *    host itself becomes unlisted. With `sslPinningRequiredForUnlisted: true` in effect,
+     *    normal fingerprint-based pinning resumes. The registered leaf cert matches, so a real
+     *    HTTPS request returns TRUSTED.
+     */
+    @Test
+    fun testRealCertificateWithDomainsConfigSslPinningRequiredForUnlisted() {
+        // Register the leaf certificate so the host has a stored fingerprint
+        api_updateCertificate()
+
+        // Put the host in the bypass list.
+        // Server will respond with domainsConfig:
+        //   sslPinningRequiredForUnlisted: true  (always hardcoded by the server)
+        //   domains: [{ name: hostToPin, sslPinningRequired: false }]
+        api_setDomainsConfigBypass(listOf(hostToPin))
+        performUpdate()
+
+        // Phase 1: listed domain with bypass → TRUSTED regardless of fingerprint
+        var result1: ValidationResult? = null
+        val ctx1 = createDepthTrustManager(0) { result1 = it }
+        performRequest(urlToPin, ctx1)
+        assertEquals("Phase 1: listed domain should be TRUSTED (bypass)", ValidationResult.TRUSTED, result1)
+
+        // Phase 2: unlisted domain with sslPinningRequiredForUnlisted=true → EMPTY (no cert stored)
+        val unknownResult = certStore.validateFingerprint("unlisted.example.com", ByteArray(32))
+        assertEquals("Phase 2: unlisted domain should be EMPTY when pinning required", ValidationResult.EMPTY, unknownResult)
+
+        // Phase 3: clear bypass, domain becomes unlisted, normal pinning resumes
+        api_setDomainsConfigBypass(emptyList())
+        performUpdate()
+
+        var result3: ValidationResult? = null
+        val ctx3 = createDepthTrustManager(0) { result3 = it }
+        performRequest(urlToPin, ctx3)
+        assertEquals("Phase 3: unlisted domain with registered cert should be TRUSTED", ValidationResult.TRUSTED, result3)
     }
 }
