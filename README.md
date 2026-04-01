@@ -122,8 +122,6 @@ val fallbackCertificates = GetFingerprintResponse(
   fingerprints = arrayOf(fallbackEntry),
   domainsConfig = null  // optional domain bypass config
 )
-
-val fallbackCertificates = GetFingerprintResponse(arrayOf(fallbackEntry))
 val configuration = CertStoreConfiguration.Builder(
                             serviceUrl = URL("https://..."),
                             publicKey= publicKey)

@@ -25,15 +25,14 @@ import java.util.concurrent.TimeUnit
  * Data class for JSON response received from the server.
  *
  * @property fingerprints List of entry objects
+ * @property domainsConfig optional domain-specific SSL pinning configuration.
  *
  * @author Tomas Kypta, tomas.kypta@wultra.com
  */
 data class GetFingerprintResponse(
     val fingerprints: Array<Entry>,
+    val domainsConfig: DomainsConfig? = null
 ) {
-    /** Optional domain-specific SSL pinning configuration. Internal — not part of the public API. */
-    internal var domainsConfig: DomainsConfig? = null
-
     /**
      * Data class for an item in JSON response received from the server.
      *
