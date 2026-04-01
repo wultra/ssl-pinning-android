@@ -24,6 +24,7 @@ import com.wultra.android.sslpinning.util.ResponseGenerator
 import io.mockk.every
 import io.mockk.mockk
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNotEquals
 import org.junit.Assert.assertNotNull
 import org.junit.Test
 import java.net.URL
@@ -297,7 +298,7 @@ class CertStoreDepthTest : CommonKotlinTest() {
         val infoDepth1 = CertificateInfo(commonName = CN_1, fingerprint = FP_1, expires = expires, depth = 1)
         val infoDepth0Copy = CertificateInfo(commonName = CN_1, fingerprint = FP_1, expires = expires, depth = 0)
 
-        assert(infoDepth0 != infoDepth1)
+        assertNotEquals(infoDepth0, infoDepth1)
         assertEquals(infoDepth0, infoDepth0Copy)
     }
 

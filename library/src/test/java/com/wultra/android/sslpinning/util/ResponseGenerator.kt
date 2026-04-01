@@ -23,10 +23,10 @@ import java.util.Base64
  *
  * Usage:
  * ```
- * val json = ResponseGenerator()
+ * val responseBytes = ResponseGenerator()
  *     .append(commonName = "example.com", fingerprint = TestConstants.FINGERPRINT_1, depth = 0)
- *     .setDomainsConfig(domainsConfigJson = """{"sslPinningRequiredForUnlisted":true,"domains":[...]}""")
- *     .toJson()
+ *     .setDomainsConfigJson(json = """{"sslPinningRequiredForUnlisted":true,"domains":[...]}""")
+ *     .toByteArray()
  * ```
  */
 class ResponseGenerator {

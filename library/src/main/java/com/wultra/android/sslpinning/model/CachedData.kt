@@ -59,6 +59,7 @@ internal data class CachedData(var certificates: Array<CertificateInfo>,
 
         if (!certificates.contentEquals(other.certificates)) return false
         if (nextUpdate != other.nextUpdate) return false
+        if (domainsConfig != other.domainsConfig) return false
 
         return true
     }
@@ -66,6 +67,7 @@ internal data class CachedData(var certificates: Array<CertificateInfo>,
     override fun hashCode(): Int {
         var result = certificates.contentHashCode()
         result = 31 * result + nextUpdate.hashCode()
+        result = 31 * result + domainsConfig.hashCode()
         return result
     }
 }

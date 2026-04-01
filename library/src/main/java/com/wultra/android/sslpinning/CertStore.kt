@@ -544,7 +544,7 @@ class CertStore internal constructor(
     fun validateCertificateChain(chain: Array<out X509Certificate>, depth: Int): ValidationResult {
         // Chain must contain at least one certificate (the leaf) to extract the common name
         if (chain.isEmpty()) {
-            return ValidationResult.EMPTY
+            return ValidationResult.UNTRUSTED
         }
         // Depth of certificate should be within chain length
         // for example chain.size = 3, valid depth values: 0, 1, 2
