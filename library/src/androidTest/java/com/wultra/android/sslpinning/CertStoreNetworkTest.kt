@@ -53,7 +53,7 @@ import javax.net.ssl.X509TrustManager
  * - `test.sslPinning.adminPassword` — admin API password
  * - `test.sslPinning.urlToPin` — URL to make pinned HTTPS requests against
  */
-@Ignore("Skipping network test until GitHub pipeline credentials are resolved")
+@Ignore("Skipping network test until GitHub pipelines credentials are resolved")
 @RunWith(AndroidJUnit4::class)
 class CertStoreNetworkTest {
 
