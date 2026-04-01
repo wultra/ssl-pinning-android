@@ -28,6 +28,7 @@ import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertTrue
 import org.junit.Assert.fail
 import org.junit.Before
+import org.junit.Ignore
 import org.junit.Test
 import org.junit.runner.RunWith
 import java.net.HttpURLConnection
@@ -52,6 +53,7 @@ import javax.net.ssl.X509TrustManager
  * - `test.sslPinning.adminPassword` — admin API password
  * - `test.sslPinning.urlToPin` — URL to make pinned HTTPS requests against
  */
+@Ignore("Skipping network test until GitHub pipeline credentials are resolved")
 @RunWith(AndroidJUnit4::class)
 class CertStoreNetworkTest {
 
