@@ -42,8 +42,6 @@ class CertStoreDepthTest : CommonKotlinTest() {
         const val CN_1 = "test.example.com"
         /** Second common name. */
         const val CN_2 = "other.example.com"
-        /** Unknown common name (never registered). */
-        const val CN_UNKNOWN = "unknown.example.com"
 
         /** A known leaf fingerprint (32 bytes of 0x01, base64). */
         val FP_1: ByteArray = ByteArray(32) { 0x01 }
@@ -330,7 +328,7 @@ class CertStoreDepthTest : CommonKotlinTest() {
 
     /**
      * Tests that legacy [CachedData] JSON without a "depth" key in certificates can still be
-     * decoded by GSON (defaults to 0), unlike iOS where depth is required.
+     * decoded by GSON (defaults to 0).
      */
     @Test
     fun testCachedData_LegacyFormatWithoutDepthKey_DefaultsToZero() {

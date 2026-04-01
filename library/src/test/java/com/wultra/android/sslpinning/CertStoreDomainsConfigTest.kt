@@ -210,7 +210,7 @@ class CertStoreDomainsConfigTest : CommonKotlinTest() {
     }
 
     /**
-     * Tests that when no DomainsConfig is present in the response, normal validation behaviour applies.
+     * Tests that when no DomainsConfig is present in the response, normal validation behavior applies.
      */
     @Test
     fun testDomainsConfig_Absent_NormalValidationApplied() {
