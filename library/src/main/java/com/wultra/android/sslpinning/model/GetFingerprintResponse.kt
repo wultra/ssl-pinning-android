@@ -48,15 +48,8 @@ data class GetFingerprintResponse @JvmOverloads constructor(
                      val fingerprint: ByteArray,
                      val expires: Date,
                      val signature: ByteArray?,
-                     val depth: Int? = null
+                     val depth: Int = 0
     ) {
-        constructor(
-            name: String,
-            fingerprint: ByteArray,
-            expires: Date,
-            signature: ByteArray?
-        ) : this(name, fingerprint, expires, signature, 0)
-
         /**
          * Get normalized data which can be used for the signature validation.
          */

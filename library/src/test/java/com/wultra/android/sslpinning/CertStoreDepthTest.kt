@@ -253,8 +253,7 @@ class CertStoreDepthTest : CommonKotlinTest() {
             name = CN_1,
             fingerprint = FP_1,
             expires = Date(System.currentTimeMillis() + TimeUnit.DAYS.toMillis(1)),
-            signature = null,
-            depth = null
+            signature = null
         )
         val info = CertificateInfo(entry)
         assertEquals(0, info.depth)
