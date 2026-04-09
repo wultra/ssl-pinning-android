@@ -179,7 +179,9 @@ class CertStore internal constructor(
     }
 
     internal fun loadFallbackCertificates(): Array<CertificateInfo> {
-        val fallbackEntries = configuration.fallbackCertificates?.fingerprints ?: return emptyArray()
+        // In the current implementation, we deliberately do not allow fallback configuration for domains;
+        // only the fallback certificates array is supported.
+        val fallbackEntries = configuration.fallbackCertificates ?: return emptyArray()
         return fallbackEntries.map { CertificateInfo(it) }.toTypedArray()
     }
 
@@ -446,6 +448,12 @@ class CertStore internal constructor(
      * @return Validation result
      */
     fun validateFingerprint(commonName: String, fingerprint: ByteArray, depth: Int): ValidationResult {
+        // depth should be 0+
+        if (depth < 0) {
+            notifyValidationObservers(commonName, ValidationObserver::onValidationUntrusted)
+            return ValidationResult.UNTRUSTED
+        }
+
         val expected = configuration.expectedCommonNames
         if (expected != null && !expected.contains(commonName)) {
             notifyValidationObservers(commonName, ValidationObserver::onValidationUntrusted)

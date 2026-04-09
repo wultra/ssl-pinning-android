@@ -73,10 +73,12 @@ class CertStoreConfiguration(
         /**
          * Defines a fallback certificate fingerprints.
          *
-         * You can configure a fallback certificate which will be used as the last stand during
-         * the fingerprint validation.
+         * You can configure fallback certificates which will be used as the last resort during
+         * the fingerprint validation. Only certificate entries (fingerprints) are supported here;
+         * any domain bypass configuration ([com.wultra.android.sslpinning.model.DomainsConfig]) is
+         * deliberately not supported in fallback data and takes effect only when received from the server.
          */
-        val fallbackCertificates: GetFingerprintResponse?,
+        val fallbackCertificates: Array<GetFingerprintResponse.Entry>?,
 
         /**
          * Defines how often (in milliseconds) will [CertStore] periodically check the certificates
@@ -110,7 +112,7 @@ class CertStoreConfiguration(
             useChallenge = builder.useChallenge,
             expectedCommonNames = builder.expectedCommonNames,
             identifier = builder.identifier,
-            fallbackCertificates = builder.fallbackCertificates ?: builder.fallbackCertificate?.let { GetFingerprintResponse(arrayOf(it)) },
+            fallbackCertificates = builder.fallbackCertificates ?: builder.fallbackCertificate?.let { arrayOf(it) },
             periodicUpdateIntervalMillis = builder.periodicUpdateIntervalMillis,
             expirationUpdateThresholdMillis = builder.expirationUpdateThresholdMillis,
             executorService = builder.executorService,
@@ -127,7 +129,7 @@ class CertStoreConfiguration(
             WultraDebug.warning("CertStoreConfiguration: 'sslValidationStrategy' should not be used in production.")
         }
         // validate fallback certificate data
-        fallbackCertificates?.fingerprints?.forEach { fallback ->
+        fallbackCertificates?.forEach { fallback ->
             try {
                 expectedCommonNames?.let { expectedCNs ->
                     if (!expectedCNs.contains(fallback.name)) {
@@ -179,7 +181,7 @@ class CertStoreConfiguration(
         var fallbackCertificate: GetFingerprintResponse.Entry? = null
             private set
 
-        var fallbackCertificates: GetFingerprintResponse? = null
+        var fallbackCertificates: Array<GetFingerprintResponse.Entry>? = null
             private set
 
         var periodicUpdateIntervalMillis: Long = TimeUnit.DAYS.toMillis(7)
@@ -232,8 +234,10 @@ class CertStoreConfiguration(
         /**
          * Fallback certificate fingerprints.
          * Useful for situations when no fingerprints has been loaded from the server yet.
+         * Only certificate fingerprints are accepted here; domain bypass configuration
+         * (DomainsConfig) is not supported in fallback data and is intentionally ignored.
          */
-        fun fallbackCertificates(fallbackCertificates: GetFingerprintResponse?) = apply {
+        fun fallbackCertificates(fallbackCertificates: Array<GetFingerprintResponse.Entry>?) = apply {
             this.fallbackCertificates = fallbackCertificates
         }
 

@@ -39,7 +39,7 @@ class CertStoreValidateTest : CommonTest() {
         val fallbackFingerprints = GSON.fromJson(validFingerprintJsonResponse().decodeToString(), GetFingerprintResponse::class.java)
         val config = CertStoreConfiguration.Builder(serviceUrl, pubKey)
             .useChallenge(true)
-            .fallbackCertificates(fallbackFingerprints)
+            .fallbackCertificates(fallbackFingerprints.fingerprints)
             .build()
         val cert = getCertificateFromUrl("https://github.com")
 

@@ -27,7 +27,7 @@ import java.util.Date
 data class CertificateInfo(val commonName: String,
                            val fingerprint: ByteArray,
                            val expires: Date,
-                           val depth: Int = 0
+                           val depth: Int? = 0
     ) : Serializable, Comparable<CertificateInfo> {
 
     internal constructor(responseEntry: GetFingerprintResponse.Entry) :
@@ -68,7 +68,7 @@ data class CertificateInfo(val commonName: String,
         var result = commonName.hashCode()
         result = 31 * result + fingerprint.contentHashCode()
         result = 31 * result + expires.hashCode()
-        result = 31 * result + depth
+        result = 31 * result + (depth ?: 0)
         return result
     }
 }
