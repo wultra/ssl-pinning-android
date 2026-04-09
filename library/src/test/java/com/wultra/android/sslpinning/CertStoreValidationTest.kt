@@ -55,7 +55,7 @@ class CertStoreValidationTest : CommonKotlinTest() {
             fingerprintBytes,
             Date(System.currentTimeMillis() + TimeUnit.DAYS.toMillis(1)),
             signatureBytes)
-        val fallback = GetFingerprintResponse(arrayOf(fallbackEntry))
+        val fallback = arrayOf(fallbackEntry)
 
         val config = TestUtils.getCertStoreConfiguration(
             Date(),

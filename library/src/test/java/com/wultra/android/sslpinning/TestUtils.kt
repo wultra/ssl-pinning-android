@@ -82,7 +82,7 @@ class TestUtils {
             expectedCommonNames: Array<String>?,
             serviceUrl: URL,
             publicKey: ByteArray,
-            fallback: GetFingerprintResponse?
+            fallback: Array<GetFingerprintResponse.Entry>?
         ): CertStoreConfiguration {
             val builder = CertStoreConfiguration.Builder(
                 serviceUrl, publicKey

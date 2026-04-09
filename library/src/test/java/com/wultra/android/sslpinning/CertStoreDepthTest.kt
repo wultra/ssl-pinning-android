@@ -26,6 +26,7 @@ import io.mockk.mockk
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotEquals
 import org.junit.Assert.assertNotNull
+import org.junit.Assert.assertNull
 import org.junit.Test
 import java.net.URL
 import java.util.Base64
@@ -329,10 +330,11 @@ class CertStoreDepthTest : CommonKotlinTest() {
 
     /**
      * Tests that legacy [CachedData] JSON without a "depth" key in certificates can still be
-     * decoded by GSON (defaults to 0).
+     * decoded by GSON, and that the depth field is null (matching the absent-key behavior,
+     * analogous to iOS where missing "d" key results in nil depth).
      */
     @Test
-    fun testCachedData_LegacyFormatWithoutDepthKey_DefaultsToZero() {
+    fun testCachedData_LegacyFormatWithoutDepthKey() {
         val fingerprintBase64 = Base64.getEncoder().encodeToString(FP_1)
         val expiresMs = System.currentTimeMillis() + TimeUnit.DAYS.toMillis(1)
         val legacyJson = """
@@ -348,9 +350,9 @@ class CertStoreDepthTest : CommonKotlinTest() {
         }
         """.trimIndent()
 
-        // GSON gracefully handles missing fields by using their default value (0 for Int)
+        // GSON sets nullable Int? fields to null when the key is absent in JSON
         val decoded = CertStore.GSON.fromJson(legacyJson, CachedData::class.java)
         assertNotNull("Legacy cache without 'depth' key should still decode with GSON", decoded)
-        assertEquals(0, decoded.certificates[0].depth)
+        assertNull("Missing 'depth' key should result in null depth", decoded.certificates[0].depth)
     }
 }

@@ -142,9 +142,8 @@ public class CertStoreConfigurationTest extends CommonKotlinTest {
         Arrays.fill(signature, (byte)0xfe);
 
         GetFingerprintResponse.Entry[] fallbackList = new GetFingerprintResponse.Entry[] { new GetFingerprintResponse.Entry("api.fallback.org", fingerprint, expiration, signature, 0) };
-        GetFingerprintResponse fallbackData = new GetFingerprintResponse(fallbackList);
 
-        return TestUtils.getCertStoreConfiguration(expiration, expectedCommonNames, serviceUrl, publicKeyBytes, fallbackData);
+        return TestUtils.getCertStoreConfiguration(expiration, expectedCommonNames, serviceUrl, publicKeyBytes, fallbackList);
     }
 
 }
