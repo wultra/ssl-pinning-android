@@ -27,14 +27,14 @@ import java.util.Date
 data class CertificateInfo(val commonName: String,
                            val fingerprint: ByteArray,
                            val expires: Date,
-                           val depth: Int? = 0
+                           val depth: Int = 0
     ) : Serializable, Comparable<CertificateInfo> {
 
     internal constructor(responseEntry: GetFingerprintResponse.Entry) :
             this(commonName = responseEntry.name,
                 fingerprint = responseEntry.fingerprint,
                 expires = responseEntry.expires,
-                depth = responseEntry.depth ?: 0)
+                depth = responseEntry.depth)
 
     /**
      * Check if the info is expired.
