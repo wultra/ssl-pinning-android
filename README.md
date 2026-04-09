@@ -256,7 +256,7 @@ The motivation for these global validation observers is that some validation fai
 
 By default the library pins the **leaf certificate** — the certificate the server presents directly. For stronger protection against a compromised leaf certificate you can instead pin an **intermediate CA** or the **root CA** in the certificate chain.
 
-The `depth` parameter refers to the position of the certificate in the TLS chain as received in `X509TrustManager.checkServerTrusted(chain, authType)`, where `chain[0]` is the leaf:
+The `depth` parameter refers to the position of the certificate in the TLS chain as received in `X509TrustManager.checkServerTrusted(chain, authType)`, where `chain[0]` is the leaf. Note that the root CA may or may not be included in this provided chain:
 
 | depth | certificate |
 |-------|-------------|

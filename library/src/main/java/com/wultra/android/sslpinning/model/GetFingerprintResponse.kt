@@ -29,7 +29,7 @@ import java.util.concurrent.TimeUnit
  *
  * @author Tomas Kypta, tomas.kypta@wultra.com
  */
-data class GetFingerprintResponse(
+data class GetFingerprintResponse @JvmOverloads constructor(
     val fingerprints: Array<Entry>,
     val domainsConfig: DomainsConfig? = null
 ) {
