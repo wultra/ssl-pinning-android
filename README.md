@@ -109,7 +109,11 @@ The configuration has the following properties:
 
 The `CertStoreConfiguration` may contain optional data with predefined certificate fingerprints. This technique can speed up the first application's startup when the database of fingerprints is empty. You still need to [update](#updating-fingerprints) your application, once the fallback fingerprints expire.
 
-To configure the property, you need to provide `GetFingerprintResponse` with fallback certificate fingerprints. The data should contain the same data as are usually received from the server, except that the `signature` property is not validated (but must be provided). The optional `depth` field specifies the certificate chain position (0 = leaf, the default). An optional `domainsConfig` object can also be included to pre-configure domain bypass rules. For example:
+To configure the property, you need to provide an array of `GetFingerprintResponse.Entry` objects with fallback certificate fingerprints. The data should contain the same data as are usually received from the server, except that the `signature` property is not validated (but must be provided). The optional `depth` field specifies the certificate chain position (0 = leaf, the default).
+
+> **Important:** Only fallback **certificates** (fingerprints) are supported in `fallbackCertificates`. The `DomainsConfig` object is intentionally **not** supported in fallback data — domain bypass rules take effect only when received from the server.
+
+For example:
 
 ```kotlin
 val fallbackEntry = GetFingerprintResponse.Entry(
@@ -118,14 +122,10 @@ val fallbackEntry = GetFingerprintResponse.Entry(
                        expires = Date(1591185600000),
                        signature = ByteArray(0),
                        depth = 0)
-val fallbackCertificates = GetFingerprintResponse(
-  fingerprints = arrayOf(fallbackEntry),
-  domainsConfig = null  // optional domain bypass config
-)
 val configuration = CertStoreConfiguration.Builder(
                             serviceUrl = URL("https://..."),
                             publicKey= publicKey)
-                    .fallbackCertificates(fallbackCertificates)
+                    .fallbackCertificates(arrayOf(fallbackEntry))
                     .build()
 val certStore = CertStore(configuration, appContext)
 ```
@@ -315,11 +315,13 @@ The SDK applies the following rules on every call to `validate...`:
 
 The `domainsConfig` is cached locally alongside the fingerprints and cleared whenever the server sends a response without it.
 
+> **Important:** `domainsConfig` is supported **only** when received from the server. It is intentionally **not** supported in `fallbackCertificates` — there is no fallback mechanism for domain bypass rules.
+
 ### Migration notes
 
 #### 1.8.x to 1.9.x
 
-The internal cache format was extended with a `depth` field for each stored certificate entry. Caches written by version 1.8.x or earlier will have their `depth` field default to `0` when decoded — this corresponds to the leaf certificate and matches the previous behaviour exactly. No action is required from the integrator.
+The internal cache format was extended with an optional `depth` field for each stored certificate entry. When the field is absent (e.g. in caches written by version 1.8.x), it defaults to `0` (leaf certificate). Existing caches are fully compatible with 1.9.x — no cache reset, server update, or integrator action is required.
 
 All existing `validate...` calls continue to work unchanged; they now implicitly validate the leaf certificate (depth 0), which is identical to previous behaviour.
 
