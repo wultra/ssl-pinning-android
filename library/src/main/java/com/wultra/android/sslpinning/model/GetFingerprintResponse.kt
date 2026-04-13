@@ -86,7 +86,7 @@ data class GetFingerprintResponse @JvmOverloads constructor(
             result = 31 * result + fingerprint.contentHashCode()
             result = 31 * result + expires.hashCode()
             result = 31 * result + (signature?.contentHashCode() ?: 0)
-            result = 31 * result + (depth ?: 0)
+            result = 31 * result + depth
             return result
         }
     }

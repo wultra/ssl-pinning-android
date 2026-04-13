@@ -349,9 +349,9 @@ class CertStoreDepthTest : CommonKotlinTest() {
         }
         """.trimIndent()
 
-        // GSON sets nullable Int? fields to null when the key is absent in JSON
+        // GSON sets Int fields to 0 when the key is absent in JSON
         val decoded = CertStore.GSON.fromJson(legacyJson, CachedData::class.java)
         assertNotNull("Legacy cache without 'depth' key should still decode with GSON", decoded)
-        assertNull("Missing 'depth' key should result in null depth", decoded.certificates[0].depth)
+        assertEquals("Missing 'depth' key should result in depth of 0", 0, decoded.certificates[0].depth)
     }
 }
