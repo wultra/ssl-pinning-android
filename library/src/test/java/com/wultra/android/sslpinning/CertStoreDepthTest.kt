@@ -335,17 +335,17 @@ class CertStoreDepthTest : CommonKotlinTest() {
     @Test
     fun testCachedData_LegacyFormatWithoutDepthKey() {
         val fingerprintBase64 = Base64.getEncoder().encodeToString(FP_1)
-        val expiresMs = System.currentTimeMillis() + TimeUnit.DAYS.toMillis(1)
+        val expires = Date(System.currentTimeMillis() + TimeUnit.DAYS.toMillis(1)).time
         val legacyJson = """
         {
             "certificates": [
                 {
                     "commonName": "$CN_1",
                     "fingerprint": "$fingerprintBase64",
-                    "expires": $expiresMs
+                    "expires": $expires
                 }
             ],
-            "nextUpdate": $expiresMs
+            "nextUpdate": $expires
         }
         """.trimIndent()
 

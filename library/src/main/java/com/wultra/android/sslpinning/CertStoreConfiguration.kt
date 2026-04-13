@@ -233,7 +233,7 @@ class CertStoreConfiguration(
 
         /**
          * Fallback certificate fingerprints.
-         * Useful for situations when no fingerprints has been loaded from the server yet.
+         * Useful for situations when no fingerprints have been loaded from the server yet.
          * Only certificate fingerprints are accepted here; domain bypass configuration
          * (DomainsConfig) is not supported in fallback data and is intentionally ignored.
          */
