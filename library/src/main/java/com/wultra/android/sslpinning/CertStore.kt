@@ -534,6 +534,7 @@ class CertStore internal constructor(
         // Chain must contain at least one certificate (the leaf) to extract the common name
         if (chain.isEmpty()) {
             WultraDebug.warning("CertStore: Certificate chain is empty; returning UNTRUSTED without fingerprint validation.")
+            notifyValidationObservers("empty chain", ValidationObserver::onValidationUntrusted)
             return ValidationResult.UNTRUSTED
         }
         // Depth of certificate should be within chain length
