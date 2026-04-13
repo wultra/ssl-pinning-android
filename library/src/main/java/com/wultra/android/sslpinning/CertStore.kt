@@ -422,20 +422,6 @@ class CertStore internal constructor(
     /*** VALIDATION ***/
 
     /**
-     * Validates whether provided certificate fingerprint is trusted for given common name.
-     * Validates the leaf certificate (depth 0), which is the default behavior and is
-     * fully backward-compatible.
-     *
-     * @param commonName A common name
-     * @param fingerprint A SHA-256 fingerprint calculated from certificate's data
-     *
-     * @return Validation result
-     */
-    fun validateFingerprint(commonName: String, fingerprint: ByteArray): ValidationResult {
-        return validateFingerprint(commonName, fingerprint, depth = 0)
-    }
-
-    /**
      * Validates whether provided certificate fingerprint at a specific chain depth is trusted for given common name.
      *
      * When [DomainsConfig] is available from a server update and the domain has [DomainConfig.sslPinningRequired]
@@ -443,11 +429,12 @@ class CertStore internal constructor(
      *
      * @param commonName A common name from the leaf server certificate
      * @param fingerprint A SHA-256 fingerprint calculated from certificate's data
-     * @param depth The certificate depth in the TLS chain (0 = leaf, 1..N-1 = intermediate, N = root)
+     * @param depth The certificate depth in the TLS chain (0 = leaf, 1..N-1 = intermediate, N = root). When no depth is provided, 0 is used as default.
      *
      * @return Validation result
      */
-    fun validateFingerprint(commonName: String, fingerprint: ByteArray, depth: Int): ValidationResult {
+    @JvmOverloads
+    fun validateFingerprint(commonName: String, fingerprint: ByteArray, depth: Int = 0): ValidationResult {
         // depth should be 0+
         if (depth < 0) {
             notifyValidationObservers(commonName, ValidationObserver::onValidationUntrusted)
@@ -456,6 +443,7 @@ class CertStore internal constructor(
 
         val expected = configuration.expectedCommonNames
         if (expected != null && !expected.contains(commonName)) {
+            WultraDebug.warning("CertStore: Common name '$commonName' not found in expected list; returning UNTRUSTED without fingerprint validation.")
             notifyValidationObservers(commonName, ValidationObserver::onValidationUntrusted)
             return ValidationResult.UNTRUSTED
         }
@@ -470,6 +458,7 @@ class CertStore internal constructor(
 
         val certificates = getCertificates()
         if (certificates.isEmpty()) {
+            WultraDebug.warning("CertStore: List of certificates is empty; returning EMPTY.")
             notifyValidationObservers(commonName, ValidationObserver::onValidationEmpty)
             return ValidationResult.EMPTY
         }
@@ -502,26 +491,14 @@ class CertStore internal constructor(
 
     /**
      * Validates whether provided certificate data in DER format is trusted for given common name.
-     * Call this method to validate the leaf (depth 0) certificate.
      *
      * @param commonName Common name (CN).
      * @param certificateData Certificate data in DER format.
+     * @param depth The certificate depth in the TLS chain (0 = leaf, 1..N-1 = intermediate, N = root). When no depth is provided, 0 is used as default.
      * @return Validation result.
      */
-    fun validateCertificateData(commonName: String, certificateData: ByteArray): ValidationResult {
-        val fingerprint = cryptoProvider.hashSha256(certificateData)
-        return validateFingerprint(commonName, fingerprint, depth = 0)
-    }
-
-    /**
-     * Validates whether provided certificate data in DER format is trusted for given common name.
-     *
-     * @param commonName Common name (CN).
-     * @param certificateData Certificate data in DER format.
-     * @param depth The certificate depth in the TLS chain (0 = leaf, 1..N-1 = intermediate, N = root).
-     * @return Validation result.
-     */
-    fun validateCertificateData(commonName: String, certificateData: ByteArray, depth: Int): ValidationResult {
+    @JvmOverloads
+    fun validateCertificateData(commonName: String, certificateData: ByteArray, depth: Int = 0): ValidationResult {
         val fingerprint = cryptoProvider.hashSha256(certificateData)
         return validateFingerprint(commonName, fingerprint, depth)
     }
@@ -552,11 +529,13 @@ class CertStore internal constructor(
     fun validateCertificateChain(chain: Array<out X509Certificate>, depth: Int): ValidationResult {
         // Chain must contain at least one certificate (the leaf) to extract the common name
         if (chain.isEmpty()) {
+            WultraDebug.warning("CertStore: Certificate chain is empty; returning UNTRUSTED without fingerprint validation.")
             return ValidationResult.UNTRUSTED
         }
         // Depth of certificate should be within chain length
         // for example chain.size = 3, valid depth values: 0, 1, 2
         if (depth < 0 || depth >= chain.size) {
+            WultraDebug.warning("CertStore: Requested certificate depth ($depth) is outside of the chain length (${chain.size}); returning UNTRUSTED without fingerprint validation.")
             notifyValidationObservers(CertUtils.parseCommonName(chain[0]), ValidationObserver::onValidationUntrusted)
             return ValidationResult.UNTRUSTED
         }
