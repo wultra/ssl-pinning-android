@@ -168,7 +168,7 @@ class CertStore internal constructor(
         return try {
             GSON.fromJson(String(encodedData), CachedData::class.java)
         } catch (t: Throwable) {
-            WultraDebug.error("Failed to parse stored fingerprint data: $t")
+            WultraDebug.error("CertStore: Failed to parse stored fingerprint data: $t")
             return null
         }
     }
@@ -293,7 +293,7 @@ class CertStore internal constructor(
             thread.priority = Process.THREAD_PRIORITY_BACKGROUND
             thread.uncaughtExceptionHandler =
                     Thread.UncaughtExceptionHandler { t, e ->
-                        WultraDebug.error("Silent update failed, $t crashed with $e.")
+                        WultraDebug.error("CertStore: Silent update failed, $t crashed with $e.")
                     }
             thread.start()
         }
@@ -307,26 +307,27 @@ class CertStore internal constructor(
         // Validate signature in header
         if (configuration.useChallenge) {
             if (challenge == null) {
+                WultraDebug.error("CertStore: Missing challenge.")
                 // This is an internal library error. In case that "useChallenge" is true,
                 // then the challenge must be provided.
                 throw IllegalArgumentException("Missing challenge")
             }
             val signatureHeader = responseHeaders[RESPONSE_SIGNATURE_HEADER]
             if (signatureHeader == null) {
-                WultraDebug.error("Missing signature header.")
+                WultraDebug.error("CertStore: Missing signature header.")
                 return UpdateResult.INVALID_SIGNATURE
             }
             val signature = try {
                 Base64.decode(signatureHeader, Base64.NO_WRAP)
             } catch (t: Throwable) {
-                WultraDebug.error("Failed to decode signature from header: $t")
+                WultraDebug.error("CertStore: Failed to decode signature from header: $t")
                 return UpdateResult.INVALID_SIGNATURE
             }
             var signedBytes = challenge.toByteArray(Charsets.UTF_8)
             signedBytes += '&'.code.toByte()
             signedBytes += data
             if (!cryptoProvider.ecdsaValidateSignature(SignedData(signedBytes, signature), publicKey)) {
-                WultraDebug.error("Invalid signature in $RESPONSE_SIGNATURE_HEADER header")
+                WultraDebug.error("CertStore: Invalid signature in $RESPONSE_SIGNATURE_HEADER header")
                 return UpdateResult.INVALID_SIGNATURE
             }
         }
@@ -334,13 +335,14 @@ class CertStore internal constructor(
         val response = try {
             GSON.fromJson(String(data), GetFingerprintResponse::class.java)
         } catch (t: Throwable) {
-            WultraDebug.error("Failed to parse received fingerprint data: $t")
+            WultraDebug.error("CertStore: Failed to parse received fingerprint data: $t")
             null
         } ?: return UpdateResult.INVALID_DATA
 
         // this can be null as it's serialize
         @Suppress("SENSELESS_COMPARISON")
         if (response.fingerprints == null) {
+            WultraDebug.error("CertStore: Fingerprints are null")
             // this can be caused by invalid data in json
             return UpdateResult.INVALID_DATA
         }
@@ -437,6 +439,7 @@ class CertStore internal constructor(
     fun validateFingerprint(commonName: String, fingerprint: ByteArray, depth: Int = 0): ValidationResult {
         // depth should be 0+
         if (depth < 0) {
+            WultraDebug.warning("CertStore: Requested depth of certificate should be >= 0; returning UNTRUSTED without fingerprint validation.")
             notifyValidationObservers(commonName, ValidationObserver::onValidationUntrusted)
             return ValidationResult.UNTRUSTED
         }
@@ -451,6 +454,7 @@ class CertStore internal constructor(
         getCachedData()?.domainsConfig?.let { domainsConfig ->
             // Check if pinning is required for this domain
             if (!domainsConfig.isPinningRequired(commonName)) {
+                WultraDebug.warning("CertStore: Skipping SSL pinning validation for domain '$commonName' because of domainsConfig; returning TRUSTED without fingerprint validation.")
                 notifyValidationObservers(commonName, ValidationObserver::onValidationTrusted)
                 return ValidationResult.TRUSTED
             }
@@ -534,7 +538,7 @@ class CertStore internal constructor(
         }
         // Depth of certificate should be within chain length
         // for example chain.size = 3, valid depth values: 0, 1, 2
-        if (depth < 0 || depth >= chain.size) {
+        if (depth >= chain.size) {
             WultraDebug.warning("CertStore: Requested certificate depth ($depth) is outside of the chain length (${chain.size}); returning UNTRUSTED without fingerprint validation.")
             notifyValidationObservers(CertUtils.parseCommonName(chain[0]), ValidationObserver::onValidationUntrusted)
             return ValidationResult.UNTRUSTED
