@@ -242,6 +242,144 @@ class CertStoreDepthTest : CommonKotlinTest() {
         assertEquals(ValidationResult.EMPTY, newCertStore.validateFingerprint(CN_1, FP_1, 0))
     }
 
+    // MARK: - Fallback certificate depth tests
+
+    private fun getCertStoreWithFallback(
+        fallback: Array<GetFingerprintResponse.Entry>,
+        remoteDataProvider: RemoteDataProvider? = null
+    ): CertStore {
+        val publicKeyBytes = Base64.getDecoder().decode(
+            "BC3kV9OIDnMuVoCdDR9nEA/JidJLTTDLuSA2TSZsGgODSshfbZg31MS90WC/HdbU/A5WL5GmyDkE/iks6INv+XE="
+        )
+        val config = TestUtils.getCertStoreConfiguration(
+            Date(),
+            null,
+            URL("https://test"),
+            publicKeyBytes,
+            fallback
+        )
+        val store = if (remoteDataProvider != null) {
+            CertStore(config, cryptoProvider, secureDataStore, remoteDataProvider)
+        } else {
+            CertStore(config, cryptoProvider, secureDataStore)
+        }
+        TestUtils.assignHandler(store, handler)
+        return store
+    }
+
+    private fun fallbackEntry(
+        commonName: String,
+        fingerprint: ByteArray,
+        depth: Int
+    ): GetFingerprintResponse.Entry = GetFingerprintResponse.Entry(
+        name = commonName,
+        fingerprint = fingerprint,
+        expires = Date(System.currentTimeMillis() + TimeUnit.DAYS.toMillis(30)),
+        signature = null,
+        depth = depth
+    )
+
+    /**
+     * Tests that a fallback certificate pinned at depth 1 (intermediate) is trusted when the
+     * store has no dynamically fetched certificates (fallback-only path).
+     */
+    @Test
+    fun testFallbackCert_Depth1_IsTrustedAtCorrectDepth() {
+        val certStore = getCertStoreWithFallback(
+            arrayOf(fallbackEntry(CN_1, FP_1, depth = 1))
+        )
+
+        assertEquals(ValidationResult.TRUSTED, certStore.validateFingerprint(CN_1, FP_1, 1))
+    }
+
+    /**
+     * Tests that a fallback certificate pinned at depth 1 is NOT trusted when validated at depth 0.
+     */
+    @Test
+    fun testFallbackCert_Depth1_IsEmptyAtDepth0() {
+        val certStore = getCertStoreWithFallback(
+            arrayOf(fallbackEntry(CN_1, FP_1, depth = 1))
+        )
+
+        // No cert is pinned at depth 0 → EMPTY
+        assertEquals(ValidationResult.EMPTY, certStore.validateFingerprint(CN_1, FP_1, 0))
+        // Legacy overload defaults to depth 0 → also EMPTY
+        assertEquals(ValidationResult.EMPTY, certStore.validateFingerprint(CN_1, FP_1))
+    }
+
+    /**
+     * Tests that a wrong fingerprint at the correct fallback depth returns UNTRUSTED.
+     */
+    @Test
+    fun testFallbackCert_WrongFingerprintAtCorrectDepth_ReturnsUntrusted() {
+        val certStore = getCertStoreWithFallback(
+            arrayOf(fallbackEntry(CN_1, FP_1, depth = 1))
+        )
+
+        assertEquals(ValidationResult.UNTRUSTED, certStore.validateFingerprint(CN_1, FP_UNKNOWN, 1))
+    }
+
+    /**
+     * Tests that a fallback certificate at depth 2 is trusted at depth 2 but not at other depths.
+     */
+    @Test
+    fun testFallbackCert_Depth2_MatchesOnlyAtDepth2() {
+        val certStore = getCertStoreWithFallback(
+            arrayOf(fallbackEntry(CN_1, FP_1, depth = 2))
+        )
+
+        assertEquals(ValidationResult.TRUSTED, certStore.validateFingerprint(CN_1, FP_1, 2))
+        assertEquals(ValidationResult.EMPTY, certStore.validateFingerprint(CN_1, FP_1, 0))
+        assertEquals(ValidationResult.EMPTY, certStore.validateFingerprint(CN_1, FP_1, 1))
+    }
+
+    /**
+     * Tests that a dynamically fetched cert and a fallback cert can coexist at different depths
+     * for the same CN, and both are honoured independently.
+     */
+    @Test
+    fun testFallbackCert_CoexistsWithDynamicCertAtDifferentDepth() {
+        // Dynamic entry at depth 0
+        val data = responseGenerator.removeAll()
+            .append(commonName = CN_1, fingerprint = FP_1, depth = 0)
+            .toByteArray()
+
+        val certStore = getCertStoreWithFallback(
+            arrayOf(fallbackEntry(CN_1, FP_2, depth = 1)),
+            remoteDataProvider = buildRemoteDataProvider(data)
+        )
+        assertEquals(UpdateResult.OK, updateStore(certStore))
+
+        // Dynamic cert trusted at depth 0
+        assertEquals(ValidationResult.TRUSTED, certStore.validateFingerprint(CN_1, FP_1, 0))
+        // Fallback cert trusted at depth 1
+        assertEquals(ValidationResult.TRUSTED, certStore.validateFingerprint(CN_1, FP_2, 1))
+        // Cross-depth checks return UNTRUSTED (wrong fingerprint for that depth)
+        assertEquals(ValidationResult.UNTRUSTED, certStore.validateFingerprint(CN_1, FP_2, 0))
+        assertEquals(ValidationResult.UNTRUSTED, certStore.validateFingerprint(CN_1, FP_1, 1))
+    }
+
+    /**
+     * Tests that multiple fallback certificates at different depths for the same CN are all
+     * independently trusted at their respective depths.
+     */
+    @Test
+    fun testFallbackCert_MultipleDepthsForSameCN_AllHonoured() {
+        val certStore = getCertStoreWithFallback(
+            arrayOf(
+                fallbackEntry(CN_1, FP_1, depth = 1),
+                fallbackEntry(CN_1, FP_2, depth = 2)
+            )
+        )
+
+        assertEquals(ValidationResult.TRUSTED, certStore.validateFingerprint(CN_1, FP_1, 1))
+        assertEquals(ValidationResult.TRUSTED, certStore.validateFingerprint(CN_1, FP_2, 2))
+        // Cross-depth: FP_1 at depth 2 → wrong fingerprint → UNTRUSTED
+        assertEquals(ValidationResult.UNTRUSTED, certStore.validateFingerprint(CN_1, FP_1, 2))
+        // FP_2 at depth 1 → wrong fingerprint → UNTRUSTED
+        assertEquals(ValidationResult.UNTRUSTED, certStore.validateFingerprint(CN_1, FP_2, 1))
+    }
+
     // MARK: - CertificateInfo model tests
 
     /**
