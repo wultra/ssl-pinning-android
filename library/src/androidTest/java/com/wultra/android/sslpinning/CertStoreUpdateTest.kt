@@ -39,7 +39,7 @@ class CertStoreUpdateTest : CommonTest() {
 
     override fun setUp() {
         super.setUp()
-        val config = CertStoreConfiguration.Builder(serviceUrl, pubKey).useChallenge(true).build()
+        val config = CertStoreConfiguration.Builder(serviceUrl, pubKey).build()
         certStores = arrayOf(
             CertStore.powerAuthCertStore(config, appContext, UUID.randomUUID().toString()),
             CertStore(config, DefaultCryptoProvider(), DefaultSecureDataStore(appContext, UUID.randomUUID().toString()))
@@ -74,7 +74,7 @@ class CertStoreUpdateTest : CommonTest() {
         val publicKey = "BEG6g28LNWRcmdFzexSNTKPBYZnDtKrCyiExFKbktttfKAF7wG4Cx1Nycr5PwCoICG1dRseLyuDxUilAmppPxAo="
         val publicKeyBytes = Base64.decode(publicKey, Base64.NO_WRAP)
 
-        val config = CertStoreConfiguration.Builder(serviceUrl, publicKeyBytes).useChallenge(true).build()
+        val config = CertStoreConfiguration.Builder(serviceUrl, publicKeyBytes).build()
         val customCertStores = arrayOf(
             CertStore.powerAuthCertStore(config, appContext, UUID.randomUUID().toString()),
             CertStore(config, DefaultCryptoProvider(), DefaultSecureDataStore(appContext, UUID.randomUUID().toString()))
