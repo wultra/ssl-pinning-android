@@ -104,6 +104,10 @@ open class CommonKotlinTest {
             TestPA2ECPublicKey(it.invocation.args[0] as ByteArray)
         }
 
+        every { cryptoProvider.getRandomData(any()) } answers {
+            ByteArray(it.invocation.args[0] as Int)
+        }
+
         every { cryptoProvider.ecdsaValidateSignature(any(), any()) } answers {
             val utils = SignatureUtils()
             val signedData: SignedData = it.invocation.args[0] as SignedData
