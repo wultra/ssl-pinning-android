@@ -48,10 +48,11 @@ class PowerAuthSslPinningValidationStrategyTest : CommonKotlinTest() {
         every { remoteDataProvider.getFingerprints(any()) } answers {
             RemoteDataResponse(
                 200,
-                emptyMap(),
+                mapOf(CertStore.RESPONSE_SIGNATURE_HEADER to "AAAA"),
                 TestUtils.validFingerprintJsonResponse()
             )
         }
+        every { cryptoProvider.ecdsaValidateSignature(any(), any()) } returns true
 
         val config = TestUtils.getCertStoreConfiguration(
             Date(),
