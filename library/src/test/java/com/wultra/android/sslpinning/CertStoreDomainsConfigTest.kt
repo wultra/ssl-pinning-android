@@ -20,8 +20,10 @@ import com.wultra.android.sslpinning.model.DomainsConfig
 import com.wultra.android.sslpinning.service.RemoteDataProvider
 import com.wultra.android.sslpinning.service.RemoteDataResponse
 import com.wultra.android.sslpinning.util.ResponseGenerator
+import io.mockk.clearMocks
 import io.mockk.every
 import io.mockk.mockk
+import io.mockk.verify
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
@@ -307,5 +309,142 @@ class CertStoreDomainsConfigTest : CommonKotlinTest() {
         // Without bypass, normal validation is restored
         assertEquals(ValidationResult.UNTRUSTED, certStore.validateFingerprint(CN_1, FP_UNKNOWN))
         assertEquals(ValidationResult.TRUSTED, certStore.validateFingerprint(CN_1, FP_1))
+    }
+
+    // MARK: - isDomainsConfigPinningRequired (via validateCertificateData)
+
+    /**
+     * When domainsConfig is absent, SHA-256 must be computed because pinning is required.
+     */
+    @Test
+    fun testIsDomainsConfigPinningRequired_AbsentConfig_PinningRequired() {
+        val data = responseGenerator.removeAll()
+            .append(commonName = CN_1, fingerprint = FP_1)
+            // no domainsConfig
+            .toByteArray()
+
+        val certStore = getCertStore(buildRemoteDataProvider(data))
+        assertEquals(UpdateResult.OK, updateStore(certStore))
+
+        clearMocks(cryptoProvider, answers = false)
+
+        val certData = ByteArray(64) { 0xAA.toByte() }
+        certStore.validateCertificateData(CN_1, certData)
+
+        // SHA-256 must be computed because no domainsConfig is present → pinning required
+        verify(exactly = 1) { cryptoProvider.hashSha256(certData) }
+    }
+
+    /**
+     * When domainsConfig bypasses pinning, [CertStore.validateCertificateData] must short-circuit
+     * before computing SHA-256 and return [ValidationResult.TRUSTED].
+     */
+    @Test
+    fun testIsDomainsConfigPinningRequired_BypassDomain_SkipsSha256() {
+        val domainsConfigJson = """{"sslPinningRequiredForUnlisted":true,"domains":[{"name":"$CN_1","sslPinningRequired":false}]}"""
+        val data = responseGenerator.removeAll()
+            .append(commonName = CN_1, fingerprint = FP_1)
+            .setDomainsConfigJson(domainsConfigJson)
+            .toByteArray()
+
+        val certStore = getCertStore(buildRemoteDataProvider(data))
+        assertEquals(UpdateResult.OK, updateStore(certStore))
+
+        clearMocks(cryptoProvider, answers = false)
+
+        val certData = ByteArray(64) { 0xAA.toByte() }
+        val result = certStore.validateCertificateData(CN_1, certData)
+
+        assertEquals(ValidationResult.TRUSTED, result)
+        // SHA-256 must NOT be computed — domainsConfig bypass short-circuits before hashing
+        verify(exactly = 0) { cryptoProvider.hashSha256(certData) }
+    }
+
+    /**
+     * When domainsConfig requires pinning, [CertStore.validateCertificateData] must proceed
+     * normally: SHA-256 is computed and fingerprint matching is performed.
+     */
+    @Test
+    fun testIsDomainsConfigPinningRequired_PinningRequired_ComputesSha256() {
+        val domainsConfigJson = """{"sslPinningRequiredForUnlisted":false,"domains":[{"name":"$CN_1","sslPinningRequired":true}]}"""
+        val data = responseGenerator.removeAll()
+            .append(commonName = CN_1, fingerprint = FP_1)
+            .setDomainsConfigJson(domainsConfigJson)
+            .toByteArray()
+
+        val certStore = getCertStore(buildRemoteDataProvider(data))
+        assertEquals(UpdateResult.OK, updateStore(certStore))
+
+        clearMocks(cryptoProvider, answers = false)
+
+        val certData = ByteArray(64) { 0xAA.toByte() }
+        certStore.validateCertificateData(CN_1, certData)
+
+        // SHA-256 must be computed because pinning is required for this domain
+        verify(exactly = 1) { cryptoProvider.hashSha256(certData) }
+    }
+
+    // MARK: - domainsConfig takes priority over expectedCommonNames
+
+    /**
+     * When domainsConfig bypasses pinning for a domain, the result must be [ValidationResult.TRUSTED]
+     * even if the domain is NOT listed in [CertStoreConfiguration.expectedCommonNames].
+     * This verifies that the domainsConfig check runs before the expectedCommonNames guard.
+     */
+    @Test
+    fun testDomainsConfig_TakesPriorityOverExpectedCommonNames_Bypass() {
+        val publicKeyBytes = Base64.getDecoder().decode(
+            "BC3kV9OIDnMuVoCdDR9nEA/JidJLTTDLuSA2TSZsGgODSshfbZg31MS90WC/HdbU/A5WL5GmyDkE/iks6INv+XE="
+        )
+        // expectedCommonNames does NOT include CN_1
+        val config = TestUtils.getCertStoreConfiguration(Date(), arrayOf(CN_2), URL("https://test"), publicKeyBytes, null)
+        val certStore = CertStore(config, cryptoProvider, secureDataStore, buildRemoteDataProvider(ByteArray(0)))
+        TestUtils.assignHandler(certStore, handler)
+
+        val domainsConfigJson = """{"sslPinningRequiredForUnlisted":true,"domains":[{"name":"$CN_1","sslPinningRequired":false}]}"""
+        val data = responseGenerator.removeAll()
+            .append(commonName = CN_2, fingerprint = FP_1)
+            .setDomainsConfigJson(domainsConfigJson)
+            .toByteArray()
+
+        val remoteDataProvider = buildRemoteDataProvider(data)
+        val certStoreWithExpected = CertStore(config, cryptoProvider, secureDataStore, remoteDataProvider)
+        TestUtils.assignHandler(certStoreWithExpected, handler)
+        assertEquals(UpdateResult.OK, TestUtils.updateAndCheck(certStoreWithExpected, UpdateMode.FORCED, null))
+
+        // CN_1 is NOT in expectedCommonNames, but domainsConfig disables pinning for it.
+        // domainsConfig is checked first → must return TRUSTED, not UNTRUSTED.
+        assertEquals(ValidationResult.TRUSTED, certStoreWithExpected.validateFingerprint(CN_1, FP_UNKNOWN))
+
+        // CN_2 is in expectedCommonNames and pinning is required → normal rules apply
+        assertEquals(ValidationResult.TRUSTED, certStoreWithExpected.validateFingerprint(CN_2, FP_1))
+        assertEquals(ValidationResult.UNTRUSTED, certStoreWithExpected.validateFingerprint(CN_2, FP_UNKNOWN))
+    }
+
+    /**
+     * When domainsConfig requires pinning for a domain NOT in [CertStoreConfiguration.expectedCommonNames],
+     * the expectedCommonNames guard must still reject it with [ValidationResult.UNTRUSTED].
+     */
+    @Test
+    fun testDomainsConfig_PinningRequired_ExpectedCommonNamesStillEnforced() {
+        val publicKeyBytes = Base64.getDecoder().decode(
+            "BC3kV9OIDnMuVoCdDR9nEA/JidJLTTDLuSA2TSZsGgODSshfbZg31MS90WC/HdbU/A5WL5GmyDkE/iks6INv+XE="
+        )
+        // expectedCommonNames does NOT include CN_1
+        val config = TestUtils.getCertStoreConfiguration(Date(), arrayOf(CN_2), URL("https://test"), publicKeyBytes, null)
+
+        val domainsConfigJson = """{"sslPinningRequiredForUnlisted":true,"domains":[{"name":"$CN_1","sslPinningRequired":true}]}"""
+        val data = responseGenerator.removeAll()
+            .append(commonName = CN_2, fingerprint = FP_1)
+            .setDomainsConfigJson(domainsConfigJson)
+            .toByteArray()
+
+        val remoteDataProvider = buildRemoteDataProvider(data)
+        val certStore = CertStore(config, cryptoProvider, secureDataStore, remoteDataProvider)
+        TestUtils.assignHandler(certStore, handler)
+        assertEquals(UpdateResult.OK, TestUtils.updateAndCheck(certStore, UpdateMode.FORCED, null))
+
+        // CN_1 is not in expectedCommonNames and pinning IS required → UNTRUSTED
+        assertEquals(ValidationResult.UNTRUSTED, certStore.validateFingerprint(CN_1, FP_1))
     }
 }
