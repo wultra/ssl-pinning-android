@@ -215,13 +215,18 @@ val validationResult = certStore.validateCertificateData(commonName, certData)
 val certificate: java.security.cert.X509Certificate = connection.getServerCertificates()[0]
 val validationResult = certStore.validateCertificate(certificate)
 
-// [ 4 ]  Validate a certificate at a specific position in the TLS chain (see "Certificate Depth Pinning")
+// [ 4 ]  Validate a full TLS certificate chain. `depth` is determined automatically from entries stored in `certStore`.
 
 val chain: Array<X509Certificate> = ...   // full TLS chain, chain[0] is the leaf
-val validationResult = certStore.validateCertificateChain(chain, depth = 1)  // intermediate CA
+val validationResult = certStore.validateCertificateChain(chain)
+
+// [ 5 ]  Validate a certificate at a specific depth (see "Certificate Depth Pinning")
+
+val validationResult = certStore.validateFingerprint(commonName, fingerprint, depth = 1)
+val validationResult = certStore.validateCertificateData(commonName, certData, depth = 1)
 ```
 
-All overloads without an explicit `depth` parameter validate the **leaf certificate** (depth 0), which is the original behaviour and is fully backward-compatible.
+The `validateFingerprint` and `validateCertificateData` overloads accept an explicit `depth` and match only entries stored at that depth. `validateCertificateChain(chain)` does **not** accept a `depth` parameter — it automatically validates all pinned entries across every depth (see [Certificate Depth Pinning](#certificate-depth-pinning)).
 
 Each `validate...` method returns the `ValidationResult` enum with the following options:
 
@@ -256,7 +261,7 @@ The motivation for these global validation observers is that some validation fai
 
 By default the library pins the **leaf certificate** — the certificate the server presents directly. For stronger protection against a compromised leaf certificate you can instead pin an **intermediate CA** or the **root CA** in the certificate chain.
 
-The `depth` parameter refers to the position of the certificate in the TLS chain as received in `X509TrustManager.checkServerTrusted(chain, authType)`, where `chain[0]` is the leaf. Note that the root CA may or may not be included in this provided chain:
+The `depth` value refers to the position of the certificate in the TLS chain as received in `X509TrustManager.checkServerTrusted(chain, authType)`, where `chain[0]` is the leaf. Note that the root CA may or may not be included in this provided chain:
 
 | depth | certificate |
 |-------|-------------|
@@ -265,24 +270,27 @@ The `depth` parameter refers to the position of the certificate in the TLS chain
 | `2`   | Second intermediate CA (if present) |
 | `N`   | Root CA |
 
-The [Mobile Utility Server](https://github.com/wultra/mobile-utility-server) stores the `depth` for each registered fingerprint and includes it in the response. The SDK matches each fingerprint only against the certificate at the corresponding depth.
+The [Mobile Utility Server](https://github.com/wultra/mobile-utility-server) stores the `depth` for each registered fingerprint and includes it in the response. When you call `validateCertificateChain(chain)`, the SDK automatically iterates over **all** pinned entries for the domain and validates each one against the certificate at its stored depth in the live TLS chain. The chain is trusted as soon as any entry matches.
 
 ```kotlin
-// Pin the intermediate CA (depth 1) inside a custom X509TrustManager
+// No depth parameter needed — the SDK resolves depth automatically for each stored entry
 override fun checkServerTrusted(chain: Array<out X509Certificate>, authType: String) {
-    val result = certStore.validateCertificateChain(chain as Array<X509Certificate>, depth = 1)
+    val result = certStore.validateCertificateChain(chain)
     if (result != ValidationResult.TRUSTED) {
-        throw CertificateException("Certificate at depth 1 is not trusted: $result")
+        throw CertificateException("Certificate chain is not trusted: $result")
     }
 }
 ```
 
+To pin an intermediate CA simply register its fingerprint at `depth: 1` in the Mobile Utility Server — no code change is needed in your app.
+
 **Important notes:**
 
-- If `depth` is negative or greater than or equal to the actual certificate chain length, `validateCertificateChain` returns `ValidationResult.UNTRUSTED` immediately.
-- Fingerprints stored at depth 0 are only matched against the leaf certificate; fingerprints stored at depth 1 are only matched against the first intermediate, and so on.
-- The leaf common name (chain[0]) is always used to look up the stored fingerprint, regardless of depth.
-- Multiple fingerprints for the same domain at different depths are fully supported and validated independently.
+- Depth is **configured server-side** in the Mobile Utility Server and carried in the downloaded fingerprint list. There is no `depth` parameter on `validateCertificateChain(chain)`.
+- Fingerprints stored at depth 0 are only matched against the leaf certificate; fingerprints stored at depth 1 are only matched against the first intermediate, and so on. A fingerprint stored at one depth is never compared against a certificate at a different depth.
+- The leaf common name (chain[0]) is always used to look up stored fingerprints, regardless of depth.
+- If a stored depth value exceeds the actual TLS chain length, that entry is silently skipped. Other entries for the same domain are still evaluated.
+- Multiple fingerprints for the same domain at different depths are fully supported and validated together in a single `validateCertificateChain(chain)` call.
 
 ## Domain Bypass Configuration
 
@@ -323,7 +331,9 @@ The `domainsConfig` is cached locally alongside the fingerprints and cleared whe
 
 The internal cache format was extended with an optional `depth` field for each stored certificate entry. When the field is absent (e.g. in caches written by version 1.8.x), it defaults to `0` (leaf certificate). Existing caches are fully compatible with 1.9.x — no cache reset, server update, or integrator action is required.
 
-All existing `validate...` calls continue to work unchanged; they now implicitly validate the leaf certificate (depth 0), which is identical to previous behaviour.
+`validateCertificateChain(chain)` automatically validates **all** pinned entries for the domain, each at its stored depth. The result is `TRUSTED` as soon as any entry matches, `UNTRUSTED` if entries were found but none matched, and `EMPTY` if no applicable entries exist. All previously written `validateCertificateChain(chain)` call sites continue to compile and behave correctly.
+
+The `depth` parameter is still available on `validateFingerprint(commonName, fingerprint, depth)` and `validateCertificateData(commonName, certificateData, depth)` for cases where you supply the fingerprint or certificate data yourself.
 
 ## Integration
 
