@@ -36,7 +36,7 @@ class SSLPinningX509TrustManager(private val certStore: CertStore) : X509TrustMa
     }
 
     override fun checkServerTrusted(chain: Array<out X509Certificate>, authType: String) {
-        if (certStore.validateCertificate(chain[0]) != ValidationResult.TRUSTED) {
+        if (certStore.validateCertificateChain(chain) != ValidationResult.TRUSTED) {
             // reject
             throw CertificateException("WultraSSLpinning doesn't trust the server certificate")
         }
