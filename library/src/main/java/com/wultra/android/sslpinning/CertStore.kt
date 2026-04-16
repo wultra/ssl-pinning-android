@@ -437,7 +437,7 @@ class CertStore internal constructor(
      */
     @JvmOverloads
     fun validateFingerprint(commonName: String, fingerprint: ByteArray, depth: Int = 0): ValidationResult {
-        // Check domainsConfig first — if pinning is not required for this domain, trust immediately
+        // Check domainsConfig as early as possible
         if (!isDomainsConfigPinningRequired(commonName)) {
             notifyValidationObservers(commonName, ValidationObserver::onValidationTrusted)
             return ValidationResult.TRUSTED
@@ -473,11 +473,11 @@ class CertStore internal constructor(
                 continue
             }
             if (info.commonName == commonName && info.depth == depth) {
+                matchAttempts += 1
                 if (info.fingerprint.contentEquals(fingerprint)) {
                     notifyValidationObservers(commonName, ValidationObserver::onValidationTrusted)
                     return ValidationResult.TRUSTED
                 }
-                matchAttempts += 1
             }
         }
 
@@ -517,23 +517,21 @@ class CertStore internal constructor(
      * @return Validation result.
      */
     fun validateCertificate(certificate: X509Certificate): ValidationResult {
-        return validateCertificateChain(arrayOf(certificate), depth = 0)
+        return validateCertificateData(CertUtils.parseCommonName(certificate), certificate.encoded, 0)
     }
 
     /**
-     * Validates whether provided TLS certificate chain is trusted at a specific chain depth.
+     * Validates whether the provided TLS certificate chain is trusted by checking all pinned entries
+     * across every depth.
      *
-     * The common name is always taken from the leaf certificate (chain[0]).
-     * The fingerprint is computed from the certificate at the given [depth].
-     *
-     * If [depth] is out of range (negative or >= chain size), returns [ValidationResult.UNTRUSTED].
+     * The common name is extracted from the leaf certificate (chain[0]). All pinned entries for that
+     * common name are then checked against the certificates in the chain at their respective stored
+     * depths. At least one pinned entry must match for the chain to be considered trusted.
      *
      * @param chain The TLS certificate chain, where chain[0] is the leaf certificate.
-     * @param depth The certificate depth in the TLS chain (0 = leaf, 1..N-1 = intermediate, N = root).
      * @return Validation result.
      */
-    fun validateCertificateChain(chain: Array<out X509Certificate>, depth: Int): ValidationResult {
-        // Chain must contain at least one certificate (the leaf) to extract the common name
+    fun validateCertificateChain(chain: Array<out X509Certificate>): ValidationResult {
         if (chain.isEmpty()) {
             WultraDebug.warning("CertStore: Certificate chain is empty; returning UNTRUSTED without fingerprint validation.")
             notifyValidationObservers("empty chain", ValidationObserver::onValidationUntrusted)
@@ -541,22 +539,59 @@ class CertStore internal constructor(
         }
 
         val commonName = CertUtils.parseCommonName(chain[0])
-        // Check domainsConfig as early as possible — skip SHA-256 when pinning is not required
+        // Check domainsConfig as early as possible
         if (!isDomainsConfigPinningRequired(commonName)) {
             notifyValidationObservers(commonName, ValidationObserver::onValidationTrusted)
             return ValidationResult.TRUSTED
         }
 
-        // Depth of certificate should be within chain length
-        // for example chain.size = 3, valid depth values: 0, 1, 2
-        if (depth >= chain.size) {
-            WultraDebug.warning("CertStore: Requested certificate depth ($depth) is outside of the chain length (${chain.size}); returning UNTRUSTED without fingerprint validation.")
-            notifyValidationObservers(CertUtils.parseCommonName(chain[0]), ValidationObserver::onValidationUntrusted)
+        // Check expected common names
+        val expected = configuration.expectedCommonNames
+        if (expected != null && !expected.contains(commonName)) {
+            WultraDebug.warning("CertStore: Common name '$commonName' not found in expected list; returning UNTRUSTED without fingerprint validation.")
+            notifyValidationObservers(commonName, ValidationObserver::onValidationUntrusted)
             return ValidationResult.UNTRUSTED
         }
 
-        val fingerprint = cryptoProvider.hashSha256(chain[depth].encoded)
-        return validateFingerprint(commonName, fingerprint, depth)
+        val certificates = getCertificates()
+        if (certificates.isEmpty()) {
+            WultraDebug.warning("CertStore: List of certificates is empty; returning EMPTY.")
+            notifyValidationObservers(commonName, ValidationObserver::onValidationEmpty)
+            return ValidationResult.EMPTY
+        }
+
+        val now = Date()
+        var matchAttempts = 0
+
+        for (info in certificates) {
+            if (info.isExpired(now)) {
+                continue
+            }
+            if (info.commonName != commonName) {
+                continue
+            }
+
+            val pinnedDepth = info.depth
+            if (pinnedDepth < 0 || pinnedDepth >= chain.size) {
+                continue
+            }
+
+            val fingerprint = cryptoProvider.hashSha256(chain[pinnedDepth].encoded)
+            matchAttempts += 1
+
+            if (info.fingerprint.contentEquals(fingerprint)) {
+                notifyValidationObservers(commonName, ValidationObserver::onValidationTrusted)
+                return ValidationResult.TRUSTED
+            }
+        }
+
+        return if (matchAttempts > 0) {
+            notifyValidationObservers(commonName, ValidationObserver::onValidationUntrusted)
+            ValidationResult.UNTRUSTED
+        } else {
+            notifyValidationObservers(commonName, ValidationObserver::onValidationEmpty)
+            ValidationResult.EMPTY
+        }
     }
 
     /**
