@@ -23,6 +23,7 @@ import androidx.test.platform.app.InstrumentationRegistry
 import com.wultra.android.sslpinning.integration.DefaultCryptoProvider
 import com.wultra.android.sslpinning.integration.DefaultSecureDataStore
 import com.wultra.android.sslpinning.service.WultraDebug
+import com.wultra.android.sslpinning.util.CertUtils
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertTrue
@@ -285,8 +286,9 @@ class CertStoreNetworkTest {
     }
 
     /**
-     * Creates an SSL context using a trust manager that calls [certStore.validateCertificateChain]
-     * at a given depth. Returns the SSL context and a latch to wait for the validation.
+     * Creates an SSL context using a trust manager that validates the certificate
+     * at a given depth via [CertStore.validateCertificateData].
+     * Returns the SSL context and invokes [onValidation] with the result.
      */
     private fun createDepthTrustManager(depth: Int, onValidation: (ValidationResult) -> Unit): SSLContext {
         val trustManager = object : X509TrustManager {
@@ -294,11 +296,36 @@ class CertStoreNetworkTest {
             override fun checkClientTrusted(chain: Array<out X509Certificate>, authType: String) {}
 
             override fun checkServerTrusted(chain: Array<out X509Certificate>, authType: String) {
-                @Suppress("UNCHECKED_CAST")
-                val result = certStore.validateCertificateChain(chain as Array<X509Certificate>, depth)
+                val commonName = CertUtils.parseCommonName(chain[0])
+                val result = certStore.validateCertificateData(commonName, chain[depth].encoded, depth)
                 onValidation(result)
                 if (result != ValidationResult.TRUSTED) {
                     throw CertificateException("WultraSSLPinning rejected certificate chain at depth $depth: $result")
+                }
+            }
+
+            override fun getAcceptedIssuers(): Array<X509Certificate> = arrayOf()
+        }
+        val sslContext = SSLContext.getInstance("TLS")
+        sslContext.init(null, arrayOf(trustManager), null)
+        return sslContext
+    }
+
+    /**
+     * Creates an SSL context using a trust manager that calls [certStore.validateCertificateChain]
+     * without a depth parameter — the SDK resolves depth automatically for each stored entry.
+     */
+    private fun createChainTrustManager(onValidation: (ValidationResult) -> Unit): SSLContext {
+        val trustManager = object : X509TrustManager {
+            @SuppressLint("TrustAllX509TrustManager")
+            override fun checkClientTrusted(chain: Array<out X509Certificate>, authType: String) {}
+
+            override fun checkServerTrusted(chain: Array<out X509Certificate>, authType: String) {
+                @Suppress("UNCHECKED_CAST")
+                val result = certStore.validateCertificateChain(chain as Array<X509Certificate>)
+                onValidation(result)
+                if (result != ValidationResult.TRUSTED) {
+                    throw CertificateException("WultraSSLPinning rejected certificate chain: $result")
                 }
             }
 
@@ -331,9 +358,9 @@ class CertStoreNetworkTest {
     /**
      * Tests that depth-specific pinning works on a real-world TLS connection.
      *
-     * The test registers the leaf certificate (depth 0) via the auto endpoint and
-     * the intermediate certificate (depth 1) extracted live from the TLS chain.
-     * It then verifies that a real HTTPS request succeeds when validated at both depths.
+     * The test registers both the leaf certificate (depth 0) and the intermediate certificate
+     * (depth 1), then verifies that a single `validateCertificateChain(chain)` call returns `TRUSTED`
+     * by finding a matching pinned entry at any depth in the chain.
      */
     @Test
     fun testRealCertificateWithDepth() {
@@ -348,21 +375,14 @@ class CertStoreNetworkTest {
         // Update certificates from MUS
         performUpdate()
 
-        // Validate at depth 0 (leaf certificate)
-        var depth0Result: ValidationResult? = null
-        val sslContextDepth0 = createDepthTrustManager(0) { depth0Result = it }
-        val resultDepth0 = performRequest(urlToPin, sslContextDepth0)
-        assertNotNull(depth0Result)
-        assertEquals("Expected leaf certificate (depth 0) to be trusted", ValidationResult.TRUSTED, depth0Result)
-        assertEquals("Expected request to succeed at depth 0", true, resultDepth0)
-
-        // Validate at depth 1 (intermediate certificate)
-        var depth1Result: ValidationResult? = null
-        val sslContextDepth1 = createDepthTrustManager(1) { depth1Result = it }
-        val resultDepth1 = performRequest(urlToPin, sslContextDepth1)
-        assertNotNull(depth1Result)
-        assertEquals("Expected intermediate certificate (depth 1) to be trusted", ValidationResult.TRUSTED, depth1Result)
-        assertEquals("Expected request to succeed at depth 1", true, resultDepth1)
+        // Both leaf (depth 0) and intermediate (depth 1) are pinned. A single validate call
+        // iterates over all pinned depths and trusts on the first matching certificate.
+        var validationResult: ValidationResult? = null
+        val sslContext = createChainTrustManager { validationResult = it }
+        val result = performRequest(urlToPin, sslContext)
+        assertNotNull(validationResult)
+        assertEquals("Expected at least one pinned depth (0 or 1) to match", ValidationResult.TRUSTED, validationResult)
+        assertEquals("Expected request to succeed", true, result)
     }
 
     /**
@@ -413,7 +433,7 @@ class CertStoreNetworkTest {
      *
      * The backend always sends `sslPinningRequiredForUnlisted: true`, meaning every domain that is
      * **not** explicitly listed in `domainsConfig.domains` must satisfy normal fingerprint-based
-     * pinning. The test covers three scenarios in sequence:
+     * pinning. The test covers three phases in sequence:
      *
      * 1. **Listed domain, pinning bypassed** — the target host is added to the bypass list
      *    (`sslPinningRequired: false`). A real HTTPS request returns TRUSTED because the
