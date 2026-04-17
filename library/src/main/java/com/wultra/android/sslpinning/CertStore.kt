@@ -148,6 +148,7 @@ class CertStore internal constructor(
 
     @Synchronized
     internal fun updateCachedData(update: () -> CachedData?) {
+        restoreCache()
         // Persist new data coming from update
         val newData = update()
         if (newData != null) {
