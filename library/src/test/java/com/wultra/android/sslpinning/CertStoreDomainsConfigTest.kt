@@ -82,7 +82,7 @@ class CertStoreDomainsConfigTest : CommonKotlinTest() {
     fun testDomainsConfig_ListedDomainPinningNotRequired() {
         val config = DomainsConfig(
             sslPinningRequiredForUnlisted = true,
-            domains = listOf(DomainConfig(name = CN_1, sslPinningRequired = false))
+            domains = listOf(DomainConfig(commonName = CN_1, sslPinningRequired = false))
         )
         assertFalse(config.isPinningRequired(CN_1))
     }
@@ -92,7 +92,7 @@ class CertStoreDomainsConfigTest : CommonKotlinTest() {
     fun testDomainsConfig_ListedDomainPinningRequired() {
         val config = DomainsConfig(
             sslPinningRequiredForUnlisted = false,
-            domains = listOf(DomainConfig(name = CN_1, sslPinningRequired = true))
+            domains = listOf(DomainConfig(commonName = CN_1, sslPinningRequired = true))
         )
         assertTrue(config.isPinningRequired(CN_1))
     }
@@ -102,7 +102,7 @@ class CertStoreDomainsConfigTest : CommonKotlinTest() {
     fun testDomainsConfig_UnlistedDomainFallsBackToRequiredTrue() {
         val config = DomainsConfig(
             sslPinningRequiredForUnlisted = true,
-            domains = listOf(DomainConfig(name = CN_1, sslPinningRequired = false))
+            domains = listOf(DomainConfig(commonName = CN_1, sslPinningRequired = false))
         )
         assertTrue(config.isPinningRequired(CN_UNKNOWN))
     }
@@ -112,7 +112,7 @@ class CertStoreDomainsConfigTest : CommonKotlinTest() {
     fun testDomainsConfig_UnlistedDomainFallsBackToRequiredFalse() {
         val config = DomainsConfig(
             sslPinningRequiredForUnlisted = false,
-            domains = listOf(DomainConfig(name = CN_1, sslPinningRequired = true))
+            domains = listOf(DomainConfig(commonName = CN_1, sslPinningRequired = true))
         )
         assertFalse(config.isPinningRequired(CN_UNKNOWN))
     }

@@ -16,6 +16,8 @@
 
 package com.wultra.android.sslpinning.model
 
+import com.google.gson.annotations.SerializedName
+
 /**
  * The [DomainsConfig] class holds domain-specific SSL pinning configuration
  * received from the server.
@@ -32,16 +34,16 @@ data class DomainsConfig(
     val domains: List<DomainConfig>
 ) {
     /**
-     * Returns whether SSL pinning is required for the given domain name.
+     * Returns whether SSL pinning is required for the given common name.
      *
      * If the domain is listed, returns its [DomainConfig.sslPinningRequired] value.
      * Otherwise, falls back to [sslPinningRequiredForUnlisted].
      *
-     * @param domain The domain name to check.
+     * @param commonName The domain's common name to check.
      * @return `true` if SSL pinning is required for the domain, `false` otherwise.
      */
-    fun isPinningRequired(domain: String): Boolean {
-        val config = domains.firstOrNull { it.name == domain }
+    fun isPinningRequired(commonName: String): Boolean {
+        val config = domains.firstOrNull { it.commonName == commonName }
         return config?.sslPinningRequired ?: sslPinningRequiredForUnlisted
     }
 }
@@ -49,10 +51,11 @@ data class DomainsConfig(
 /**
  * The [DomainConfig] class holds SSL pinning configuration for a specific domain.
  *
- * @property name The domain name.
- * @property sslPinningRequired Whether SSL pinning is required for this domain.
+ * @property commonName The domain's common name.
+ * @property sslPinningRequired Whether SSL pinning is required for this common name.
  */
 data class DomainConfig(
-    val name: String,
+    @SerializedName("name")
+    val commonName: String,
     val sslPinningRequired: Boolean
 )
