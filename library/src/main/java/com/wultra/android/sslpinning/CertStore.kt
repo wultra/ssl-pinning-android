@@ -147,10 +147,9 @@ class CertStore internal constructor(
     }
 
     @Synchronized
-    internal fun updateCachedData(update: (CachedData?) -> CachedData?) {
-        restoreCache()
-
-        val newData = update(cachedData)
+    internal fun updateCachedData(update: () -> CachedData?) {
+        // Persist new data coming from update
+        val newData = update()
         if (newData != null) {
             cachedData = newData
             saveDataToCache(newData)
@@ -337,10 +336,8 @@ class CertStore internal constructor(
         }
 
         var result = UpdateResult.OK
-        updateCachedData { cachedData ->
-            val newCertificates = (cachedData?.certificates ?: arrayOf())
-                    .filter { !it.isExpired(currentDate) }
-                    .toMutableList()
+        updateCachedData {
+            val newCertificates = mutableListOf<CertificateInfo>()
 
             for (entry in response.fingerprints) {
                 val newCertificateInfo = CertificateInfo(entry)
@@ -350,7 +347,7 @@ class CertStore internal constructor(
                 }
 
                 if (newCertificates.indexOf(newCertificateInfo) != -1) {
-                    // skip entry that's already in the database
+                    // Skip duplicate entries in new certificates
                     continue
                 }
 
