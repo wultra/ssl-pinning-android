@@ -81,9 +81,10 @@ class CertStoreNetworkTest {
             ?: throw IllegalArgumentException("Missing test.sslPinning.adminLogin")
         adminPassword = args.getString("test.sslPinning.adminPassword")
             ?: throw IllegalArgumentException("Missing test.sslPinning.adminPassword")
-        val urlToPinString = args.getString("test.sslPinning.urlToPin")
-            ?: throw IllegalArgumentException("Missing test.sslPinning.urlToPin")
-        urlToPin = URL(urlToPinString)
+        // Tests are pointing to GitHub. In order to change it, separate refactor needs to be done.
+        // val urlToPinString = args.getString("test.sslPinning.urlToPin")
+        //   ?: throw IllegalArgumentException("Missing test.sslPinning.urlToPin")
+        urlToPin = URL("https://github.com")
 
         pubKey = getPublicKeyFromServer()
 
