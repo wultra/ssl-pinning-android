@@ -23,7 +23,6 @@ import androidx.test.platform.app.InstrumentationRegistry
 import com.wultra.android.sslpinning.integration.DefaultCryptoProvider
 import com.wultra.android.sslpinning.integration.DefaultSecureDataStore
 import com.wultra.android.sslpinning.service.WultraDebug
-import com.wultra.android.sslpinning.util.CertUtils
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertTrue
@@ -286,32 +285,6 @@ class CertStoreNetworkTest {
     }
 
     /**
-     * Creates an SSL context using a trust manager that validates the certificate
-     * at a given depth via [CertStore.validateCertificateData].
-     * Returns the SSL context and invokes [onValidation] with the result.
-     */
-    private fun createDepthTrustManager(depth: Int, onValidation: (ValidationResult) -> Unit): SSLContext {
-        val trustManager = object : X509TrustManager {
-            @SuppressLint("TrustAllX509TrustManager")
-            override fun checkClientTrusted(chain: Array<out X509Certificate>, authType: String) {}
-
-            override fun checkServerTrusted(chain: Array<out X509Certificate>, authType: String) {
-                val commonName = CertUtils.parseCommonName(chain[0])
-                val result = certStore.validateCertificateData(commonName, chain[depth].encoded, depth)
-                onValidation(result)
-                if (result != ValidationResult.TRUSTED) {
-                    throw CertificateException("WultraSSLPinning rejected certificate chain at depth $depth: $result")
-                }
-            }
-
-            override fun getAcceptedIssuers(): Array<X509Certificate> = arrayOf()
-        }
-        val sslContext = SSLContext.getInstance("TLS")
-        sslContext.init(null, arrayOf(trustManager), null)
-        return sslContext
-    }
-
-    /**
      * Creates an SSL context using a trust manager that calls [certStore.validateCertificateChain]
      * without a depth parameter — the SDK resolves depth automatically for each stored entry.
      */
@@ -409,7 +382,7 @@ class CertStoreNetworkTest {
 
         // With bypass active, validation must return TRUSTED regardless of the certificate
         var bypassResult: ValidationResult? = null
-        val bypassSslContext = createDepthTrustManager(0) { bypassResult = it }
+        val bypassSslContext = createChainTrustManager { bypassResult = it }
         val bypassRequestResult = performRequest(urlToPin, bypassSslContext)
         assertNotNull(bypassResult)
         assertEquals("Expected TRUSTED with bypass active", ValidationResult.TRUSTED, bypassResult)
@@ -421,7 +394,7 @@ class CertStoreNetworkTest {
 
         // Without bypass, normal fingerprint-based pinning should apply
         var restoredResult: ValidationResult? = null
-        val restoredSslContext = createDepthTrustManager(0) { restoredResult = it }
+        val restoredSslContext = createChainTrustManager { restoredResult = it }
         val restoredRequestResult = performRequest(urlToPin, restoredSslContext)
         assertNotNull(restoredResult)
         assertEquals("Expected TRUSTED after bypass cleared (valid cert registered)", ValidationResult.TRUSTED, restoredResult)
@@ -462,7 +435,7 @@ class CertStoreNetworkTest {
 
         // Phase 1: listed domain with bypass → TRUSTED regardless of fingerprint
         var result1: ValidationResult? = null
-        val ctx1 = createDepthTrustManager(0) { result1 = it }
+        val ctx1 = createChainTrustManager { result1 = it }
         performRequest(urlToPin, ctx1)
         assertEquals("Phase 1: listed domain should be TRUSTED (bypass)", ValidationResult.TRUSTED, result1)
 
@@ -475,7 +448,7 @@ class CertStoreNetworkTest {
         performUpdate()
 
         var result3: ValidationResult? = null
-        val ctx3 = createDepthTrustManager(0) { result3 = it }
+        val ctx3 = createChainTrustManager { result3 = it }
         performRequest(urlToPin, ctx3)
         assertEquals("Phase 3: unlisted domain with registered cert should be TRUSTED", ValidationResult.TRUSTED, result3)
     }
