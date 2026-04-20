@@ -88,7 +88,7 @@ public class CertStoreUpdateTestJava extends CommonTest {
                 new CertStore(config, new DefaultCryptoProvider(), new DefaultSecureDataStore(appContext, UUID.randomUUID().toString()))
         };
         for (CertStore store : stores) {
-            updateAndCheck(store, UpdateMode.FORCED, UpdateResult.STORE_IS_EMPTY);
+            updateAndCheck(store, UpdateMode.FORCED, UpdateResult.OK);
         }
     }
 
@@ -103,7 +103,7 @@ public class CertStoreUpdateTestJava extends CommonTest {
                 new CertStore(config, new DefaultCryptoProvider(), new DefaultSecureDataStore(appContext, UUID.randomUUID().toString()))
         };
         for (CertStore store : stores) {
-            updateAndCheck(store, UpdateMode.FORCED, UpdateResult.STORE_IS_EMPTY);
+            updateAndCheck(store, UpdateMode.FORCED, UpdateResult.OK);
         }
     }
 }

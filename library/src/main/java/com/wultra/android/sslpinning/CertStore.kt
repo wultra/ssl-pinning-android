@@ -395,12 +395,6 @@ class CertStore internal constructor(
                 newCertificates.add(newCertificateInfo)
             }
 
-            if (result == UpdateResult.OK && newCertificates.isEmpty()) {
-                // looks like it's time to update list of certificates stored on the server
-                WultraDebug.warning("CertStore: Database after update is still empty.")
-                result = UpdateResult.STORE_IS_EMPTY
-            }
-
             if (result != UpdateResult.OK) {
                 return@updateCachedData null
             }

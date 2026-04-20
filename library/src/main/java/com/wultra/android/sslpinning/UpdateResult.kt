@@ -27,11 +27,6 @@ enum class UpdateResult {
      */
     OK,
     /**
-     * [CertStore] is empty. There's no valid certificate fingerprint to validate server cert against.
-     * Might happen when all the certificate fingerprints are already expired.
-     */
-    STORE_IS_EMPTY,
-    /**
      * There was an error in network communication with the server.
      */
     NETWORK_ERROR,

@@ -119,7 +119,7 @@ class CertStoreUpdateTest : CommonKotlinTest() {
         every { cryptoProvider.ecdsaValidateSignature(any(), any()) } returns false
 
         val updateResult = performForcedUpdate(remoteDataProvider)
-        Assert.assertEquals(UpdateResult.STORE_IS_EMPTY, updateResult)
+        Assert.assertEquals(UpdateResult.OK, updateResult)
     }
 
     @Test

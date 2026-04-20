@@ -94,7 +94,7 @@ class CertStoreValidationTest : CommonKotlinTest() {
         }
 
         // json with outdated data, correct public key
-        validateGithubWithUpdateJsonOnly(remoteDataProvider, UpdateResult.STORE_IS_EMPTY, ValidationResult.EMPTY)
+        validateGithubWithUpdateJsonOnly(remoteDataProvider, UpdateResult.OK, ValidationResult.EMPTY)
     }
 
     @Test
