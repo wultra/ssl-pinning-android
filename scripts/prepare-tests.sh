@@ -49,7 +49,11 @@ if [[ "${URL}" == "" || "${APPNAME}" == "" ]]; then
   fi
 else
   # create test file
-  echo -e "test.sslPinning.baseUrl=${URL}\ntest.sslPinning.appName=${APPNAME}" > "${TEST_CREDS_FILE}"
+  echo -e "test.sslPinning.baseUrl=${URL}\n\
+  test.sslPinning.appName=${APPNAME}\n\
+  test.sslPinning.adminLogin=${MUS_USERNAME}\n\
+  test.sslPinning.adminPassword=${MUS_PASSWORD}\n\
+  " > "${TEST_CREDS_FILE}"
 fi
 
 if [[ "${MUS_USERNAME}" == "" || "${MUS_PASSWORD}" == "" ]]; then
