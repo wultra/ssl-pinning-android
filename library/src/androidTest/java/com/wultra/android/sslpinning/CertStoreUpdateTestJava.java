@@ -16,94 +16,87 @@
 
 package com.wultra.android.sslpinning;
 
-import android.content.Context;
+import static com.wultra.android.sslpinning.TestUtilsKt.updateAndCheck;
+
+import android.util.Base64;
 
 import com.wultra.android.sslpinning.integration.DefaultCryptoProvider;
 import com.wultra.android.sslpinning.integration.DefaultSecureDataStore;
 import com.wultra.android.sslpinning.integration.powerauth.PowerAuthCertStore;
-import com.wultra.android.sslpinning.integration.powerauth.PowerAuthCryptoProvider;
-import com.wultra.android.sslpinning.integration.powerauth.PowerAuthSecureDataStore;
-import com.wultra.android.sslpinning.service.RemoteDataProvider;
 
+import org.junit.Before;
 import org.junit.Test;
 
 import java.net.URL;
-import java.util.ArrayList;
 import java.util.UUID;
-
-import static com.wultra.android.sslpinning.TestUtilsKt.getPublicKeyBytes;
-import static com.wultra.android.sslpinning.TestUtilsKt.getRemoteDataProvider;
-import static com.wultra.android.sslpinning.TestUtilsKt.jsonDataAllEmpty;
-import static com.wultra.android.sslpinning.TestUtilsKt.jsonDataFingerprintsEmpty;
-import static com.wultra.android.sslpinning.TestUtilsKt.updateAndCheck;
 
 /**
  * Instrumentation test for update signature validation on a device/emulator.
- * Written in Java to validate APIs.
+ * Written in Java to validate Java API compatibility.
  *
  * @author Tomas Kypta, tomas.kypta@wultra.com
  */
 public class CertStoreUpdateTestJava extends CommonTest {
 
-    @Test
-    public void testLocalUpdateSignatureGithub_InvalidUrlUpdate() throws Exception {
-        Context appContext = getAppContext();
-        // empty
-        URL url = new URL("https://gist.githubusercontent.com/TomasKypta/ae4fa795a8c1ffa1ed0144c49b95e63c/raw/761483b6c1fa3039f0b9d7b05c5d43532fc1556a/ssl-pinning-signatures_invalid_url.json");
-        CertStoreConfiguration config = new CertStoreConfiguration.Builder(url, getPublicKeyBytes()).build();
-        CertStore[] stores = {
-            PowerAuthCertStore.createInstance(config, appContext),
-            new CertStore(config, appContext)
+    private CertStore[] certStores;
+
+    @Before
+    @Override
+    public void setUp() {
+        super.setUp();
+        CertStoreConfiguration config = new CertStoreConfiguration.Builder(getServiceUrl(), getPubKey()).build();
+        certStores = new CertStore[]{
+            PowerAuthCertStore.createInstance(config, getAppContext(), UUID.randomUUID().toString()),
+            new CertStore(config, new DefaultCryptoProvider(), new DefaultSecureDataStore(getAppContext(), UUID.randomUUID().toString()))
         };
-        for (CertStore store : stores) {
+    }
+
+    @Test
+    public void testUpdate_ForcedOK() throws Exception {
+        for (CertStore store : certStores) {
+            updateAndCheck(store, UpdateMode.FORCED, UpdateResult.OK);
+        }
+    }
+
+    @Test
+    public void testUpdate_RemoteDirect() throws Exception {
+        for (CertStore store : certStores) {
+            updateAndCheck(store, UpdateMode.FORCED, UpdateResult.OK, UpdateType.DIRECT);
+        }
+    }
+
+    @Test
+    public void testUpdate_DefaultMode() throws Exception {
+        for (CertStore store : certStores) {
+            updateAndCheck(store, UpdateMode.DEFAULT, UpdateResult.OK, UpdateType.DIRECT);
+            updateAndCheck(store, UpdateMode.DEFAULT, UpdateResult.OK, UpdateType.NO_UPDATE);
+        }
+    }
+
+    @Test
+    public void testUpdate_InvalidSignature() throws Exception {
+        String badKey = "BEG6g28LNWRcmdFzexSNTKPBYZnDtKrCyiExFKbktttfKAF7wG4Cx1Nycr5PwCoICG1dRseLyuDxUilAmppPxAo=";
+        byte[] badKeyBytes = Base64.decode(badKey, Base64.NO_WRAP);
+        CertStoreConfiguration config = new CertStoreConfiguration.Builder(getServiceUrl(), badKeyBytes).build();
+        CertStore[] badStores = {
+            PowerAuthCertStore.createInstance(config, getAppContext(), UUID.randomUUID().toString()),
+            new CertStore(config, new DefaultCryptoProvider(), new DefaultSecureDataStore(getAppContext(), UUID.randomUUID().toString()))
+        };
+        for (CertStore store : badStores) {
+            updateAndCheck(store, UpdateMode.FORCED, UpdateResult.INVALID_SIGNATURE);
+        }
+    }
+
+    @Test
+    public void testUpdate_NetworkError() throws Exception {
+        URL badUrl = new URL("https://localhost:1/non-existent");
+        CertStoreConfiguration config = new CertStoreConfiguration.Builder(badUrl, getPubKey()).build();
+        CertStore[] badStores = {
+            PowerAuthCertStore.createInstance(config, getAppContext(), UUID.randomUUID().toString()),
+            new CertStore(config, new DefaultCryptoProvider(), new DefaultSecureDataStore(getAppContext(), UUID.randomUUID().toString()))
+        };
+        for (CertStore store : badStores) {
             updateAndCheck(store, UpdateMode.FORCED, UpdateResult.NETWORK_ERROR);
-        }
-    }
-
-    @Test
-    public void testLocalUpdateSignatureGithub_EmptyUpdate() throws Exception {
-        Context appContext = getAppContext();
-        // empty
-        URL url = new URL("https://gist.githubusercontent.com/TomasKypta/ae4fa795a8c1ffa1ed0144c49b95e63c/raw/761483b6c1fa3039f0b9d7b05c5d43532fc1556a/ssl-pinning-signatures_empty.json");
-        CertStoreConfiguration config = new CertStoreConfiguration.Builder(url, getPublicKeyBytes()).build();
-        RemoteDataProvider provider = getRemoteDataProvider(jsonDataAllEmpty);
-                CertStore[] stores = {
-                new CertStore(config, new PowerAuthCryptoProvider(), new PowerAuthSecureDataStore(appContext), provider),
-                new CertStore(config, new DefaultCryptoProvider(), new DefaultSecureDataStore(appContext), provider),
-        };
-        for (CertStore store : stores) {
-            updateAndCheck(store, UpdateMode.FORCED, UpdateResult.INVALID_DATA);
-        }
-    }
-
-    @Test
-    public void testLocalUpdateSignatureGithub_EmptyFingerprintUpdate() throws Exception {
-        Context appContext = getAppContext();
-        // empty
-        URL url = new URL("https://gist.githubusercontent.com/TomasKypta/ae4fa795a8c1ffa1ed0144c49b95e63c/raw/761483b6c1fa3039f0b9d7b05c5d43532fc1556a/ssl-pinning-signatures_empty.json");
-        CertStoreConfiguration config = new CertStoreConfiguration.Builder(url, getPublicKeyBytes()).build();
-        RemoteDataProvider provider = getRemoteDataProvider(jsonDataFingerprintsEmpty);
-        CertStore[] stores = {
-                new CertStore(config, new PowerAuthCryptoProvider(), new PowerAuthSecureDataStore(appContext), provider),
-                new CertStore(config, new DefaultCryptoProvider(), new DefaultSecureDataStore(appContext, UUID.randomUUID().toString()))
-        };
-        for (CertStore store : stores) {
-            updateAndCheck(store, UpdateMode.FORCED, UpdateResult.OK);
-        }
-    }
-
-    @Test
-    public void testRemoteUpdateSignatureGithub_EmptyUpdate() throws Exception {
-        Context appContext = getAppContext();
-        // empty
-        URL url = new URL("https://gist.githubusercontent.com/TomasKypta/ae4fa795a8c1ffa1ed0144c49b95e63c/raw/761483b6c1fa3039f0b9d7b05c5d43532fc1556a/ssl-pinning-signatures_empty.json");
-        CertStoreConfiguration config = new CertStoreConfiguration.Builder(url, getPublicKeyBytes()).build();
-        CertStore[] stores = {
-                PowerAuthCertStore.createInstance(config, appContext),
-                new CertStore(config, new DefaultCryptoProvider(), new DefaultSecureDataStore(appContext, UUID.randomUUID().toString()))
-        };
-        for (CertStore store : stores) {
-            updateAndCheck(store, UpdateMode.FORCED, UpdateResult.OK);
         }
     }
 }
