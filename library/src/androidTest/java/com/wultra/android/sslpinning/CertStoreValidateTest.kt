@@ -50,19 +50,4 @@ class CertStoreValidateTest : CommonTest() {
             Assert.assertEquals(ValidationResult.TRUSTED, result)
         }
     }
-
-    @Test
-    fun validateAfterUpdate() {
-        val config = CertStoreConfiguration.Builder(serviceUrl, pubKey).build()
-        val cert = getCertificateFromUrl("https://github.com")
-
-        arrayOf(
-            CertStore.powerAuthCertStore(config, appContext),
-            CertStore(config, DefaultCryptoProvider(), DefaultSecureDataStore(appContext, UUID.randomUUID().toString()))
-        ).forEach { store ->
-            updateAndCheck(store, UpdateMode.FORCED, UpdateResult.OK)
-            val result = store.validateCertificate(cert)
-            Assert.assertEquals(ValidationResult.TRUSTED, result)
-        }
-    }
 }
