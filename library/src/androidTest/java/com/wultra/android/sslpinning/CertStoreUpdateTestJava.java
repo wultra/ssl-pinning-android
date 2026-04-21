@@ -23,11 +23,18 @@ import android.util.Base64;
 import com.wultra.android.sslpinning.integration.DefaultCryptoProvider;
 import com.wultra.android.sslpinning.integration.DefaultSecureDataStore;
 import com.wultra.android.sslpinning.integration.powerauth.PowerAuthCertStore;
+import com.wultra.android.sslpinning.interfaces.CryptoProvider;
+import com.wultra.android.sslpinning.interfaces.ECPublicKey;
+import com.wultra.android.sslpinning.interfaces.SignedData;
+import com.wultra.android.sslpinning.service.RemoteDataProvider;
+import com.wultra.android.sslpinning.service.RemoteDataResponse;
 
 import org.junit.Before;
 import org.junit.Test;
 
 import java.net.URL;
+import java.nio.charset.StandardCharsets;
+import java.util.Collections;
 import java.util.UUID;
 
 /**
@@ -84,6 +91,55 @@ public class CertStoreUpdateTestJava extends CommonTest {
         };
         for (CertStore store : badStores) {
             updateAndCheck(store, UpdateMode.FORCED, UpdateResult.INVALID_SIGNATURE);
+        }
+    }
+
+    @Test
+    public void testUpdate_InvalidData() {
+        // CertStore validates the ECDSA signature before parsing JSON, so we need a
+        // CryptoProvider that bypasses signature validation to reach the data-parsing path.
+        CryptoProvider bypassCryptoProvider = new CryptoProvider() {
+            private final DefaultCryptoProvider delegate = new DefaultCryptoProvider();
+
+            @Override
+            public boolean ecdsaValidateSignature(SignedData signedData, ECPublicKey publicKey) {
+                return true;
+            }
+
+            @Override
+            public ECPublicKey importECPublicKey(byte[] publicKey) {
+                return delegate.importECPublicKey(publicKey);
+            }
+
+            @Override
+            public byte[] hashSha256(byte[] data) {
+                return delegate.hashSha256(data);
+            }
+
+            @Override
+            public byte[] getRandomData(int length) {
+                return delegate.getRandomData(length);
+            }
+        };
+
+        // Return "{}" — fingerprints field absent → INVALID_DATA
+        RemoteDataProvider fakeProvider = request -> new RemoteDataResponse(
+                200,
+                Collections.singletonMap(CertStore.RESPONSE_SIGNATURE_HEADER, "AAAA"),
+                "{}".getBytes(StandardCharsets.UTF_8)
+        );
+
+        CertStoreConfiguration config = new CertStoreConfiguration.Builder(getServiceUrl(), getPubKey()).build();
+        CertStore store = new CertStore(
+                config,
+                bypassCryptoProvider,
+                new DefaultSecureDataStore(getAppContext(), UUID.randomUUID().toString()),
+                fakeProvider
+        );
+        try {
+            updateAndCheck(store, UpdateMode.FORCED, UpdateResult.INVALID_DATA);
+        } catch (Exception e) {
+            throw new RuntimeException(e);
         }
     }
 
