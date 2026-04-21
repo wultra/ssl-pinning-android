@@ -333,7 +333,7 @@ The `domainsConfig` is cached locally alongside the fingerprints and cleared whe
 
 The internal cache format was extended with an optional `depth` field for each stored certificate entry. When the field is absent (e.g. in caches written by version 1.5.x), it defaults to `0` (leaf certificate). Existing caches are fully compatible with 1.6.x — no cache reset, server update, or integrator action is required.
 
-`validateCertificateChain(chain)` automatically validates **all** pinned entries for the domain, each at its stored depth. The result is `TRUSTED` as soon as any entry matches, `UNTRUSTED` if entries were found but none matched, and `EMPTY` if no applicable entries exist. All previously written `validateCertificateChain(chain)` call sites continue to compile and behave correctly.
+`validateCertificateChain(chain)` automatically validates **all** pinned entries for the domain, each at its stored depth. The result is `TRUSTED` as soon as any entry matches, `UNTRUSTED` if entries were found but none matched, and `EMPTY` if no applicable entries exist. Existing validation call sites remain unchanged, and the built-in trust manager now validates the full chain using the stored depths.
 
 The `depth` parameter is still available on `validateFingerprint(commonName, fingerprint, depth)` and `validateCertificateData(commonName, certificateData, depth)` for cases where you supply the fingerprint or certificate data yourself.
 

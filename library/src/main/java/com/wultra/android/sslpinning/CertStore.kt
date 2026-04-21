@@ -339,7 +339,7 @@ class CertStore internal constructor(
             null
         } ?: return UpdateResult.INVALID_DATA
 
-        // this can be null as it's serialize
+        // This can be null as it's serialized.
         @Suppress("SENSELESS_COMPARISON")
         if (response.fingerprints == null) {
             WultraDebug.error("CertStore: Fingerprints are null")
@@ -420,7 +420,7 @@ class CertStore internal constructor(
     /**
      * Validates whether provided certificate fingerprint at a specific chain depth is trusted for given common name.
      *
-     * When [DomainsConfig] is available from a server update and the domain has [DomainConfig.sslPinningRequired]
+     * When [com.wultra.android.sslpinning.model.DomainsConfig] is available from a server update and the domain has [com.wultra.android.sslpinning.model.DomainConfig.sslPinningRequired]
      * set to `false`, the validation returns [ValidationResult.TRUSTED] immediately without checking the fingerprint.
      *
      * @param commonName A common name from the leaf server certificate
@@ -567,6 +567,7 @@ class CertStore internal constructor(
 
             val pinnedDepth = info.depth
             if (pinnedDepth < 0 || pinnedDepth >= chain.size) {
+                WultraDebug.warning("CertStore: Skipping pinned certificate for common name '$commonName' because configured depth $pinnedDepth is out of range for certificate chain size ${chain.size}.")
                 continue
             }
 
