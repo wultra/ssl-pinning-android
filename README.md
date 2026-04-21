@@ -327,9 +327,11 @@ The `domainsConfig` is cached locally alongside the fingerprints and cleared whe
 
 ### Migration notes
 
-#### 1.8.x to 1.9.x
+#### 1.5.x to 1.6.x
 
-The internal cache format was extended with an optional `depth` field for each stored certificate entry. When the field is absent (e.g. in caches written by version 1.8.x), it defaults to `0` (leaf certificate). Existing caches are fully compatible with 1.9.x — no cache reset, server update, or integrator action is required.
+`UpdateResult.STORE_IS_EMPTY` has been removed. It was previously returned when the server responded with an empty `fingerprints` array. The update now returns `UpdateResult.OK` in that case, because an empty fingerprint list is a valid server response (e.g. when all certificates have been removed). If your code handles `STORE_IS_EMPTY` explicitly, remove that branch — no error handling is needed for this case.
+
+The internal cache format was extended with an optional `depth` field for each stored certificate entry. When the field is absent (e.g. in caches written by version 1.5.x), it defaults to `0` (leaf certificate). Existing caches are fully compatible with 1.6.x — no cache reset, server update, or integrator action is required.
 
 `validateCertificateChain(chain)` automatically validates **all** pinned entries for the domain, each at its stored depth. The result is `TRUSTED` as soon as any entry matches, `UNTRUSTED` if entries were found but none matched, and `EMPTY` if no applicable entries exist. All previously written `validateCertificateChain(chain)` call sites continue to compile and behave correctly.
 
