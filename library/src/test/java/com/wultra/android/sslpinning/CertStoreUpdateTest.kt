@@ -322,7 +322,8 @@ class CertStoreUpdateTest : CommonKotlinTest() {
         val fingerprint1 = Base64.getDecoder().decode("kqN/vV4hpTqVxxbhFE9EL1grlND6/Gc+tnF6TrUaiKc=")
         Assert.assertEquals(ValidationResult.TRUSTED, store.validateFingerprint("github.com", fingerprint1))
 
-        // Entry for google should return empty, because there is no other certificate with the same common name
+        // google.com is not included in this test CertStore's expectedCommonNames, so validation is rejected
+        // as UNTRUSTED even though the expired certificate was not stored in the cache.
         val fingerprint2 = Base64.getDecoder().decode("MRFQDEpmASza4zPsP8ocnd5FyVREDn7kE3Fr/zZjwHQ=")
         Assert.assertEquals(ValidationResult.UNTRUSTED, store.validateFingerprint("google.com", fingerprint2))
     }
