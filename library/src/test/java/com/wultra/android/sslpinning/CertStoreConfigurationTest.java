@@ -16,14 +16,14 @@
 
 package com.wultra.android.sslpinning;
 
+import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
+import static java.util.Collections.emptyList;
 
 import com.wultra.android.sslpinning.model.GetFingerprintResponse;
 
 import org.junit.Test;
-
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.Arrays;
@@ -49,7 +49,7 @@ public class CertStoreConfigurationTest extends CommonKotlinTest {
     @Test
     public void testConfiguration() throws Exception {
         CertStoreConfiguration config = configuration(new Date());
-        assertNull(config.getFallbackCertificates());
+        assertArrayEquals(emptyList().toArray(), config.getFallbackCertificates());
         CertStore store = new CertStore(config, cryptoProvider, secureDataStore);
         TestUtils.assignHandler(store, handler);
 
