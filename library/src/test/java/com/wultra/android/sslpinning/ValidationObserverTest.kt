@@ -78,6 +78,7 @@ class ValidationObserverTest : CommonKotlinTest() {
         }
         store.removeValidationObserver(observer)
 
+        every { cryptoProvider.ecdsaValidateSignature(any(), any()) } returns true
         TestUtils.updateAndCheck(store, UpdateMode.FORCED, UpdateResult.OK)
 
         observer = mockkValidationObserver()
