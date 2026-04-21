@@ -18,7 +18,7 @@ package com.wultra.android.sslpinning.model
 
 import android.util.Base64
 import com.wultra.android.sslpinning.interfaces.SignedData
-import java.util.*
+import java.util.Date
 import java.util.concurrent.TimeUnit
 
 /**

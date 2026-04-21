@@ -16,18 +16,15 @@
 package com.wultra.android.sslpinning
 
 import android.os.Handler
-import com.google.gson.Gson
 import com.wultra.android.sslpinning.model.GetFingerprintResponse
 import org.junit.Assert
 import java.io.ByteArrayInputStream
 import java.io.File
 import java.io.IOException
-import java.io.InputStream
 import java.net.HttpURLConnection
 import java.net.URL
 import java.security.cert.CertificateFactory
 import java.security.cert.X509Certificate
-import java.util.Base64
 import java.util.Date
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit

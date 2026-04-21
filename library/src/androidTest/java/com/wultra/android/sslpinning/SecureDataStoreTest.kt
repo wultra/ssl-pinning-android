@@ -16,15 +16,15 @@
 
 package com.wultra.android.sslpinning
 
-import androidx.test.platform.app.InstrumentationRegistry
 import androidx.test.ext.junit.runners.AndroidJUnit4
+import androidx.test.platform.app.InstrumentationRegistry
 import com.wultra.android.sslpinning.integration.DefaultSecureDataStore
 import com.wultra.android.sslpinning.integration.powerauth.PowerAuthSecureDataStore
 import com.wultra.android.sslpinning.interfaces.SecureDataStore
-import org.junit.Test
-
-import org.junit.Assert.*
+import org.junit.Assert.assertArrayEquals
+import org.junit.Assert.assertNull
 import org.junit.Before
+import org.junit.Test
 import org.junit.runner.RunWith
 import java.util.UUID
 

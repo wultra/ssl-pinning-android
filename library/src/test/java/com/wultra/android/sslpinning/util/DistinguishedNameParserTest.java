@@ -19,7 +19,6 @@ package com.wultra.android.sslpinning.util;
 import com.wultra.android.sslpinning.TestUtils;
 
 import org.junit.Assert;
-import org.junit.Ignore;
 import org.junit.Test;
 
 import java.io.IOException;

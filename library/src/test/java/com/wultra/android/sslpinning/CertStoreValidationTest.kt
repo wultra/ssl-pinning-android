@@ -21,15 +21,12 @@ import com.wultra.android.sslpinning.service.RemoteDataProvider
 import com.wultra.android.sslpinning.service.RemoteDataResponse
 import io.mockk.every
 import io.mockk.mockk
-
+import org.junit.Assert.assertEquals
 import org.junit.Test
-
 import java.net.URL
 import java.util.Base64
 import java.util.Date
 import java.util.concurrent.TimeUnit
-
-import org.junit.Assert.assertEquals
 
 /**
  * Tests for validation with [CertStore].

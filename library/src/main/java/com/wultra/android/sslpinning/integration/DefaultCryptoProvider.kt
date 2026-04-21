@@ -16,8 +16,17 @@ import com.wultra.android.sslpinning.interfaces.ECPublicKey
 import com.wultra.android.sslpinning.interfaces.SignedData
 import com.wultra.android.sslpinning.service.WultraDebug
 import java.math.BigInteger
-import java.security.*
-import java.security.spec.*
+import java.security.AlgorithmParameters
+import java.security.KeyFactory
+import java.security.MessageDigest
+import java.security.PublicKey
+import java.security.SecureRandom
+import java.security.Signature
+import java.security.spec.ECGenParameterSpec
+import java.security.spec.ECParameterSpec
+import java.security.spec.ECPoint
+import java.security.spec.ECPublicKeySpec
+import java.security.spec.X509EncodedKeySpec
 
 class DefaultCryptoProvider: CryptoProvider {
 

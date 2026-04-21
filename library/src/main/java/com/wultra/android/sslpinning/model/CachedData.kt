@@ -16,7 +16,7 @@
 
 package com.wultra.android.sslpinning.model
 
-import java.util.*
+import java.util.Date
 
 /**
  * Data class for stored data - list of certificates and next update date.

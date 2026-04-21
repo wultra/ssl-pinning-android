@@ -18,9 +18,8 @@ package com.wultra.android.sslpinning
 
 import com.wultra.android.sslpinning.model.GetFingerprintResponse
 import com.wultra.android.sslpinning.service.WultraDebug
-import java.lang.IllegalArgumentException
 import java.net.URL
-import java.util.*
+import java.util.Date
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.TimeUnit
 

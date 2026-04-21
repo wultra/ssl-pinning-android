@@ -32,7 +32,11 @@ import com.wultra.android.sslpinning.interfaces.SignedData
 import com.wultra.android.sslpinning.model.CachedData
 import com.wultra.android.sslpinning.model.CertificateInfo
 import com.wultra.android.sslpinning.model.GetFingerprintResponse
-import com.wultra.android.sslpinning.service.*
+import com.wultra.android.sslpinning.service.RemoteDataProvider
+import com.wultra.android.sslpinning.service.RemoteDataRequest
+import com.wultra.android.sslpinning.service.RestApi
+import com.wultra.android.sslpinning.service.UpdateScheduler
+import com.wultra.android.sslpinning.service.WultraDebug
 import com.wultra.android.sslpinning.util.ByteArrayTypeAdapter
 import com.wultra.android.sslpinning.util.CertUtils
 import com.wultra.android.sslpinning.util.DateTypeAdapter

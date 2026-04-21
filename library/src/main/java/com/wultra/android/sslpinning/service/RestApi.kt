@@ -19,11 +19,9 @@ package com.wultra.android.sslpinning.service
 import androidx.annotation.WorkerThread
 import com.wultra.android.sslpinning.SslValidationStrategy
 import java.io.IOException
-import java.lang.Exception
 import java.net.HttpURLConnection
 import java.net.URL
-import java.nio.charset.Charset
-import java.util.*
+import java.util.Locale
 import javax.net.ssl.HttpsURLConnection
 
 /**

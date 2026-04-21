@@ -19,7 +19,6 @@ package com.wultra.android.sslpinning.integration
 import android.os.Build
 import android.util.Log
 import com.wultra.android.sslpinning.CertStore
-import java.lang.Exception
 import java.net.InetAddress
 import java.net.Socket
 import java.security.KeyManagementException

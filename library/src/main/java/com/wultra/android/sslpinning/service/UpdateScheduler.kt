@@ -17,7 +17,7 @@
 package com.wultra.android.sslpinning.service
 
 import com.wultra.android.sslpinning.model.CertificateInfo
-import java.util.*
+import java.util.Date
 import java.util.concurrent.TimeUnit
 
 /**

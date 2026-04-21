@@ -20,7 +20,10 @@ import android.annotation.SuppressLint
 import java.security.KeyManagementException
 import java.security.NoSuchAlgorithmException
 import java.security.cert.X509Certificate
-import javax.net.ssl.*
+import javax.net.ssl.HostnameVerifier
+import javax.net.ssl.SSLContext
+import javax.net.ssl.SSLSocketFactory
+import javax.net.ssl.X509TrustManager
 
 /**
  * Provides validation strategy how HTTPS requests initiated from this library should be handled.

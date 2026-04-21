@@ -21,7 +21,6 @@ import com.wultra.android.sslpinning.interfaces.ECPublicKey
 import com.wultra.android.sslpinning.interfaces.SignedData
 import io.getlime.security.powerauth.core.CryptoUtils
 import io.getlime.security.powerauth.core.EcPublicKey
-import java.lang.IllegalArgumentException
 import java.security.SecureRandom
 
 /**

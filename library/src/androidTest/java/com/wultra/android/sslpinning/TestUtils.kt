@@ -31,7 +31,7 @@ import org.junit.Assert.assertTrue
 import java.net.HttpURLConnection
 import java.net.URL
 import java.security.cert.X509Certificate
-import java.util.*
+import java.util.Date
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit
 import javax.net.ssl.HttpsURLConnection

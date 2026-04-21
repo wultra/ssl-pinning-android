@@ -20,7 +20,6 @@ import android.util.Base64
 import androidx.test.platform.app.InstrumentationRegistry
 import com.wultra.android.sslpinning.service.WultraDebug
 import org.junit.Before
-import java.io.File
 import java.net.URL
 
 /**

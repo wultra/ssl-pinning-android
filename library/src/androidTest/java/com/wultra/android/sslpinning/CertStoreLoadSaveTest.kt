@@ -27,7 +27,8 @@ import com.wultra.android.sslpinning.model.CertificateInfo
 import org.junit.Assert
 import org.junit.Test
 import org.junit.runner.RunWith
-import java.util.*
+import java.util.Date
+import java.util.UUID
 
 /**
  * Test saving and loading of caches.
