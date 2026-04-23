@@ -16,7 +16,17 @@
 
 package com.wultra.android.sslpinning.model
 
+import com.wultra.android.sslpinning.service.WultraDebug
 import java.util.*
+
+/**
+ * Data class for data necessary to perform validation - `cachedData` and `Array<CertificateInfo>`.
+ *
+ * @property cachedData Cached data object.
+ * @property certificates Collection of certificates from `cachedData` with fallback certificates.
+ *
+ * */
+internal data class ValidationData(val cachedData: CachedData?, val certificates: Collection<CertificateInfo>)
 
 /**
  * Data class for stored data - list of certificates and next update date.
@@ -41,6 +51,19 @@ internal data class CachedData(var certificates: Array<CertificateInfo>,
         return result
     }
 
+    /**
+     * Returns whether SSL pinning is required for the given domain name according to [DomainsConfig].
+     * @param commonName The domain name to check.
+     * @return `false` when [DomainsConfig] explicitly disables pinning for this domain; `true` otherwise.
+     */
+    internal fun isDomainsConfigPinningRequired(commonName: String): Boolean {
+        val domainsConfig = domainsConfig ?: return true
+        val required = domainsConfig.isPinningRequired(commonName)
+        if (!required) {
+            WultraDebug.warning("CachedData: Pinning disabled by domainsConfig for domain '$commonName'; returning TRUSTED without fingerprint validation.")
+        }
+        return required
+    }
     /**
      * Sorts certificates stored in CachedData structure. Entries are alphabetically sorted
      * by the common name. For entries with the same common name, the entries with expiration

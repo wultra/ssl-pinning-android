@@ -32,6 +32,7 @@ import com.wultra.android.sslpinning.interfaces.SignedData
 import com.wultra.android.sslpinning.model.CachedData
 import com.wultra.android.sslpinning.model.CertificateInfo
 import com.wultra.android.sslpinning.model.GetFingerprintResponse
+import com.wultra.android.sslpinning.model.ValidationData
 import com.wultra.android.sslpinning.service.*
 import com.wultra.android.sslpinning.util.ByteArrayTypeAdapter
 import com.wultra.android.sslpinning.util.CertUtils
@@ -122,17 +123,6 @@ class CertStore internal constructor(
     }
 
     /**
-     * Internal function returns array of [CertificateInfo] objects.
-     * The array contains the fallback certificate, if provided, at the last position.
-     * The operation is thread safe.
-     */
-    @Synchronized
-    internal fun getCertificates(): Array<CertificateInfo> {
-        restoreCache()
-        return cachedData?.let { it.certificates + fallbackCertificates } ?: fallbackCertificates
-    }
-
-    /**
      * Internal function returns whole `CachedData` structure.
      * The operation is thread safe.
      */
@@ -140,6 +130,20 @@ class CertStore internal constructor(
     internal fun getCachedData(): CachedData? {
         restoreCache()
         return cachedData
+    }
+
+    /**
+     * Internal function returns whole `CachedData` and `[CertificateInfo]` needed for validation.
+     * The operation is thread safe.
+     */
+    @Synchronized
+    internal fun getValidationData(): ValidationData {
+        restoreCache()
+        val certificates = mutableListOf<CertificateInfo>()
+        cachedData?.certificates?.let { certificates.addAll(it) }
+        certificates.addAll(fallbackCertificates)
+
+        return ValidationData(cachedData, certificates)
     }
 
     @Synchronized
@@ -432,7 +436,8 @@ class CertStore internal constructor(
     @JvmOverloads
     fun validateFingerprint(commonName: String, fingerprint: ByteArray, depth: Int = 0): ValidationResult {
         // Check domainsConfig as early as possible
-        if (!isDomainsConfigPinningRequired(commonName)) {
+        val validationData = getValidationData()
+        if (validationData.cachedData?.isDomainsConfigPinningRequired(commonName) == false) {
             notifyValidationObservers(commonName, ValidationObserver::onValidationTrusted)
             return ValidationResult.TRUSTED
         }
@@ -451,8 +456,7 @@ class CertStore internal constructor(
             return ValidationResult.UNTRUSTED
         }
 
-        val certificates = getCertificates()
-        if (certificates.isEmpty()) {
+        if (validationData.certificates.isEmpty()) {
             WultraDebug.warning("CertStore: List of certificates is empty; returning EMPTY.")
             notifyValidationObservers(commonName, ValidationObserver::onValidationEmpty)
             return ValidationResult.EMPTY
@@ -462,7 +466,7 @@ class CertStore internal constructor(
         var matchAttempts = 0
         // Iterate over all entries and look for common name & fingerprint.
         // Also filter out already expired certificates (including the fallback certificate).
-        for (info in certificates) {
+        for (info in validationData.certificates) {
             if (info.isExpired(now)) {
                 continue
             }
@@ -494,11 +498,6 @@ class CertStore internal constructor(
      */
     @JvmOverloads
     fun validateCertificateData(commonName: String, certificateData: ByteArray, depth: Int = 0): ValidationResult {
-        // Check domainsConfig as early as possible — skip SHA-256 when pinning is not required
-        if (!isDomainsConfigPinningRequired(commonName)) {
-            notifyValidationObservers(commonName, ValidationObserver::onValidationTrusted)
-            return ValidationResult.TRUSTED
-        }
         val fingerprint = cryptoProvider.hashSha256(certificateData)
         return validateFingerprint(commonName, fingerprint, depth)
     }
@@ -534,7 +533,8 @@ class CertStore internal constructor(
 
         val commonName = CertUtils.parseCommonName(chain[0])
         // Check domainsConfig as early as possible
-        if (!isDomainsConfigPinningRequired(commonName)) {
+        val validationData = getValidationData()
+        if (validationData.cachedData?.isDomainsConfigPinningRequired(commonName) == false) {
             notifyValidationObservers(commonName, ValidationObserver::onValidationTrusted)
             return ValidationResult.TRUSTED
         }
@@ -547,8 +547,8 @@ class CertStore internal constructor(
             return ValidationResult.UNTRUSTED
         }
 
-        val certificates = getCertificates()
-        if (certificates.isEmpty()) {
+
+        if (validationData.certificates.isEmpty()) {
             WultraDebug.warning("CertStore: List of certificates is empty; returning EMPTY.")
             notifyValidationObservers(commonName, ValidationObserver::onValidationEmpty)
             return ValidationResult.EMPTY
@@ -557,7 +557,7 @@ class CertStore internal constructor(
         val now = Date()
         var matchAttempts = 0
 
-        for (info in certificates) {
+        for (info in validationData.certificates) {
             if (info.isExpired(now)) {
                 continue
             }
@@ -587,24 +587,6 @@ class CertStore internal constructor(
             notifyValidationObservers(commonName, ValidationObserver::onValidationEmpty)
             ValidationResult.EMPTY
         }
-    }
-
-    /**
-     * Returns whether SSL pinning is required for the given domain name according to [DomainsConfig].
-     *
-     * When no [DomainsConfig] is available (e.g. not yet fetched from the server), pinning is
-     * considered required. When [DomainsConfig] is present, its per-domain or fallback value is used.
-     *
-     * @param commonName The domain name to check.
-     * @return `false` when [DomainsConfig] explicitly disables pinning for this domain; `true` otherwise.
-     */
-    private fun isDomainsConfigPinningRequired(commonName: String): Boolean {
-        val domainsConfig = getCachedData()?.domainsConfig ?: return true
-        val required = domainsConfig.isPinningRequired(commonName)
-        if (!required) {
-            WultraDebug.warning("CertStore: Pinning disabled by domainsConfig for domain '$commonName'; returning TRUSTED without fingerprint validation.")
-        }
-        return required
     }
 
     /*** GLOBAL VALIDATION OBSERVERS ***/
