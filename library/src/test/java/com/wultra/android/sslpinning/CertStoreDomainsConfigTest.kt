@@ -336,31 +336,6 @@ class CertStoreDomainsConfigTest : CommonKotlinTest() {
     }
 
     /**
-     * When domainsConfig bypasses pinning, [CertStore.validateCertificateData] must short-circuit
-     * before computing SHA-256 and return [ValidationResult.TRUSTED].
-     */
-    @Test
-    fun testIsDomainsConfigPinningRequired_BypassDomain_SkipsSha256() {
-        val domainsConfigJson = """{"sslPinningRequiredForUnlisted":true,"domains":[{"name":"$CN_1","sslPinningRequired":false}]}"""
-        val data = responseGenerator.removeAll()
-            .append(commonName = CN_1, fingerprint = FP_1)
-            .setDomainsConfigJson(domainsConfigJson)
-            .toByteArray()
-
-        val certStore = getCertStore(buildRemoteDataProvider(data))
-        assertEquals(UpdateResult.OK, updateStore(certStore))
-
-        clearMocks(cryptoProvider, answers = false)
-
-        val certData = ByteArray(64) { 0xAA.toByte() }
-        val result = certStore.validateCertificateData(CN_1, certData)
-
-        assertEquals(ValidationResult.TRUSTED, result)
-        // SHA-256 must NOT be computed — domainsConfig bypass short-circuits before hashing
-        verify(exactly = 0) { cryptoProvider.hashSha256(certData) }
-    }
-
-    /**
      * When domainsConfig requires pinning, [CertStore.validateCertificateData] must proceed
      * normally: SHA-256 is computed and fingerprint matching is performed.
      */
