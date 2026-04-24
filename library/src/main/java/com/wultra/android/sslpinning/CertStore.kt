@@ -32,6 +32,7 @@ import com.wultra.android.sslpinning.interfaces.SignedData
 import com.wultra.android.sslpinning.model.CachedData
 import com.wultra.android.sslpinning.model.CertificateInfo
 import com.wultra.android.sslpinning.model.GetFingerprintResponse
+import com.wultra.android.sslpinning.model.ValidationData
 import com.wultra.android.sslpinning.service.*
 import com.wultra.android.sslpinning.util.ByteArrayTypeAdapter
 import com.wultra.android.sslpinning.util.CertUtils
@@ -122,17 +123,6 @@ class CertStore internal constructor(
     }
 
     /**
-     * Internal function returns array of [CertificateInfo] objects.
-     * The array contains the fallback certificate, if provided, at the last position.
-     * The operation is thread safe.
-     */
-    @Synchronized
-    internal fun getCertificates(): Array<CertificateInfo> {
-        restoreCache()
-        return cachedData?.let { it.certificates + fallbackCertificates } ?: fallbackCertificates
-    }
-
-    /**
      * Internal function returns whole `CachedData` structure.
      * The operation is thread safe.
      */
@@ -140,6 +130,20 @@ class CertStore internal constructor(
     internal fun getCachedData(): CachedData? {
         restoreCache()
         return cachedData
+    }
+
+    /**
+     * Internal function returns whole `CachedData` and `[CertificateInfo]` needed for validation.
+     * The operation is thread safe.
+     */
+    @Synchronized
+    internal fun getValidationData(): ValidationData {
+        restoreCache()
+        val certificates = mutableListOf<CertificateInfo>()
+        cachedData?.certificates?.let { certificates.addAll(it) }
+        certificates.addAll(fallbackCertificates)
+
+        return ValidationData(cachedData, certificates)
     }
 
     @Synchronized
@@ -168,7 +172,7 @@ class CertStore internal constructor(
         return try {
             GSON.fromJson(String(encodedData), CachedData::class.java)
         } catch (t: Throwable) {
-            WultraDebug.error("Failed to parse stored fingerprint data: $t")
+            WultraDebug.error("CertStore: Failed to parse stored fingerprint data: $t")
             return null
         }
     }
@@ -179,7 +183,9 @@ class CertStore internal constructor(
     }
 
     internal fun loadFallbackCertificates(): Array<CertificateInfo> {
-        val fallbackEntries = configuration.fallbackCertificates?.fingerprints ?: return emptyArray()
+        // In the current implementation, we deliberately do not allow fallback configuration for domains;
+        // only the fallback certificates array is supported.
+        val fallbackEntries = configuration.fallbackCertificates ?: return emptyArray()
         return fallbackEntries.map { CertificateInfo(it) }.toTypedArray()
     }
 
@@ -291,7 +297,7 @@ class CertStore internal constructor(
             thread.priority = Process.THREAD_PRIORITY_BACKGROUND
             thread.uncaughtExceptionHandler =
                     Thread.UncaughtExceptionHandler { t, e ->
-                        WultraDebug.error("Silent update failed, $t crashed with $e.")
+                        WultraDebug.error("CertStore: Silent update failed, $t crashed with $e.")
                     }
             thread.start()
         }
@@ -305,26 +311,27 @@ class CertStore internal constructor(
         // Validate signature in header
         if (configuration.useChallenge) {
             if (challenge == null) {
+                WultraDebug.error("CertStore: Missing challenge.")
                 // This is an internal library error. In case that "useChallenge" is true,
                 // then the challenge must be provided.
                 throw IllegalArgumentException("Missing challenge")
             }
             val signatureHeader = responseHeaders[RESPONSE_SIGNATURE_HEADER]
             if (signatureHeader == null) {
-                WultraDebug.error("Missing signature header.")
+                WultraDebug.error("CertStore: Missing signature header.")
                 return UpdateResult.INVALID_SIGNATURE
             }
             val signature = try {
                 Base64.decode(signatureHeader, Base64.NO_WRAP)
             } catch (t: Throwable) {
-                WultraDebug.error("Failed to decode signature from header: $t")
+                WultraDebug.error("CertStore: Failed to decode signature from header: $t")
                 return UpdateResult.INVALID_SIGNATURE
             }
             var signedBytes = challenge.toByteArray(Charsets.UTF_8)
             signedBytes += '&'.code.toByte()
             signedBytes += data
             if (!cryptoProvider.ecdsaValidateSignature(SignedData(signedBytes, signature), publicKey)) {
-                WultraDebug.error("Invalid signature in $RESPONSE_SIGNATURE_HEADER header")
+                WultraDebug.error("CertStore: Invalid signature in $RESPONSE_SIGNATURE_HEADER header")
                 return UpdateResult.INVALID_SIGNATURE
             }
         }
@@ -332,13 +339,14 @@ class CertStore internal constructor(
         val response = try {
             GSON.fromJson(String(data), GetFingerprintResponse::class.java)
         } catch (t: Throwable) {
-            WultraDebug.error("Failed to parse received fingerprint data: $t")
+            WultraDebug.error("CertStore: Failed to parse received fingerprint data: $t")
             null
         } ?: return UpdateResult.INVALID_DATA
 
-        // this can be null as it's serialize
+        // This can be null as it's serialized.
         @Suppress("SENSELESS_COMPARISON")
         if (response.fingerprints == null) {
+            WultraDebug.error("CertStore: Fingerprints are null")
             // this can be caused by invalid data in json
             return UpdateResult.INVALID_DATA
         }
@@ -391,12 +399,6 @@ class CertStore internal constructor(
                 newCertificates.add(newCertificateInfo)
             }
 
-            if (result == UpdateResult.OK && newCertificates.isEmpty()) {
-                // looks like it's time to update list of certificates stored on the server
-                WultraDebug.warning("CertStore: Database after update is still empty.")
-                result = UpdateResult.STORE_IS_EMPTY
-            }
-
             if (result != UpdateResult.OK) {
                 return@updateCachedData null
             }
@@ -409,7 +411,10 @@ class CertStore internal constructor(
                     expirationUpdateThresholdMillis = configuration.expirationUpdateThresholdMillis,
                     thresholdMultiplier = 0.125)
             val nextUpdate = scheduler.scheduleNextUpdate(certArray, currentDate)
-            return@updateCachedData CachedData(certificates = certArray, nextUpdate = nextUpdate)
+            return@updateCachedData CachedData(
+                certificates = certArray,
+                nextUpdate = nextUpdate,
+                domainsConfig =  response.domainsConfig)
         }
         return result
     }
@@ -417,40 +422,60 @@ class CertStore internal constructor(
     /*** VALIDATION ***/
 
     /**
-     * Validates whether provided certificate fingerprint is trusted for given common name.
+     * Validates whether provided certificate fingerprint at a specific chain depth is trusted for given common name.
      *
-     * @param commonName A common name
+     * When [com.wultra.android.sslpinning.model.DomainsConfig] is available from a server update and the domain has [com.wultra.android.sslpinning.model.DomainConfig.sslPinningRequired]
+     * set to `false`, the validation returns [ValidationResult.TRUSTED] immediately without checking the fingerprint.
+     *
+     * @param commonName A common name from the leaf server certificate
      * @param fingerprint A SHA-256 fingerprint calculated from certificate's data
+     * @param depth The certificate depth in the TLS chain (0 = leaf, 1..N-1 = intermediate, N = root). When no depth is provided, 0 is used as default.
      *
      * @return Validation result
      */
-    fun validateFingerprint(commonName: String, fingerprint: ByteArray): ValidationResult {
-        val expected = configuration.expectedCommonNames
-        if (expected != null && !expected.contains(commonName)) {
+    @JvmOverloads
+    fun validateFingerprint(commonName: String, fingerprint: ByteArray, depth: Int = 0): ValidationResult {
+        // Check domainsConfig as early as possible
+        val validationData = getValidationData()
+        if (validationData.cachedData?.isDomainsConfigPinningRequired(commonName) == false) {
+            notifyValidationObservers(commonName, ValidationObserver::onValidationTrusted)
+            return ValidationResult.TRUSTED
+        }
+
+        // depth should be 0+
+        if (depth < 0) {
+            WultraDebug.warning("CertStore: Requested depth of certificate should be >= 0; returning UNTRUSTED without fingerprint validation.")
             notifyValidationObservers(commonName, ValidationObserver::onValidationUntrusted)
             return ValidationResult.UNTRUSTED
         }
 
-        val certificates = getCertificates()
-        if (certificates.isEmpty()) {
+        val expected = configuration.expectedCommonNames
+        if (expected != null && !expected.contains(commonName)) {
+            WultraDebug.warning("CertStore: Common name '$commonName' not found in expected list; returning UNTRUSTED without fingerprint validation.")
+            notifyValidationObservers(commonName, ValidationObserver::onValidationUntrusted)
+            return ValidationResult.UNTRUSTED
+        }
+
+        if (validationData.certificates.isEmpty()) {
+            WultraDebug.warning("CertStore: List of certificates is empty; returning EMPTY.")
             notifyValidationObservers(commonName, ValidationObserver::onValidationEmpty)
             return ValidationResult.EMPTY
         }
 
         val now = Date()
         var matchAttempts = 0
-        // iterate over all entries and check common name and fingerprint
-        // filter out already expired certificates (including the fallback certificate)
-        for (info in certificates) {
+        // Iterate over all entries and look for common name & fingerprint.
+        // Also filter out already expired certificates (including the fallback certificate).
+        for (info in validationData.certificates) {
             if (info.isExpired(now)) {
                 continue
             }
-            if (info.commonName == commonName) {
+            if (info.commonName == commonName && info.depth == depth) {
+                matchAttempts += 1
                 if (info.fingerprint.contentEquals(fingerprint)) {
                     notifyValidationObservers(commonName, ValidationObserver::onValidationTrusted)
                     return ValidationResult.TRUSTED
                 }
-                matchAttempts += 1
             }
         }
 
@@ -468,24 +493,100 @@ class CertStore internal constructor(
      *
      * @param commonName Common name (CN).
      * @param certificateData Certificate data in DER format.
+     * @param depth The certificate depth in the TLS chain (0 = leaf, 1..N-1 = intermediate, N = root). When no depth is provided, 0 is used as default.
      * @return Validation result.
      */
-    fun validateCertificateData(commonName: String, certificateData: ByteArray): ValidationResult {
+    @JvmOverloads
+    fun validateCertificateData(commonName: String, certificateData: ByteArray, depth: Int = 0): ValidationResult {
         val fingerprint = cryptoProvider.hashSha256(certificateData)
-        return validateFingerprint(commonName, fingerprint)
+        return validateFingerprint(commonName, fingerprint, depth)
     }
 
     /**
      * Validates whether provided certificate is trusted.
+     * Validates the leaf certificate (depth 0), which is the default behavior.
      *
      * @param certificate Certificate to test.
      * @return Validation result.
      */
     fun validateCertificate(certificate: X509Certificate): ValidationResult {
-        val key = certificate.encoded
-        val fingerprint = cryptoProvider.hashSha256(key)
-        val commonName = CertUtils.parseCommonName(certificate)
-        return validateFingerprint(commonName, fingerprint)
+        return validateCertificateData(CertUtils.parseCommonName(certificate), certificate.encoded, 0)
+    }
+
+    /**
+     * Validates whether the provided TLS certificate chain is trusted by checking all pinned entries
+     * across every depth.
+     *
+     * The common name is extracted from the leaf certificate (chain[0]). All pinned entries for that
+     * common name are then checked against the certificates in the chain at their respective stored
+     * depths. At least one pinned entry must match for the chain to be considered trusted.
+     *
+     * @param chain The TLS certificate chain, where chain[0] is the leaf certificate.
+     * @return Validation result.
+     */
+    fun validateCertificateChain(chain: Array<out X509Certificate>): ValidationResult {
+        if (chain.isEmpty()) {
+            WultraDebug.warning("CertStore: Certificate chain is empty; returning UNTRUSTED without fingerprint validation.")
+            notifyValidationObservers("empty chain", ValidationObserver::onValidationUntrusted)
+            return ValidationResult.UNTRUSTED
+        }
+
+        val commonName = CertUtils.parseCommonName(chain[0])
+        // Check domainsConfig as early as possible
+        val validationData = getValidationData()
+        if (validationData.cachedData?.isDomainsConfigPinningRequired(commonName) == false) {
+            notifyValidationObservers(commonName, ValidationObserver::onValidationTrusted)
+            return ValidationResult.TRUSTED
+        }
+
+        // Check expected common names
+        val expected = configuration.expectedCommonNames
+        if (expected != null && !expected.contains(commonName)) {
+            WultraDebug.warning("CertStore: Common name '$commonName' not found in expected list; returning UNTRUSTED without fingerprint validation.")
+            notifyValidationObservers(commonName, ValidationObserver::onValidationUntrusted)
+            return ValidationResult.UNTRUSTED
+        }
+
+
+        if (validationData.certificates.isEmpty()) {
+            WultraDebug.warning("CertStore: List of certificates is empty; returning EMPTY.")
+            notifyValidationObservers(commonName, ValidationObserver::onValidationEmpty)
+            return ValidationResult.EMPTY
+        }
+
+        val now = Date()
+        var matchAttempts = 0
+
+        for (info in validationData.certificates) {
+            if (info.isExpired(now)) {
+                continue
+            }
+            if (info.commonName != commonName) {
+                continue
+            }
+
+            val pinnedDepth = info.depth
+            if (pinnedDepth < 0 || pinnedDepth >= chain.size) {
+                WultraDebug.warning("CertStore: Skipping pinned certificate for common name '$commonName' because configured depth $pinnedDepth is out of range for certificate chain size ${chain.size}.")
+                continue
+            }
+
+            val fingerprint = cryptoProvider.hashSha256(chain[pinnedDepth].encoded)
+            matchAttempts += 1
+
+            if (info.fingerprint.contentEquals(fingerprint)) {
+                notifyValidationObservers(commonName, ValidationObserver::onValidationTrusted)
+                return ValidationResult.TRUSTED
+            }
+        }
+
+        return if (matchAttempts > 0) {
+            notifyValidationObservers(commonName, ValidationObserver::onValidationUntrusted)
+            ValidationResult.UNTRUSTED
+        } else {
+            notifyValidationObservers(commonName, ValidationObserver::onValidationEmpty)
+            ValidationResult.EMPTY
+        }
     }
 
     /*** GLOBAL VALIDATION OBSERVERS ***/

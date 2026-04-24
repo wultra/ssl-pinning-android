@@ -12,6 +12,8 @@
 - [Updating Fingerprints](#updating-fingerprints)
 - [Fingerprint Validation](#fingerprint-validation)
    - [Global Validation Observers](#global-validation-observers)
+- [Certificate Depth Pinning](#certificate-depth-pinning)
+- [Domain Bypass Configuration](#domain-bypass-configuration)
 - [Integration](#integration)
    - [PowerAuth Integration](#powerauth-integration)
    - [PowerAuth Integration from Java](#powerauth-integration-from-java)
@@ -107,19 +109,23 @@ The configuration has the following properties:
 
 The `CertStoreConfiguration` may contain optional data with predefined certificate fingerprints. This technique can speed up the first application's startup when the database of fingerprints is empty. You still need to [update](#updating-fingerprints) your application, once the fallback fingerprints expire.
 
-To configure the property, you need to provide `GetFingerprintResponse` with a fallback certificate fingerprints. The data should contain the same data as are usually received from the server, except that the `signature` property is not validated (but must be provided). For example:
+To configure the property, you need to provide an array of `GetFingerprintResponse.Entry` objects with fallback certificate fingerprints. The data should contain the same data as are usually received from the server, except that the `signature` property is not validated (but must be provided). The optional `depth` field specifies the certificate chain position (0 = leaf, the default).
+
+> **Important:** Only fallback **certificates** (fingerprints) are supported in `fallbackCertificates`. The `DomainsConfig` object is intentionally **not** supported in fallback data — domain bypass rules take effect only when received from the server.
+
+For example:
 
 ```kotlin
 val fallbackEntry = GetFingerprintResponse.Entry(
                        name = "github.com",
                        fingerprint = fingerprintBytes,
                        expires = Date(1591185600000),
-                       ByteArray(0))
-val fallbackCertificates = GetFingerprintResponse(arrayOf(fallbackEntry))
+                       signature = ByteArray(0),
+                       depth = 0)
 val configuration = CertStoreConfiguration.Builder(
                             serviceUrl = URL("https://..."),
                             publicKey= publicKey)
-                    .fallbackCertificates(fallbackCertificates)
+                    .fallbackCertificates(arrayOf(fallbackEntry))
                     .build()
 val certStore = CertStore(configuration, appContext)
 ```
@@ -208,7 +214,19 @@ val validationResult = certStore.validateCertificateData(commonName, certData)
 // [ 3 ]  You want to validate java.security.cert.X509Certificate
 val certificate: java.security.cert.X509Certificate = connection.getServerCertificates()[0]
 val validationResult = certStore.validateCertificate(certificate)
+
+// [ 4 ]  Validate a full TLS certificate chain. `depth` is determined automatically from entries stored in `certStore`.
+
+val chain: Array<X509Certificate> = ...   // full TLS chain, chain[0] is the leaf
+val validationResult = certStore.validateCertificateChain(chain)
+
+// [ 5 ]  Validate a certificate at a specific depth (see "Certificate Depth Pinning")
+
+val validationResult = certStore.validateFingerprint(commonName, fingerprint, depth = 1)
+val validationResult = certStore.validateCertificateData(commonName, certData, depth = 1)
 ```
+
+The `validateFingerprint` and `validateCertificateData` overloads accept an explicit `depth` and match only entries stored at that depth. `validateCertificateChain(chain)` does **not** accept a `depth` parameter — it automatically validates all pinned entries across every depth (see [Certificate Depth Pinning](#certificate-depth-pinning)).
 
 Each `validate...` method returns the `ValidationResult` enum with the following options:
 
@@ -238,6 +256,86 @@ if (validationResult != ValidationResult.TRUSTED) {
 In order to be notified about all validation failures there is the `ValidationObserver` interface and methods on `CertStore` for adding/removing global validation observers.
 
 The motivation for these global validation observers is that some validation failures (e.g. those happening in `SSLSocketFactory` instances created by `SSLSocketIntegration.createSSLPinningSocketFactory(CertStore)`) are out of reach of the app integrating the pinning library. These global validation observers are notified about all validation failures. The app can then react with force updating the fingerprints.
+
+## Certificate Depth Pinning
+
+By default the library pins the **leaf certificate** — the certificate the server presents directly. For stronger protection against a compromised leaf certificate you can instead pin an **intermediate CA** or the **root CA** in the certificate chain.
+
+The `depth` value refers to the position of the certificate in the TLS chain as received in `X509TrustManager.checkServerTrusted(chain, authType)`, where `chain[0]` is the leaf. Note that the root CA may or may not be included in this provided chain:
+
+| depth | certificate |
+|-------|-------------|
+| `0`   | Leaf (server) certificate — default |
+| `1`   | First intermediate CA |
+| `2`   | Second intermediate CA (if present) |
+| `N`   | Root CA |
+
+The [Mobile Utility Server](https://github.com/wultra/mobile-utility-server) stores the `depth` for each registered fingerprint and includes it in the response. When you call `validateCertificateChain(chain)`, the SDK automatically iterates over **all** pinned entries for the domain and validates each one against the certificate at its stored depth in the live TLS chain. The chain is trusted as soon as any entry matches.
+
+```kotlin
+// No depth parameter needed — the SDK resolves depth automatically for each stored entry
+override fun checkServerTrusted(chain: Array<out X509Certificate>, authType: String) {
+    val result = certStore.validateCertificateChain(chain)
+    if (result != ValidationResult.TRUSTED) {
+        throw CertificateException("Certificate chain is not trusted: $result")
+    }
+}
+```
+
+To pin an intermediate CA simply register its fingerprint at `depth: 1` in the Mobile Utility Server — no code change is needed in your app.
+
+**Important notes:**
+
+- Depth is **configured server-side** in the Mobile Utility Server and carried in the downloaded fingerprint list. There is no `depth` parameter on `validateCertificateChain(chain)`.
+- Fingerprints stored at depth 0 are only matched against the leaf certificate; fingerprints stored at depth 1 are only matched against the first intermediate, and so on. A fingerprint stored at one depth is never compared against a certificate at a different depth.
+- The leaf common name (chain[0]) is always used to look up stored fingerprints, regardless of depth.
+- If a stored depth value exceeds the actual TLS chain length, that entry is silently skipped. Other entries for the same domain are still evaluated.
+- Multiple fingerprints for the same domain at different depths are fully supported and validated together in a single `validateCertificateChain(chain)` call.
+
+## Domain Bypass Configuration
+
+The [Mobile Utility Server](https://github.com/wultra/mobile-utility-server) can mark specific domains as not requiring SSL pinning. When the server includes this configuration in its response the SDK respects it transparently — no code changes are needed in your app.
+
+### How it works
+
+The server response may include a `domainsConfig` object:
+
+```json
+{
+  "fingerprints": [...],
+  "domainsConfig": {
+    "sslPinningRequiredForUnlisted": true,
+    "domains": [
+      { "name": "bypass.example.com", "sslPinningRequired": false },
+      { "name": "api.example.com",    "sslPinningRequired": true  }
+    ]
+  }
+}
+```
+
+The SDK applies the following rules on every call to `validate...`:
+
+1. If the domain appears in `domains` with `sslPinningRequired: false` → returns `TRUSTED` immediately, no fingerprint check.
+2. If the domain appears in `domains` with `sslPinningRequired: true` → normal fingerprint-based validation applies.
+3. If the domain is **not** in the list:
+  - `sslPinningRequiredForUnlisted: true` → normal fingerprint-based validation (default server behaviour).
+  - `sslPinningRequiredForUnlisted: false` → returns `TRUSTED` immediately.
+
+The `domainsConfig` is cached locally alongside the fingerprints and cleared whenever the server sends a response without it.
+
+> **Important:** `domainsConfig` is supported **only** when received from the server. It is intentionally **not** supported in `fallbackCertificates` — there is no fallback mechanism for domain bypass rules.
+
+### Migration notes
+
+#### 1.5.x to 1.6.x
+
+`UpdateResult.STORE_IS_EMPTY` has been removed. It was previously returned when the server responded with an empty `fingerprints` array. The update now returns `UpdateResult.OK` in that case, because an empty fingerprint list is a valid server response (e.g. when all certificates have been removed). If your code handles `STORE_IS_EMPTY` explicitly, remove that branch — no error handling is needed for this case.
+
+The internal cache format was extended with an optional `depth` field for each stored certificate entry. When the field is absent (e.g. in caches written by version 1.5.x), it defaults to `0` (leaf certificate). Existing caches are fully compatible with 1.6.x — no cache reset, server update, or integrator action is required.
+
+`validateCertificateChain(chain)` automatically validates **all** pinned entries for the domain, each at its stored depth. The result is `TRUSTED` as soon as any entry matches, `UNTRUSTED` if entries were found but none matched, and `EMPTY` if no applicable entries exist. Existing validation call sites remain unchanged, and the built-in trust manager now validates the full chain using the stored depths.
+
+The `depth` parameter is still available on `validateFingerprint(commonName, fingerprint, depth)` and `validateCertificateData(commonName, certificateData, depth)` for cases where you supply the fingerprint or certificate data yourself.
 
 ## Integration
 
