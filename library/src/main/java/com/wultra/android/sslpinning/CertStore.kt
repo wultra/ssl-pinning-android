@@ -147,13 +147,12 @@ class CertStore internal constructor(
     }
 
     @Synchronized
-    internal fun updateCachedData(update: (CachedData?) -> CachedData?) {
-        restoreCache()
-
-        val newData = update(cachedData)
-        if (newData != null) {
-            cachedData = newData
-            saveDataToCache(newData)
+    internal fun updateCachedData(newCacheData: CachedData?) {
+        if (newCacheData != null) {
+            cachedData = newCacheData
+            saveDataToCache(newCacheData)
+        } else {
+            WultraDebug.warning("CertStore: Want to update cache with no data.")
         }
     }
 
@@ -336,53 +335,47 @@ class CertStore internal constructor(
             return UpdateResult.INVALID_DATA
         }
 
-        var result = UpdateResult.OK
-        updateCachedData { cachedData ->
-            val newCertificates = (cachedData?.certificates ?: arrayOf())
-                    .filter { !it.isExpired(currentDate) }
-                    .toMutableList()
+        val newCertificates = mutableListOf<CertificateInfo>()
 
-            for (entry in response.fingerprints) {
-                val newCertificateInfo = CertificateInfo(entry)
-                if (newCertificateInfo.isExpired(currentDate)) {
-                    // skip already expired entry
-                    continue
-                }
-
-                if (newCertificates.indexOf(newCertificateInfo) != -1) {
-                    // skip entry that's already in the database
-                    continue
-                }
-
-                configuration.expectedCommonNames?.let { expectedCN ->
-                    if (!expectedCN.contains(newCertificateInfo.commonName)) {
-                        // CertStore will store this CertificateInfo, but validation will ignore
-                        // this entry because it's not in expectedCommonNames
-                        WultraDebug.warning("CertStore: Loaded data contains name, which will not be trusted. CN = '${entry.name}'")
-                    }
-                }
-
-                newCertificates.add(newCertificateInfo)
+        for (entry in response.fingerprints) {
+            val newCertificateInfo = CertificateInfo(entry)
+            if (newCertificateInfo.isExpired(currentDate)) {
+                // skip already expired entry
+                continue
             }
 
-            if (result != UpdateResult.OK) {
-                return@updateCachedData null
+            if (newCertificates.indexOf(newCertificateInfo) != -1) {
+                // skip entry that's already in the database
+                continue
             }
 
-            newCertificates.sort()
-            val certArray = newCertificates.toTypedArray()
+            configuration.expectedCommonNames?.let { expectedCN ->
+                if (!expectedCN.contains(newCertificateInfo.commonName)) {
+                    // CertStore will store this CertificateInfo, but validation will ignore
+                    // this entry because it's not in expectedCommonNames
+                    WultraDebug.warning("CertStore: Loaded data contains name, which will not be trusted. CN = '${entry.name}'")
+                }
+            }
 
-            val scheduler = UpdateScheduler(
-                    periodicUpdateIntervalMillis = configuration.periodicUpdateIntervalMillis,
-                    expirationUpdateThresholdMillis = configuration.expirationUpdateThresholdMillis,
-                    thresholdMultiplier = 0.125)
-            val nextUpdate = scheduler.scheduleNextUpdate(certArray, currentDate)
-            return@updateCachedData CachedData(
-                certificates = certArray,
-                nextUpdate = nextUpdate,
-                domainsConfig =  response.domainsConfig)
+            newCertificates.add(newCertificateInfo)
         }
-        return result
+
+        newCertificates.sort()
+        val certArray = newCertificates.toTypedArray()
+
+        val scheduler = UpdateScheduler(
+            periodicUpdateIntervalMillis = configuration.periodicUpdateIntervalMillis,
+            expirationUpdateThresholdMillis = configuration.expirationUpdateThresholdMillis,
+            thresholdMultiplier = 0.125)
+
+        val nextUpdate = scheduler.scheduleNextUpdate(certArray, currentDate)
+
+        updateCachedData(CachedData(
+            certificates = certArray,
+            nextUpdate = nextUpdate,
+            domainsConfig =  response.domainsConfig))
+
+        return UpdateResult.OK
     }
 
     /*** VALIDATION ***/
