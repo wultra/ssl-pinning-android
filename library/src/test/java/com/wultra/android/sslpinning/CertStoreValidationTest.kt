@@ -121,7 +121,7 @@ class CertStoreValidationTest : CommonKotlinTest() {
         }
         every { cryptoProvider.ecdsaValidateSignature(any(), any()) } returns true
 
-        // json with current data, invalid header signatur
+        // json with current data, invalid header signature
         validateGithubWithUpdateJsonOnly(remoteDataProvider, UpdateResult.INVALID_SIGNATURE, ValidationResult.EMPTY)
     }
 
