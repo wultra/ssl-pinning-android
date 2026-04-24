@@ -56,7 +56,7 @@ class CertStore internal constructor(
 
 
     @Volatile
-    private var cacheIsLoaded = false
+    private var isCacheLoaded = false
     private var cachedData: CachedData? = null
     private var fallbackCertificates = emptyArray<CertificateInfo>()
 
@@ -148,6 +148,7 @@ class CertStore internal constructor(
 
     @Synchronized
     internal fun updateCachedData(newCacheData: CachedData?) {
+        restoreCache()
         if (newCacheData != null) {
             cachedData = newCacheData
             saveDataToCache(newCacheData)
@@ -157,10 +158,10 @@ class CertStore internal constructor(
     }
 
     private fun restoreCache() {
-        if (!cacheIsLoaded) {
+        if (!isCacheLoaded) {
             cachedData = loadCachedData()
             fallbackCertificates = loadFallbackCertificates()
-            cacheIsLoaded = true
+            isCacheLoaded = true
         }
     }
 
@@ -345,7 +346,7 @@ class CertStore internal constructor(
             }
 
             if (newCertificates.indexOf(newCertificateInfo) != -1) {
-                // skip entry that's already in the database
+                // skip entry that's already in the response list
                 continue
             }
 
