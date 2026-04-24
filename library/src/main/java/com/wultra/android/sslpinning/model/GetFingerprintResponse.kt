@@ -39,8 +39,8 @@ data class GetFingerprintResponse @JvmOverloads constructor(
      * @property name Common name
      * @property fingerprint Fingerprint data
      * @property expires Expiration date
-     * @property signature ECDSA signature, optional for servers that supports challenge in request
-     *                     and provides signature for the whole response.
+     * @property signature ECDSA signature, included in each entry in the JSON response.
+     *                     The field is optional in the JSON model for backwards compatibility.
      * @property depth  Certificate depth in the TLS chain. 0 is the leaf certificate (default),
      *                  1...N-1 are intermediate certificates, and N is the root certificate.
      */
