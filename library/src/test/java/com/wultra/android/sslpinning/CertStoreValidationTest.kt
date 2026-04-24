@@ -106,7 +106,7 @@ class CertStoreValidationTest : CommonKotlinTest() {
         every { remoteDataProvider.getFingerprints(any()) } answers {
             RemoteDataResponse(
                 200,
-                sigHeader,
+                emptyMap(),
                 """
                     { 
                   "fingerprints": [{
