@@ -12,12 +12,6 @@
       "path": "library/gradle.properties",
       "type": "version_replace",
       "match": "VERSION_NAME=%VERSION%"
-    },
-    {
-      "description": "Changelog for the wultra documentation.",
-      "path": "docs/Changelog.md",
-      "type": "version_verify",
-      "match": "## %VERSION%"
     }
   ],
   "scripts": [

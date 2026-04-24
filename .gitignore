@@ -36,6 +36,9 @@ proguard/
 # Log Files
 *.log
 
+# Credentials
+.credentials
+
 # Android Studio Navigation editor temp files
 .navigation/
 
@@ -70,3 +73,6 @@ fastlane/readme.md
 
 # jEnv
 .java-version
+
+# MacOS
+.DS_Store
