@@ -65,7 +65,7 @@ class CertStoreDomainsConfigTest : CommonKotlinTest() {
     private fun buildRemoteDataProvider(responseData: ByteArray): RemoteDataProvider {
         val remoteDataProvider: RemoteDataProvider = mockk()
         every { remoteDataProvider.getFingerprints(any()) } answers {
-            RemoteDataResponse(200, emptyMap(), responseData)
+            RemoteDataResponse(200, sigHeader, responseData)
         }
         every { cryptoProvider.ecdsaValidateSignature(any(), any()) } returns true
         return remoteDataProvider
@@ -286,7 +286,9 @@ class CertStoreDomainsConfigTest : CommonKotlinTest() {
 
         // First update: include DomainsConfig
         every { remoteDataProvider.getFingerprints(any()) } answers {
-            RemoteDataResponse(200, emptyMap(),
+            RemoteDataResponse(
+                200,
+                sigHeader,
                 responseGenerator.removeAll()
                     .append(commonName = CN_1, fingerprint = FP_1)
                     .setDomainsConfigJson(domainsConfigJson)
@@ -299,7 +301,9 @@ class CertStoreDomainsConfigTest : CommonKotlinTest() {
 
         // Second update: no DomainsConfig
         every { remoteDataProvider.getFingerprints(any()) } answers {
-            RemoteDataResponse(200, emptyMap(),
+            RemoteDataResponse(
+                200,
+                sigHeader,
                 responseGenerator.removeAll()
                     .append(commonName = CN_1, fingerprint = FP_1)
                     .toByteArray()

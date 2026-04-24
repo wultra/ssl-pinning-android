@@ -41,7 +41,7 @@ class CertStoreLoadSaveTest : CommonTest() {
 
     override fun setUp() {
         super.setUp()
-        config = CertStoreConfiguration.Builder(serviceUrl, pubKey).useChallenge(true).build()
+        config = CertStoreConfiguration.Builder(serviceUrl, pubKey).build()
     }
 
     @Test

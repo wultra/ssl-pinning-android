@@ -43,7 +43,7 @@ class CertStoreUpdateTest : CommonKotlinTest() {
         every { remoteDataProvider.getFingerprints(any()) } answers {
             RemoteDataResponse(
                 200,
-                emptyMap(),
+                sigHeader,
                 """
                     {
                       "fingerprints": [
@@ -73,7 +73,7 @@ class CertStoreUpdateTest : CommonKotlinTest() {
         every { remoteDataProvider.getFingerprints(any()) } answers {
             RemoteDataResponse(
                 200,
-                emptyMap(),
+                sigHeader,
                 """
                     { 
                       "fingerprints": [{
@@ -100,7 +100,7 @@ class CertStoreUpdateTest : CommonKotlinTest() {
         every { remoteDataProvider.getFingerprints(any()) } answers {
             RemoteDataResponse(
                 200,
-                emptyMap(),
+                sigHeader,
                 """
                     {
                       "fingerprints": [
@@ -116,7 +116,7 @@ class CertStoreUpdateTest : CommonKotlinTest() {
             )
         }
 
-        every { cryptoProvider.ecdsaValidateSignature(any(), any()) } returns false
+        every { cryptoProvider.ecdsaValidateSignature(any(), any()) } returns true
 
         val updateResult = performForcedUpdate(remoteDataProvider)
         Assert.assertEquals(UpdateResult.OK, updateResult)
@@ -139,7 +139,7 @@ class CertStoreUpdateTest : CommonKotlinTest() {
               ]
             }""".toByteArray()
             latch.countDown()
-            RemoteDataResponse(200, emptyMap(), bytes)
+            RemoteDataResponse(200, sigHeader, bytes)
         }
         val store = getCertStore(remoteDataProvider)
         TestUtils.assignHandler(store, handler)
@@ -161,6 +161,37 @@ class CertStoreUpdateTest : CommonKotlinTest() {
             override fun continueExecution() {}
         })
         Assert.assertTrue(latch.await(2, TimeUnit.SECONDS))
+    }
+
+    @Test
+    @Throws(Exception::class)
+    fun testMissingSignatureHeader() {
+        // Arrange: valid response body, but no x-cert-pinning-signature header at all.
+        val remoteDataProvider: RemoteDataProvider = mockk()
+        every { remoteDataProvider.getFingerprints(any()) } answers {
+            RemoteDataResponse(
+                200,
+                emptyMap(),
+                """
+                    {
+                      "fingerprints": [
+                        {
+                          "name" : "github.com",
+                          "fingerprint" : "kqN/vV4hpTqVxxbhFE9EL1grlND6/Gc+tnF6TrUaiKc=",
+                          "expires" : 2212460799,
+                          "signature" : "MEUCICB69UpMPOdtrsR6XcJqHEh2L2RO4oSJ3SZ7BYnTBJbGAiEAnZ7rEWdMVGwa59Wx5QbAorEFxXH89Iu0CnqWa96Eda0="
+                        }
+                      ]
+                    }
+                """.toByteArray()
+            )
+        }
+
+        // Act
+        val updateResult = performForcedUpdate(remoteDataProvider)
+
+        // Assert: absent header must be treated as an invalid signature — security-critical.
+        Assert.assertEquals(UpdateResult.INVALID_SIGNATURE, updateResult)
     }
 
     @Throws(Exception::class)

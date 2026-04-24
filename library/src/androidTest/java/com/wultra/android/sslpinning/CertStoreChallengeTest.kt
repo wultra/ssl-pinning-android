@@ -31,7 +31,7 @@ class CertStoreChallengeTest: CommonTest() {
 
     override fun setUp() {
         super.setUp()
-        val config = CertStoreConfiguration.Builder(serviceUrl, pubKey).useChallenge(true).build()
+        val config = CertStoreConfiguration.Builder(serviceUrl, pubKey).build()
         certStores = arrayOf(
             CertStore.powerAuthCertStore(config, appContext, UUID.randomUUID().toString()),
             CertStore(config, DefaultCryptoProvider(), DefaultSecureDataStore(appContext, UUID.randomUUID().toString()))

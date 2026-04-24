@@ -90,7 +90,7 @@ class CertStoreNetworkTest {
         val config = CertStoreConfiguration.Builder(
             URL("$baseUrl/app/init?appName=$appName"),
             pubKey
-        ).useChallenge(true).build()
+        ).build()
 
         certStore = CertStore(
             config,

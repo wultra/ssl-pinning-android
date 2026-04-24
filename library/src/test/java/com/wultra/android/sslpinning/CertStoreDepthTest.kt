@@ -74,7 +74,7 @@ class CertStoreDepthTest : CommonKotlinTest() {
     private fun buildRemoteDataProvider(responseData: ByteArray): RemoteDataProvider {
         val remoteDataProvider: RemoteDataProvider = mockk()
         every { remoteDataProvider.getFingerprints(any()) } answers {
-            RemoteDataResponse(200, emptyMap(), responseData)
+            RemoteDataResponse(200, sigHeader, responseData)
         }
         every { cryptoProvider.ecdsaValidateSignature(any(), any()) } returns true
         return remoteDataProvider

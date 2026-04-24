@@ -46,6 +46,8 @@ import java.security.Security
  */
 open class CommonKotlinTest {
 
+    val sigHeader = mapOf(CertStore.RESPONSE_SIGNATURE_HEADER to "AAAA")
+
     @MockK
     lateinit var cryptoProvider: CryptoProvider
 
@@ -102,6 +104,10 @@ open class CommonKotlinTest {
 
         every { cryptoProvider.importECPublicKey(any()) } answers {
             TestPA2ECPublicKey(it.invocation.args[0] as ByteArray)
+        }
+
+        every { cryptoProvider.getRandomData(any()) } answers {
+            ByteArray(it.invocation.args[0] as Int)
         }
 
         every { cryptoProvider.ecdsaValidateSignature(any(), any()) } answers {

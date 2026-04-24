@@ -38,7 +38,6 @@ class CertStoreValidateTest : CommonTest() {
     fun validateWithFallback() {
         val fallbackFingerprints = GSON.fromJson(validFingerprintJsonResponse().decodeToString(), GetFingerprintResponse::class.java)
         val config = CertStoreConfiguration.Builder(serviceUrl, pubKey)
-            .useChallenge(true)
             .fallbackCertificates(fallbackFingerprints.fingerprints)
             .build()
         val cert = getCertificateFromUrl("https://github.com")
@@ -54,7 +53,7 @@ class CertStoreValidateTest : CommonTest() {
 
     @Test
     fun validateAfterUpdate() {
-        val config = CertStoreConfiguration.Builder(serviceUrl, pubKey).useChallenge(true).build()
+        val config = CertStoreConfiguration.Builder(serviceUrl, pubKey).build()
         val cert = getCertificateFromUrl("https://github.com")
 
         arrayOf(

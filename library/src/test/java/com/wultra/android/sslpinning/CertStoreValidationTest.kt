@@ -77,7 +77,7 @@ class CertStoreValidationTest : CommonKotlinTest() {
         every { remoteDataProvider.getFingerprints(any()) } answers {
             RemoteDataResponse(
                 200,
-                emptyMap(),
+                sigHeader,
                 """
                     {
                       "fingerprints": [
@@ -92,6 +92,7 @@ class CertStoreValidationTest : CommonKotlinTest() {
                 """.toByteArray()
             )
         }
+        every { cryptoProvider.ecdsaValidateSignature(any(), any()) } returns true
 
         // json with outdated data, correct public key
         validateGithubWithUpdateJsonOnly(remoteDataProvider, UpdateResult.OK, ValidationResult.EMPTY)
@@ -119,7 +120,7 @@ class CertStoreValidationTest : CommonKotlinTest() {
             )
         }
 
-        // json with current data, different public key
+        // json with current data, invalid header signature
         validateGithubWithUpdateJsonOnly(remoteDataProvider, UpdateResult.INVALID_SIGNATURE, ValidationResult.EMPTY)
     }
 
@@ -131,11 +132,12 @@ class CertStoreValidationTest : CommonKotlinTest() {
         every { remoteDataProvider.getFingerprints(any()) } answers {
             RemoteDataResponse(
                 200,
-                emptyMap(),
+                sigHeader,
                 TestUtils.validFingerprintJsonResponse()
             )
         }
-
+        every { cryptoProvider.ecdsaValidateSignature(any(), any()) } returns true
+        
         // json with current data, correct public key
         validateGithubWithUpdateJsonOnly(remoteDataProvider, UpdateResult.OK, ValidationResult.TRUSTED)
     }
