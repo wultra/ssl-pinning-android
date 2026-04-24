@@ -105,7 +105,7 @@ class CertStoreConfiguration(
             publicKey = builder.publicKey,
             expectedCommonNames = builder.expectedCommonNames,
             identifier = builder.identifier,
-            fallbackCertificates = builder.fallbackCertificates ?: builder.fallbackCertificate?.let { arrayOf(it) },
+            fallbackCertificates = builder.fallbackCertificates ?: emptyArray(),
             periodicUpdateIntervalMillis = builder.periodicUpdateIntervalMillis,
             expirationUpdateThresholdMillis = builder.expirationUpdateThresholdMillis,
             executorService = builder.executorService,
@@ -166,11 +166,6 @@ class CertStoreConfiguration(
         var identifier: String? = null
             private set
 
-        // TODO: Remove in version 2.0
-        @Deprecated("Use [fallbackCertificates] instead.")
-        var fallbackCertificate: GetFingerprintResponse.Entry? = null
-            private set
-
         var fallbackCertificates: Array<GetFingerprintResponse.Entry>? = null
             private set
 
@@ -201,15 +196,6 @@ class CertStoreConfiguration(
          */
         fun identifier(identifier: String?) = apply {
             this.identifier = identifier
-        }
-
-        /**
-         * Fallback certificate fingerprint.
-         * Useful for situations when no fingerprints has been loaded from the server yet.
-         */
-        @Deprecated("Use fallbackCertificates instead. This method will be removed in the future.")
-        fun fallbackCertificate(fallbackCertificate: GetFingerprintResponse.Entry?) = apply {
-            this.fallbackCertificate = fallbackCertificate
         }
 
         /**

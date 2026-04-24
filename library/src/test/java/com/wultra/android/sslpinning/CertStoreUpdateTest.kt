@@ -194,6 +194,185 @@ class CertStoreUpdateTest : CommonKotlinTest() {
         Assert.assertEquals(UpdateResult.INVALID_SIGNATURE, updateResult)
     }
 
+    // MARK: - Replace cache tests
+
+    /**
+     * Verifies that after an update the cache contains only the certificates from the new
+     * server response, and previously cached certificates that are absent from the response
+     * are discarded.
+     */
+    @Test
+    @Throws(Exception::class)
+    fun testUpdate_ReplacesExistingCertificates() {
+        val remoteDataProvider: RemoteDataProvider = mockk()
+        every { cryptoProvider.ecdsaValidateSignature(any(), any()) } returns true
+
+        // First update: load cert1 + cert2
+        every { remoteDataProvider.getFingerprints(any()) } answers {
+            RemoteDataResponse(
+                200,
+                mapOf(CertStore.RESPONSE_SIGNATURE_HEADER to "AAAA"),
+                """
+                    {
+                      "fingerprints": [
+                        {
+                          "name" : "github.com",
+                          "fingerprint" : "kqN/vV4hpTqVxxbhFE9EL1grlND6/Gc+tnF6TrUaiKc=",
+                          "expires" : 2212460799,
+                          "signature" : "MEUCICB69UpMPOdtrsR6XcJqHEh2L2RO4oSJ3SZ7BYnTBJbGAiEAnZ7rEWdMVGwa59Wx5QbAorEFxXH89Iu0CnqWa96Eda0="
+                        },
+                        {
+                          "name" : "github.com",
+                          "fingerprint" : "MRFQDEpmASza4zPsP8ocnd5FyVREDn7kE3Fr/zZjwHQ=",
+                          "expires" : 2212460799,
+                          "signature" : "MEUCIQD8nGyux9GM8u3XCrRiuJj/N2eEuB0oiHzTEpGyy2gE9gIgYIRfyed6ykDzZbK1ougq1SoRW8UBe5q3VmWihHuL2JY="
+                        }
+                      ]
+                    }
+                """.toByteArray()
+            )
+        }
+
+        val store = getCertStore(remoteDataProvider)
+        TestUtils.assignHandler(store, handler)
+
+        var updateResult = TestUtils.updateAndCheck(store, UpdateMode.FORCED, null)
+        Assert.assertEquals(UpdateResult.OK, updateResult)
+        Assert.assertEquals(2, store.getCachedData()?.certificates?.size)
+
+        // Second update: server returns only cert2 (cert1 is gone)
+        every { remoteDataProvider.getFingerprints(any()) } answers {
+            RemoteDataResponse(
+                200,
+                mapOf(CertStore.RESPONSE_SIGNATURE_HEADER to "AAAA"),
+                """
+                    {
+                      "fingerprints": [
+                        {
+                          "name" : "github.com",
+                          "fingerprint" : "MRFQDEpmASza4zPsP8ocnd5FyVREDn7kE3Fr/zZjwHQ=",
+                          "expires" : 2212460799,
+                          "signature" : "MEUCIQD8nGyux9GM8u3XCrRiuJj/N2eEuB0oiHzTEpGyy2gE9gIgYIRfyed6ykDzZbK1ougq1SoRW8UBe5q3VmWihHuL2JY="
+                        }
+                      ]
+                    }
+                """.toByteArray()
+            )
+        }
+
+        updateResult = TestUtils.updateAndCheck(store, UpdateMode.FORCED, null)
+        Assert.assertEquals(UpdateResult.OK, updateResult)
+
+        val cached = store.getCachedData()
+        Assert.assertEquals("Cache must contain only the certificate from the latest response", 1, cached?.certificates?.size)
+
+        // cert1 must be untrusted, because there is still another certificate with the same common name
+        val fingerprint1 = Base64.getDecoder().decode("kqN/vV4hpTqVxxbhFE9EL1grlND6/Gc+tnF6TrUaiKc=")
+        Assert.assertEquals(ValidationResult.UNTRUSTED, store.validateFingerprint("github.com", fingerprint1))
+
+        // cert2 must still be trusted
+        val fingerprint2 = Base64.getDecoder().decode("MRFQDEpmASza4zPsP8ocnd5FyVREDn7kE3Fr/zZjwHQ=")
+        Assert.assertEquals(ValidationResult.TRUSTED, store.validateFingerprint("github.com", fingerprint2))
+    }
+
+    /**
+     * Verifies that expired certificates received in the server response are not stored in the cache.
+     */
+    @Test
+    @Throws(Exception::class)
+    fun testUpdate_FiltersExpiredCertificatesInResponse() {
+        val remoteDataProvider: RemoteDataProvider = mockk()
+        every { cryptoProvider.ecdsaValidateSignature(any(), any()) } returns true
+
+        // Response contains one valid and one already-expired certificate
+        every { remoteDataProvider.getFingerprints(any()) } answers {
+            RemoteDataResponse(
+                200,
+                mapOf(CertStore.RESPONSE_SIGNATURE_HEADER to "AAAA"),
+                """
+                    {
+                      "fingerprints": [
+                        {
+                          "name" : "github.com",
+                          "fingerprint" : "kqN/vV4hpTqVxxbhFE9EL1grlND6/Gc+tnF6TrUaiKc=",
+                          "expires" : 2212460799,
+                          "signature" : "MEUCICB69UpMPOdtrsR6XcJqHEh2L2RO4oSJ3SZ7BYnTBJbGAiEAnZ7rEWdMVGwa59Wx5QbAorEFxXH89Iu0CnqWa96Eda0="
+                        },
+                        {
+                          "name" : "google.com",
+                          "fingerprint" : "MRFQDEpmASza4zPsP8ocnd5FyVREDn7kE3Fr/zZjwHQ=",
+                          "expires" : 1531185600,
+                          "signature" : "MEUCIQD8nGyux9GM8u3XCrRiuJj/N2eEuB0oiHzTEpGyy2gE9gIgYIRfyed6ykDzZbK1ougq1SoRW8UBe5q3VmWihHuL2JY="
+                        }
+                      ]
+                    }
+                """.toByteArray()
+            )
+        }
+
+        val store = getCertStore(remoteDataProvider)
+        TestUtils.assignHandler(store, handler)
+
+        val updateResult = TestUtils.updateAndCheck(store, UpdateMode.FORCED, null)
+        Assert.assertEquals(UpdateResult.OK, updateResult)
+
+        val cached = store.getCachedData()
+        Assert.assertEquals("Expired certificate from response must not be stored", 1, cached?.certificates?.size)
+
+        val fingerprint1 = Base64.getDecoder().decode("kqN/vV4hpTqVxxbhFE9EL1grlND6/Gc+tnF6TrUaiKc=")
+        Assert.assertEquals(ValidationResult.TRUSTED, store.validateFingerprint("github.com", fingerprint1))
+
+        // google.com is not included in this test CertStore's expectedCommonNames, so validation is rejected
+        // as UNTRUSTED even though the expired certificate was not stored in the cache.
+        val fingerprint2 = Base64.getDecoder().decode("MRFQDEpmASza4zPsP8ocnd5FyVREDn7kE3Fr/zZjwHQ=")
+        Assert.assertEquals(ValidationResult.UNTRUSTED, store.validateFingerprint("google.com", fingerprint2))
+    }
+
+    /**
+     * Verifies that duplicate entries within a single server response are stored only once.
+     */
+    @Test
+    @Throws(Exception::class)
+    fun testUpdate_DeduplicatesCertificatesInResponse() {
+        val remoteDataProvider: RemoteDataProvider = mockk()
+        every { cryptoProvider.ecdsaValidateSignature(any(), any()) } returns true
+
+        // Response contains cert1 twice
+        every { remoteDataProvider.getFingerprints(any()) } answers {
+            RemoteDataResponse(
+                200,
+                mapOf(CertStore.RESPONSE_SIGNATURE_HEADER to "AAAA"),
+                """
+                    {
+                      "fingerprints": [
+                        {
+                          "name" : "github.com",
+                          "fingerprint" : "kqN/vV4hpTqVxxbhFE9EL1grlND6/Gc+tnF6TrUaiKc=",
+                          "expires" : 2212460799,
+                          "signature" : "MEUCICB69UpMPOdtrsR6XcJqHEh2L2RO4oSJ3SZ7BYnTBJbGAiEAnZ7rEWdMVGwa59Wx5QbAorEFxXH89Iu0CnqWa96Eda0="
+                        },
+                        {
+                          "name" : "github.com",
+                          "fingerprint" : "kqN/vV4hpTqVxxbhFE9EL1grlND6/Gc+tnF6TrUaiKc=",
+                          "expires" : 2212460799,
+                          "signature" : "MEUCICB69UpMPOdtrsR6XcJqHEh2L2RO4oSJ3SZ7BYnTBJbGAiEAnZ7rEWdMVGwa59Wx5QbAorEFxXH89Iu0CnqWa96Eda0="
+                        }
+                      ]
+                    }
+                """.toByteArray()
+            )
+        }
+
+        val store = getCertStore(remoteDataProvider)
+        TestUtils.assignHandler(store, handler)
+
+        val updateResult = TestUtils.updateAndCheck(store, UpdateMode.FORCED, null)
+        Assert.assertEquals(UpdateResult.OK, updateResult)
+
+        val cached = store.getCachedData()
+        Assert.assertEquals("Duplicate certificate from response must be stored only once", 1, cached?.certificates?.size)
+    }
+
     @Throws(Exception::class)
     private fun performForcedUpdate(remoteDataProvider: RemoteDataProvider): UpdateResult {
         val store = getCertStore(remoteDataProvider)
