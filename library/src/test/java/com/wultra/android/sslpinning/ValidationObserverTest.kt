@@ -49,7 +49,7 @@ class ValidationObserverTest : CommonKotlinTest() {
         every { remoteDataProvider.getFingerprints(any()) } answers {
             RemoteDataResponse(
                 200,
-                emptyMap(),
+                sigHeader,
                 TestUtils.validFingerprintJsonResponse()
             )
         }
@@ -78,6 +78,7 @@ class ValidationObserverTest : CommonKotlinTest() {
         }
         store.removeValidationObserver(observer)
 
+        every { cryptoProvider.ecdsaValidateSignature(any(), any()) } returns true
         TestUtils.updateAndCheck(store, UpdateMode.FORCED, UpdateResult.OK)
 
         observer = mockkValidationObserver()

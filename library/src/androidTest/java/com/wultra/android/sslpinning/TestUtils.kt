@@ -41,11 +41,13 @@ import javax.net.ssl.HttpsURLConnection
  *
  * @author Tomas Kypta, tomas.kypta@wultra.com
  */
+val sigHeader = mapOf(CertStore.RESPONSE_SIGNATURE_HEADER to "AAAA")
+
 val remoteDataProvider = getRemoteDataProvider()
 fun getRemoteDataProvider(json: String = jsonData): RemoteDataProvider {
     return object : RemoteDataProvider {
         override fun getFingerprints(request: RemoteDataRequest): RemoteDataResponse {
-            return RemoteDataResponse(200, emptyMap(), json.toByteArray(Charsets.UTF_8))
+            return RemoteDataResponse(200, sigHeader, json.toByteArray(Charsets.UTF_8))
         }
     }
 }
