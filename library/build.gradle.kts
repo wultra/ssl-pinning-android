@@ -27,6 +27,8 @@ plugins {
     id("signing")
 }
 
+apply<com.wultra.plugin.WultraAndroidReleasePlugin>()
+
 android {
     namespace = "com.wultra.android.sslpinning"
     testNamespace = "com.wultra.android.sslpinning.test"
@@ -104,8 +106,6 @@ dependencies {
         }
     }
 }
-
-apply("android-release-aar.gradle")
 
 // Load properties for instrumentation tests.
 fun loadInstrumentationTestConfigProperties(project: Project, defaultConfig: DefaultConfig) {
