@@ -24,8 +24,23 @@ SRC_ROOT="`( cd \"${TOP}/..\" && pwd )`"
 
 pushd "${SRC_ROOT}" # move to the repo root
 
-TARGET_REPO=$1 # assume first argument is the target repository
+if [ "$#" -ne 1 ]; then
+    echo "Usage: ./scripts/build-and-publish.sh <repository>"
+    echo "  where <repository> is either \"central\" or \"local\""
+    exit 1
+fi
 
+case "$1" in
+    central|local)
+        TARGET_REPO="$1"
+        ;;
+    *)
+        echo "Invalid repository: $1"
+        echo "Usage: ./scripts/build-and-publish.sh <repository>"
+        echo "  where <repository> is either \"central\" or \"local\""
+        exit 1
+        ;;
+esac
 source "library/gradle.properties" # load project properties to get version and artifact id
 
 # print info about what is going to be published for better visibility
