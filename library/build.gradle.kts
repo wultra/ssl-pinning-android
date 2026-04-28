@@ -65,16 +65,11 @@ android {
         suppressWarnings = false
     }
 
-    // Custom ktlint script
-    tasks.register("ktlint") {
-        logger.lifecycle("ktlint")
-        exec {
-            commandLine = listOf("./../scripts/lint.sh", "--no-error")
-        }
+    lint {
+        // to handle warning coming from a transitive dependency
+        // - obsolete 'androidx.fragment' through 'powerauth-sdk'
+        disable.add("ObsoleteLintCustomCheck")
     }
-
-    // Make ktlint run before build
-    tasks.getByName("preBuild").dependsOn("ktlint")
 }
 
 dependencies {
