@@ -62,6 +62,14 @@ Default implementations (`DefaultCryptoProvider`, `DefaultSecureDataStore`) use 
 4. Valid data is serialised as JSON via GSON and persisted through `SecureDataStore`; the cached model is `CachedData`
 5. Fingerprint expiry is monitored by `UpdateScheduler` to trigger more frequent updates near expiry
 
+### Domain bypass
+
+The server can include a `DomainsConfig` in its response, allowing selective bypass of SSL pinning for specific domains. `DomainsConfig.isPinningRequired(commonName)` checks per-domain config first, then falls back to a global `sslPinningRequiredForUnlisted` flag. This config is persisted as part of `CachedData`.
+
+### Validation observers
+
+`CertStore` supports registering `ValidationObserver` instances that receive callbacks (`onValidationTrusted`, `onValidationUntrusted`, `onValidationEmpty`) on the main thread for every certificate validation. Useful for analytics and debugging.
+
 ### Integration points
 
 - **`SSLPinningIntegration`** — helpers for `HttpsURLConnection` and OkHttp
