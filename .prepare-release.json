@@ -1,6 +1,6 @@
 {
   "_purpose": "This file is used as a definition file for the prepare-release script.",
-  "_info": "It defines files that contains version number that should be updated during the release preparation.",
+  "_info": "It defines files that contain version number that should be updated during the release preparation.",
   "library": {
     "name": "ssl-pinning-android",
     "type": "android-oss",
