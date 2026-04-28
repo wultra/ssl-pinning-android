@@ -2,6 +2,7 @@
 
 set -e # stop script when error occurs
 set -u # stop when undefined variable is used
+set -o pipefail # stop when any command in a pipe fails
 #set -x # print all execution (good for debugging)
 
 ######### USAGE #########
