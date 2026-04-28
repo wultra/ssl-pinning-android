@@ -88,7 +88,7 @@ The primary `internal` constructor takes `(configuration, cryptoProvider, secure
 - **Unit tests** (`src/test`) — JVM-only; use MockK. Extend `CommonKotlinTest` which:
   - mocks `android.util.Base64`, `android.util.Log`, `Looper`
   - installs BouncyCastle as a JCE provider
-  - provides a real `CryptoProvider` backed by PowerAuth Java Crypto
+  - uses a mocked `CryptoProvider`, delegating selected operations (for example, ECDSA validation) to PowerAuth Java Crypto utilities
 - **Instrumentation tests** (`src/androidTest`) — require a device/emulator and optionally a live Mobile Utility Server
 - Async update calls in tests are coordinated with `CountDownLatch` + `UpdateObserver`
 
