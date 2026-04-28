@@ -1,6 +1,7 @@
 #!/bin/bash
 
 set -e # stop script when error occurs
+set -o pipefail # fail when any command in a pipeline fails
 set -u # stop when undefined variable is used
 #set -x # print all execution (good for debugging)
 
