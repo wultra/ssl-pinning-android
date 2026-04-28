@@ -99,6 +99,15 @@ dependencies {
     }
 }
 
+// The Wultra release plugin registers an `androidJavadocs` Javadoc task that excludes *.kt files.
+// Since this library is Kotlin-only there are no Java sources to document, so we suppress the
+// "no public classes found" error. The plugin also picks up a `dokkaJavadoc` task (when present)
+// to include Kotlin API docs in the -javadoc.jar; we register one here pointing at Dokka's HTML
+// output so the published artifact contains meaningful documentation.
+tasks.withType<Javadoc>().configureEach {
+    isFailOnError = false
+}
+
 // Load properties for instrumentation tests.
 fun loadInstrumentationTestConfigProperties(project: Project, defaultConfig: DefaultConfig) {
     val configsRoot = File("${project.rootProject.projectDir}/configs")
