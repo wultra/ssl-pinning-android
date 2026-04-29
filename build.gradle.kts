@@ -17,12 +17,16 @@
 buildscript {
     repositories {
         mavenCentral()
+        mavenLocal()
         google()
+        maven(url = "https://plugins.gradle.org/m2/")
     }
     dependencies {
         classpath("com.android.tools.build:gradle:${Constants.BuildScript.androidPluginVersion}")
         classpath("org.jetbrains.kotlin:kotlin-gradle-plugin:${Constants.BuildScript.kotlinVersion}")
         classpath("org.jetbrains.dokka:dokka-gradle-plugin:${Constants.BuildScript.dokkaVersion}")
+        // releasing
+        classpath("com.wultra.gradle:android-release-gradle-plugin:1.+") // Wultra releasing plugin (latest 1.x version)
     }
 }
 
