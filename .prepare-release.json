@@ -1,0 +1,19 @@
+{
+  "_purpose": "This file is used as a definition file for the prepare-release script.",
+  "_info": "It defines files that contain version number that should be updated during the release preparation.",
+  "library": {
+    "name": "ssl-pinning-android",
+    "type": "android-oss",
+    "publishScript": "scripts/build-and-publish.sh central"
+  },
+  "files": [
+    {
+      "description": "Gradle properties file.",
+      "path": "library/gradle.properties",
+      "type": "version_replace",
+      "match": "VERSION_NAME=%VERSION%"
+    }
+  ],
+  "scripts": [
+  ]
+}

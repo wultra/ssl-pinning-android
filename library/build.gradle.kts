@@ -1,5 +1,4 @@
 import com.android.build.api.dsl.DefaultConfig
-import com.android.build.gradle.BaseExtension
 import java.io.FileInputStream
 import java.util.Properties
 
@@ -23,9 +22,10 @@ plugins {
     id("com.android.library")
     id("org.jetbrains.kotlin.android")
     id("org.jetbrains.dokka")
-    id("maven-publish")
     id("signing")
 }
+
+apply<com.wultra.plugin.WultraAndroidReleasePlugin>()
 
 android {
     namespace = "com.wultra.android.sslpinning"
@@ -63,18 +63,17 @@ android {
         jvmTarget = Constants.Java.kotlinJvmTarget
     }
 
-    // avoids a gradle warning, otherwise unused due to custom config in android-release-aar.gradle
-    publishing {
-        singleVariant("release") {
-            withSourcesJar()
-            withJavadocJar()
-        }
-    }
-
     lint {
         // to handle warning coming from a transitive dependency
         // - obsolete 'androidx.fragment' through 'powerauth-sdk'
         disable.add("ObsoleteLintCustomCheck")
+    }
+}
+
+afterEvaluate {
+    // there are no java files, disable javadocs generation
+    tasks.named("androidJavadocs").configure {
+        enabled = false
     }
 }
 
@@ -104,8 +103,6 @@ dependencies {
         }
     }
 }
-
-apply("android-release-aar.gradle")
 
 // Load properties for instrumentation tests.
 fun loadInstrumentationTestConfigProperties(project: Project, defaultConfig: DefaultConfig) {
