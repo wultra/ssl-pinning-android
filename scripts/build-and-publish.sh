@@ -23,8 +23,20 @@ SRC_ROOT="`( cd \"${TOP}/..\" && pwd )`"
 
 pushd "${SRC_ROOT}" # move to the repo root
 
-TARGET_REPO=$1 # assume first argument is the target repository
+if [ $# -eq 1 ] && { [ "$1" = "-h" ] || [ "$1" = "--help" ]; }; then
+    echo "Usage: ./scripts/build-and-publish.sh <repository>"
+    echo '  where <repository> is either "central" or "local"'
+    exit 0
+fi
 
+if [ $# -ne 1 ]; then
+    echo "Error: missing or invalid arguments."
+    echo "Usage: ./scripts/build-and-publish.sh <repository>"
+    echo '  where <repository> is either "central" or "local"'
+    exit 1
+fi
+
+TARGET_REPO="$1" # first argument is the target repository
 source "library/gradle.properties" # load project properties to get version and artifact id
 
 # print info about what is going to be published for better visibility
