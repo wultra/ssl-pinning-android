@@ -19,7 +19,6 @@ package com.wultra.android.sslpinning
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.wultra.android.sslpinning.integration.DefaultCryptoProvider
 import com.wultra.android.sslpinning.integration.DefaultSecureDataStore
-import com.wultra.android.sslpinning.integration.powerauth.powerAuthCertStore
 import com.wultra.android.sslpinning.model.GetFingerprintResponse
 import org.junit.Assert
 import org.junit.Test
@@ -43,7 +42,6 @@ class CertStoreValidateTest : CommonTest() {
         val cert = getCertificateFromUrl("https://github.com")
 
         arrayOf(
-            CertStore.powerAuthCertStore(config, appContext),
             CertStore(config, DefaultCryptoProvider(), DefaultSecureDataStore(appContext, UUID.randomUUID().toString()))
         ).forEach { store ->
             val result = store.validateCertificate(cert)
@@ -57,7 +55,6 @@ class CertStoreValidateTest : CommonTest() {
         val cert = getCertificateFromUrl("https://github.com")
 
         arrayOf(
-            CertStore.powerAuthCertStore(config, appContext),
             CertStore(config, DefaultCryptoProvider(), DefaultSecureDataStore(appContext, UUID.randomUUID().toString()))
         ).forEach { store ->
             updateAndCheck(store, UpdateMode.FORCED, UpdateResult.OK)

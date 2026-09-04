@@ -22,11 +22,10 @@ import android.os.Handler
 import android.os.Looper
 import android.util.Base64
 import android.util.Log
+import com.wultra.android.sslpinning.integration.DefaultCryptoProvider
 import com.wultra.android.sslpinning.interfaces.CryptoProvider
 import com.wultra.android.sslpinning.interfaces.SecureDataStore
 import com.wultra.android.sslpinning.interfaces.SignedData
-import io.getlime.security.powerauth.crypto.lib.util.KeyConvertor
-import io.getlime.security.powerauth.crypto.lib.util.SignatureUtils
 import io.mockk.MockKAnnotations
 import io.mockk.every
 import io.mockk.impl.annotations.MockK
@@ -103,7 +102,7 @@ open class CommonKotlinTest {
         }
 
         every { cryptoProvider.importECPublicKey(any()) } answers {
-            TestPA2ECPublicKey(it.invocation.args[0] as ByteArray)
+            DefaultCryptoProvider().importECPublicKey(it.invocation.args[0] as ByteArray)
         }
 
         every { cryptoProvider.getRandomData(any()) } answers {
@@ -111,13 +110,9 @@ open class CommonKotlinTest {
         }
 
         every { cryptoProvider.ecdsaValidateSignature(any(), any()) } answers {
-            val utils = SignatureUtils()
             val signedData: SignedData = it.invocation.args[0] as SignedData
-            val pubKey: TestPA2ECPublicKey = it.invocation.args[1] as TestPA2ECPublicKey
-            val keyConvertor = KeyConvertor()
-            utils.validateECDSASignature(signedData.data,
-                signedData.signature,
-                keyConvertor.convertBytesToPublicKey(pubKey.data))
+            val publicKey = it.invocation.args[1]
+            DefaultCryptoProvider().ecdsaValidateSignature(signedData, publicKey as com.wultra.android.sslpinning.interfaces.ECPublicKey)
         }
 
         every { secureDataStore.load(any()) } returns null

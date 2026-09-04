@@ -38,7 +38,4 @@ object Constants {
         const val buildToolsVersion = "35.0.0"
     }
 
-    object Dependencies {
-        const val powerAuthSdkVersion = "1.9.3"
-    }
 }

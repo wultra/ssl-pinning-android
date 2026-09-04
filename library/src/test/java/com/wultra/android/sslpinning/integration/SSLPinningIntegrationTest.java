@@ -20,7 +20,8 @@ import com.wultra.android.sslpinning.CertStore;
 import com.wultra.android.sslpinning.CertStoreConfiguration;
 import com.wultra.android.sslpinning.CommonKotlinTest;
 import com.wultra.android.sslpinning.TestUtils;
-import com.wultra.android.sslpinning.integration.powerauth.PowerAuthCertStore;
+import com.wultra.android.sslpinning.integration.DefaultCryptoProvider;
+import com.wultra.android.sslpinning.integration.DefaultSecureDataStore;
 
 import org.junit.Assert;
 import org.junit.Test;
@@ -44,7 +45,7 @@ public class SSLPinningIntegrationTest extends CommonKotlinTest {
 
         CertStoreConfiguration configuration = new CertStoreConfiguration.Builder(url, publicKeyBytes)
                 .build();
-        CertStore store = PowerAuthCertStore.createInstance(configuration, context);
+        CertStore store = new CertStore(configuration, new DefaultCryptoProvider(), getSecureDataStore());
         TestUtils.assignHandler(store, handler);
 
         Assert.assertNotNull(store);

@@ -15,8 +15,6 @@
 - [Certificate Depth Pinning](#certificate-depth-pinning)
 - [Domain Bypass Configuration](#domain-bypass-configuration)
 - [Integration](#integration)
-   - [PowerAuth Integration](#powerauth-integration)
-   - [PowerAuth Integration from Java](#powerauth-integration-from-java)
    - [Integration with HttpsUrlConnection](#integration-with-httpsurlconnection)
    - [Integration with OkHttp](#integration-with-okhttp)
 - [Switching Server Certificate](#switching-server-certificate)
@@ -339,58 +337,6 @@ The `domainsConfig` is cached locally alongside the fingerprints and cleared whe
 
 ## Integration
 
-### PowerAuth Integration
-
-The **WultraSSLPinning** library contains classes for integration with the PowerAuth SDK. The most important one is the `PowerAuthSslPinningValidationStrategy` class, which implements `PA2ClientValidationStrategy` with SSL pinning. You can simply instantiate in with an existing `CertStore` and set it in `PA2ClientConfiguration`. Then the class will provide SSL pinning for all communication initiated within the PowerAuth SDK.
-
-For example, this is how the configuration sequence may look like if you want to use both, `PowerAuthSDK` and `CertStore`:
-
-```kotlin
-val certStoreConfiguration = CertStoreConfiguration.Builder(
-                            serviceUrl = URL("https://..."),
-                            publicKey= publicKey)
-                    .fallbackCertificates(fallbackCertificates)
-                    .build()
-                    
-val powerAuthCertStore = CertStore.powerAuthCertStore(certStoreConfiguration, appContext)
-
-val powerAuthConfiguration = PowerAuthConfiguration.Builder(
-                appContext.packageName,
-                BuildConfig.PA_SDK_CONFIG
-            ).build()
-
-val sslPinningValidationStrategy = PowerAuthSslPinningValidationStrategy(powerAuthCertStore)
-
-val powerAuthClientConfiguration = PowerAuthClientConfiguration.Builder()
-                .clientValidationStrategy(sslPinningValidationStrategy)
-                .allowUnsecuredConnection(false)
-                .build()
-                
-val powerAuth = PowerAuthSDK.Builder(powerAuthConfiguration)
-                .clientConfiguration(powerAuthClientConfiguration)
-                .build(appContext)
-```
-
-### PowerAuth Integration From Java
-
-Some of Kotlin's PowerAuthSDK integration APIs are inconvenient in Java. A `CertStore` integrating PowerAuthSDK can be created with:
-
-```java
-CertStore store = PowerAuthCertStore.createInstance(configuration, context);
-```
-
-Or:
-
-```java
-CertStore store = PowerAuthCertStore.createInstance(configuration, context, "my-keychain-identifier");
-```
-
-Note that Kotlin's way of construction `CertStore.powerAuthCertStore` is not available in Java. Calling this in Java would be way too cumbersome, but will work:
-
-```java
-PowerAuthIntegrationKt.powerAuthCertStore(CertStore.Companion, configuration, context, null);`
-```
-
 ### Integration With `HttpsUrlConnection`
 
 For integration with HttpsUrlConnection use `SSLSocketFactory` provided by `SSLPinningIntegration.createSSLPinningSocketFactory(...)` methods.
@@ -439,13 +385,9 @@ Yes, you can change how much information is printed to the debug console:
 WultraDebug.loggingLevel = WultraDebug.WultraLoggingLevel.DEBUG
 ```
 
-### Is there a dependency on PowerAuthSDK?
+### Does the library depend on any external SDK?
 
-There's an optional dependency on [PowerAuthSDK](https://github.com/wultra/powerauth-mobile-sdk). 
-
-This makes the library easier to use with for Wultra customers using our PowerAuthSDK.
-
-In case PowerAuth library is not available, you can't use any class from the `com.wultra.android.sslpinning.integration.powerauth` package since they expect PowerAuthSDK to be present and any such usage will result in an ClassNotFound exception.
+No. The library ships with its built-in `DefaultCryptoProvider` and `DefaultSecureDataStore`, and does not include any optional SDK dependency or integration package.
 
 ### What is pinned?
 
@@ -485,7 +427,6 @@ If you really want to use public key pinning instead of certificate pinning (e.g
    - `CertStore.validateCertificate(X509Certificate)`
    - `SSLPinningX509TrustManager`
    - `SSLPinningIntegration.createSSLPinningSocketFactory(CertStore)`
-   - `PowerAuthSslPinningValidationStrategy`
 
 You can use `CertStore.validateCertficateData(commonName, byteArray)` only if you pass public key bytes as `byteArray`.
 

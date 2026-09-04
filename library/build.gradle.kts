@@ -64,9 +64,6 @@ android {
     }
 
     lint {
-        // to handle warning coming from a transitive dependency
-        // - obsolete 'androidx.fragment' through 'powerauth-sdk'
-        disable.add("ObsoleteLintCustomCheck")
     }
 }
 
@@ -78,23 +75,18 @@ afterEvaluate {
 }
 
 dependencies {
-    compileOnly("com.wultra.android.powerauth:powerauth-sdk:${Constants.Dependencies.powerAuthSdkVersion}")
-
     implementation("org.jetbrains.kotlin:kotlin-stdlib:${Constants.BuildScript.kotlinVersion}")
     implementation("com.google.code.gson:gson:2.10.1")
     implementation("androidx.annotation:annotation:1.7.1")
     implementation("androidx.security:security-crypto:1.0.0")
 
-    testImplementation("com.wultra.android.powerauth:powerauth-sdk:${Constants.Dependencies.powerAuthSdkVersion}")
     testImplementation("junit:junit:4.13.2")
     testImplementation("io.mockk:mockk:1.13.5")
     testImplementation("org.bouncycastle:bcprov-jdk15on:1.70")
-    testImplementation("io.getlime.security:powerauth-java-crypto:1.4.0")
 
     androidTestImplementation("androidx.test:runner:1.5.2")
     androidTestImplementation("androidx.test:rules:1.5.0")
     androidTestImplementation("androidx.test.ext:junit:1.1.5")
-    androidTestImplementation("com.wultra.android.powerauth:powerauth-sdk:${Constants.Dependencies.powerAuthSdkVersion}")
     androidTestImplementation("com.squareup.okhttp3:okhttp:4.10.0")
 
     constraints {
