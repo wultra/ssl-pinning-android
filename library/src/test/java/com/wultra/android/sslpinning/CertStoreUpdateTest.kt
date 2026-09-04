@@ -126,7 +126,9 @@ class CertStoreUpdateTest : CommonKotlinTest() {
     @Throws(Exception::class)
     fun testUpdateWithNoUpdateObserver() {
         val remoteDataProvider: RemoteDataProvider = mockk()
-        val latch = CountDownLatch(1)
+        val updateFinishedLatch = CountDownLatch(1)
+        var updateResult: UpdateResult? = null
+        every { cryptoProvider.ecdsaValidateSignature(any(), any()) } returns true
         every { remoteDataProvider.getFingerprints(any()) } answers {
             val bytes = """{
               "fingerprints": [
@@ -138,7 +140,6 @@ class CertStoreUpdateTest : CommonKotlinTest() {
                 }
               ]
             }""".toByteArray()
-            latch.countDown()
             RemoteDataResponse(200, sigHeader, bytes)
         }
         val store = getCertStore(remoteDataProvider)
@@ -151,7 +152,9 @@ class CertStoreUpdateTest : CommonKotlinTest() {
 
             override fun onUpdateFinished(type: UpdateType, result: UpdateResult) {
                 Assert.assertEquals(UpdateType.DIRECT, type)
+                updateResult = result
                 super.onUpdateFinished(type, result)
+                updateFinishedLatch.countDown()
             }
 
             override fun handleFailedUpdate(type: UpdateType, result: UpdateResult) {
@@ -160,7 +163,8 @@ class CertStoreUpdateTest : CommonKotlinTest() {
 
             override fun continueExecution() {}
         })
-        Assert.assertTrue(latch.await(2, TimeUnit.SECONDS))
+        Assert.assertTrue(updateFinishedLatch.await(2, TimeUnit.SECONDS))
+        Assert.assertEquals(UpdateResult.OK, updateResult)
     }
 
     @Test
