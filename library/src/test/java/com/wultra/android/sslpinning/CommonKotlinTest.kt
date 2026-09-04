@@ -23,9 +23,7 @@ import android.os.Looper
 import android.util.Base64
 import android.util.Log
 import com.wultra.android.sslpinning.integration.DefaultCryptoProvider
-import com.wultra.android.sslpinning.interfaces.CryptoProvider
-import com.wultra.android.sslpinning.interfaces.SecureDataStore
-import com.wultra.android.sslpinning.interfaces.SignedData
+import com.wultra.android.sslpinning.interfaces.*
 import io.mockk.MockKAnnotations
 import io.mockk.every
 import io.mockk.impl.annotations.MockK
@@ -111,8 +109,8 @@ open class CommonKotlinTest {
 
         every { cryptoProvider.ecdsaValidateSignature(any(), any()) } answers {
             val signedData: SignedData = it.invocation.args[0] as SignedData
-            val publicKey = it.invocation.args[1]
-            DefaultCryptoProvider().ecdsaValidateSignature(signedData, publicKey as com.wultra.android.sslpinning.interfaces.ECPublicKey)
+            val publicKey: ECPublicKey = it.invocation.args[1] as ECPublicKey
+            DefaultCryptoProvider().ecdsaValidateSignature(signedData, publicKey)
         }
 
         every { secureDataStore.load(any()) } returns null
