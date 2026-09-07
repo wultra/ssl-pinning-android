@@ -336,7 +336,7 @@ The `domainsConfig` is cached locally alongside the fingerprints and cleared whe
 
 - `UpdateResult.STORE_IS_EMPTY` has been removed. It was previously returned when the server responded with an empty `fingerprints` array. The update now returns `UpdateResult.OK` in that case, because an empty fingerprint list is a valid server response (e.g. when all certificates have been removed). If your code handles `STORE_IS_EMPTY` explicitly, remove that branch — no error handling is needed for this case.
 
-#### 1.6.x to 1.7.x
+#### 1.6.x to 2.0.x
 
 PowerAuth SDK integration has been removed from WultraSSLPinning. The library no longer depends on PowerAuth SDK and the `com.wultra.android.sslpinning.integration.powerauth` package is no longer available.
 
