@@ -52,7 +52,7 @@ The project has a single Gradle module: `:library`. The `pinningtool/` directory
 - **`CryptoProvider`** — ECDSA signature validation, SHA-256, EC key import
 - **`SecureDataStore`** — persistent encrypted storage (load/save/remove by key)
 
-Default implementations (`DefaultCryptoProvider`, `DefaultSecureDataStore`) use Android's built-in crypto and `EncryptedSharedPreferences` respectively. The PowerAuth integration package (`integration/powerauth/`) provides alternatives backed by the PowerAuth SDK.
+Default implementations (`DefaultCryptoProvider`, `DefaultSecureDataStore`) use Android's built-in crypto and `EncryptedSharedPreferences` respectively.
 
 ### Data flow
 
@@ -74,7 +74,6 @@ The server can include a `DomainsConfig` in its response, allowing selective byp
 
 - **`SSLPinningIntegration`** — helpers for `HttpsURLConnection` and OkHttp
 - **`SSLPinningX509TrustManager`** — drops into any `SSLContext`
-- **`PowerAuthSslPinningValidationStrategy`** — integrates with PowerAuth's `PA2ClientSslValidationStrategy`
 
 ## Key Conventions
 
@@ -88,7 +87,7 @@ The primary `internal` constructor takes `(configuration, cryptoProvider, secure
 - **Unit tests** (`src/test`) — JVM-only; use MockK. Extend `CommonKotlinTest` which:
   - mocks `android.util.Base64`, `android.util.Log`, `Looper`
   - installs BouncyCastle as a JCE provider
-  - uses a mocked `CryptoProvider`, delegating selected operations (for example, ECDSA validation) to PowerAuth Java Crypto utilities
+  - uses a mocked `CryptoProvider` and default JCA/ECDSA validation for selected operations
 - **Instrumentation tests** (`src/androidTest`) — require a device/emulator and optionally a live Mobile Utility Server
 - Async update calls in tests are coordinated with `CountDownLatch` + `UpdateObserver`
 

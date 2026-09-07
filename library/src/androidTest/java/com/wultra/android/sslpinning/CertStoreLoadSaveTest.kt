@@ -19,9 +19,6 @@ package com.wultra.android.sslpinning
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.wultra.android.sslpinning.integration.DefaultCryptoProvider
 import com.wultra.android.sslpinning.integration.DefaultSecureDataStore
-import com.wultra.android.sslpinning.integration.powerauth.PowerAuthCryptoProvider
-import com.wultra.android.sslpinning.integration.powerauth.PowerAuthSecureDataStore
-import com.wultra.android.sslpinning.integration.powerauth.powerAuthCertStore
 import com.wultra.android.sslpinning.model.CachedData
 import com.wultra.android.sslpinning.model.CertificateInfo
 import org.junit.Assert
@@ -51,8 +48,7 @@ class CertStoreLoadSaveTest : CommonTest() {
         val uuid = UUID.randomUUID().toString()
         // we need to create the store several times with the same ID -> prepare "factories"
         val factories = arrayOf(
-            { CertStore(config, DefaultCryptoProvider(), DefaultSecureDataStore(appContext, "${uuid}_default")) },
-            { CertStore(config, PowerAuthCryptoProvider(), PowerAuthSecureDataStore(appContext, "${uuid}_pa")) }
+            { CertStore(config, DefaultCryptoProvider(), DefaultSecureDataStore(appContext, "${uuid}_default")) }
         )
 
         factories.forEach { factory ->
@@ -86,7 +82,6 @@ class CertStoreLoadSaveTest : CommonTest() {
     fun testSaveAndLoad() {
 
         arrayOf(
-            CertStore.powerAuthCertStore(config, appContext, UUID.randomUUID().toString()),
             CertStore(config, DefaultCryptoProvider(), DefaultSecureDataStore(appContext, UUID.randomUUID().toString()))
         ).forEach { store ->
 

@@ -22,7 +22,6 @@ import android.util.Base64;
 
 import com.wultra.android.sslpinning.integration.DefaultCryptoProvider;
 import com.wultra.android.sslpinning.integration.DefaultSecureDataStore;
-import com.wultra.android.sslpinning.integration.powerauth.PowerAuthCertStore;
 
 import org.junit.Before;
 import org.junit.Test;
@@ -46,7 +45,6 @@ public class CertStoreUpdateTestJava extends CommonTest {
         super.setUp();
         CertStoreConfiguration config = new CertStoreConfiguration.Builder(getServiceUrl(), getPubKey()).build();
         certStores = new CertStore[]{
-                PowerAuthCertStore.createInstance(config, getAppContext(), UUID.randomUUID().toString()),
                 new CertStore(config, new DefaultCryptoProvider(), new DefaultSecureDataStore(getAppContext(), UUID.randomUUID().toString()))
         };
     }
@@ -79,7 +77,6 @@ public class CertStoreUpdateTestJava extends CommonTest {
         byte[] badKeyBytes = Base64.decode(badKey, Base64.NO_WRAP);
         CertStoreConfiguration config = new CertStoreConfiguration.Builder(getServiceUrl(), badKeyBytes).build();
         CertStore[] badStores = {
-                PowerAuthCertStore.createInstance(config, getAppContext(), UUID.randomUUID().toString()),
                 new CertStore(config, new DefaultCryptoProvider(), new DefaultSecureDataStore(getAppContext(), UUID.randomUUID().toString()))
         };
         for (CertStore store : badStores) {
@@ -92,7 +89,6 @@ public class CertStoreUpdateTestJava extends CommonTest {
         URL badUrl = new URL("https://localhost:1/non-existent");
         CertStoreConfiguration config = new CertStoreConfiguration.Builder(badUrl, getPubKey()).build();
         CertStore[] badStores = {
-                PowerAuthCertStore.createInstance(config, getAppContext(), UUID.randomUUID().toString()),
                 new CertStore(config, new DefaultCryptoProvider(), new DefaultSecureDataStore(getAppContext(), UUID.randomUUID().toString()))
         };
         for (CertStore store : badStores) {

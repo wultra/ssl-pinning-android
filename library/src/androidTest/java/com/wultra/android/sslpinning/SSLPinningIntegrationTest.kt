@@ -21,7 +21,6 @@ import com.wultra.android.sslpinning.integration.DefaultCryptoProvider
 import com.wultra.android.sslpinning.integration.DefaultSecureDataStore
 import com.wultra.android.sslpinning.integration.SSLPinningIntegration
 import com.wultra.android.sslpinning.integration.SSLPinningX509TrustManager
-import com.wultra.android.sslpinning.integration.powerauth.powerAuthCertStore
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import org.junit.Assert
@@ -47,7 +46,6 @@ class SSLPinningIntegrationTest : CommonTest() {
         super.setUp()
         val config = CertStoreConfiguration.Builder(serviceUrl, pubKey).build()
         certStores = arrayOf(
-            CertStore.powerAuthCertStore(config, appContext, UUID.randomUUID().toString()),
             CertStore(config, DefaultCryptoProvider(), DefaultSecureDataStore(appContext, UUID.randomUUID().toString()))
         )
     }
