@@ -254,7 +254,7 @@ The motivation for these global validation observers is that some validation fai
 
 ## Certificate Depth Pinning
 
-By default the library pins the **leaf certificate** — the certificate the server presents directly. For stronger protection against a compromised leaf certificate you can instead pin an **intermediate CA** or the **root CA** in the certificate chain.
+By default, the library pins the **leaf certificate**—the certificate presented directly by the server. This is the approach recommended by OWASP because it limits trust to the intended endpoint. For resilience during certificate rotation or recovery, you can pin the issuing **intermediate CA**. Pinning an intermediate CA broadens the set of trusted certificates, while pinning a **root CA** is generally not recommended.
 
 The `depth` value refers to the position of the certificate in the TLS chain as received in `X509TrustManager.checkServerTrusted(chain, authType)`, where `chain[0]` is the leaf. Note that the root CA may or may not be included in this provided chain:
 
